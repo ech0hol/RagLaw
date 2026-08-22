@@ -1,0 +1,11 @@
+{
+  "name": "raglaw",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev:web": "pnpm --filter raglaw-web dev",
+    "build:web": "pnpm --filter raglaw-web build",
+    "lint:web": "pnpm --filter raglaw-web lint",
+    "e2e": "pnpm --filter raglaw-web e2e"
+  }
+}

@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build
+dist/
+build/
+target/
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Env
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Playwright
+test-results/
+playwright-report/
+
+# Vite
+*.local

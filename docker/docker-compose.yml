@@ -1,0 +1,131 @@
+name: raglaw
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: raglaw-mysql
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: raglaw
+      MYSQL_USER: raglaw
+      MYSQL_PASSWORD: raglaw
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --ngram_token_size=2
+    volumes:
+      - raglaw-mysql-data:/var/lib/mysql
+      - ../docs/sql/mysql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uraglaw", "-praglaw"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: raglaw-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: raglaw_vector
+      POSTGRES_USER: raglaw
+      POSTGRES_PASSWORD: raglaw
+    volumes:
+      - raglaw-pg-data:/var/lib/postgresql/data
+      - ../docs/sql/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raglaw -d raglaw_vector"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: raglaw-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: raglaw
+      MINIO_ROOT_PASSWORD: raglawsecret
+    command: server /data --console-address ":9001"
+    volumes:
+      - raglaw-minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: raglaw-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: raglaw
+      RABBITMQ_DEFAULT_PASS: raglaw
+    volumes:
+      - raglaw-rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: raglaw-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - raglaw-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  langfuse-db:
+    profiles: [observability]
+    image: postgres:16-alpine
+    container_name: raglaw-langfuse-db
+    environment:
+      POSTGRES_DB: langfuse
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: langfuse
+    volumes:
+      - raglaw-langfuse-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse -d langfuse"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  langfuse:
+    profiles: [observability]
+    image: langfuse/langfuse:2
+    container_name: raglaw-langfuse
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: postgresql://langfuse:langfuse@langfuse-db:5432/langfuse
+      NEXTAUTH_SECRET: raglaw-langfuse-dev-secret
+      SALT: raglaw-langfuse-salt
+      NEXTAUTH_URL: http://localhost:3001
+      TELEMETRY_ENABLED: "false"
+    depends_on:
+      langfuse-db:
+        condition: service_healthy
+
+volumes:
+  raglaw-mysql-data:
+  raglaw-pg-data:
+  raglaw-minio-data:
+  raglaw-rabbitmq-data:
+  raglaw-redis-data:
+  raglaw-langfuse-db-data:

@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:raglaw_test;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+raglaw:
+  jwt:
+    secret: test-secret-key-32-characters-min
+    access-ttl-minutes: 120
+    refresh-ttl-days: 7
+  seed:
+    admin-password: admin-test-password
+  llm:
+    mock: true

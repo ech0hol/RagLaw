@@ -1,0 +1,62 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: raglaw-server
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3307}/${MYSQL_DATABASE:raglaw}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USER:raglaw}
+    password: ${MYSQL_PASSWORD:raglaw}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+raglaw:
+  version: 0.1.0-SNAPSHOT
+  jwt:
+    secret: ${JWT_SECRET:raglaw-dev-secret-change-me-32chars-min}
+    access-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:120}
+    refresh-ttl-days: ${JWT_REFRESH_TTL_DAYS:7}
+  rag:
+    postgres:
+      enabled: ${POSTGRES_ENABLED:false}
+      url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DATABASE:raglaw_vector}
+      username: ${POSTGRES_USER:raglaw}
+      password: ${POSTGRES_PASSWORD:raglaw}
+    minio:
+      enabled: ${MINIO_ENABLED:false}
+      endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+      access-key: ${MINIO_ACCESS_KEY:raglaw}
+      secret-key: ${MINIO_SECRET_KEY:raglawsecret}
+      bucket: ${MINIO_BUCKET:raglaw}
+    storage:
+      local-temp-dir: ${RAG_LOCAL_TEMP_DIR:./tmp/raglaw-uploads}
+    embedding:
+      enabled: ${EMBEDDING_ENABLED:false}
+      api-key: ${DASHSCOPE_API_KEY:}
+      model: text-embedding-v3
+      dimensions: 1024
+    rabbit:
+      enabled: ${RABBITMQ_ENABLED:false}
+      parse-queue: raglaw.parse
+  llm:
+    mock: ${RAGLAW_LLM_MOCK:false}
+    dashscope-api-key: ${DASHSCOPE_API_KEY:}
+    default-model: qwen-plus
