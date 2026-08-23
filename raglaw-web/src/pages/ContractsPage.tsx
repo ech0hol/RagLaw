@@ -54,7 +54,7 @@ export function ContractsPage() {
   }
 
   return (
-    <div>
+    <div className="rl-page-center">
       <PageHeader
         title="合同审查"
         subtitle="上传合同文档，自动提取文本、识别风险并进入专项对话。"

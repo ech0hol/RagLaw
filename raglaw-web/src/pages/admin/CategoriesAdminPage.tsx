@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Badge, Card, MainHeader } from '@raglaw/ui';
+import { Badge, Card, MainHeader, Spinner } from '@raglaw/ui';
 import { api } from '../../lib/api';
 
 type CategoryNode = {
@@ -44,15 +44,18 @@ function CategoryRow({ node, depth = 0 }: { node: CategoryNode; depth?: number }
 
 export function CategoriesAdminPage() {
   const [tree, setTree] = useState<CategoryNode[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     void api<CategoryNode[]>('/api/v1/admin/categories').then((res) => {
       if (res.success) {
         setTree(res.data);
+        setError(null);
       } else {
         setError(res.error?.message ?? '加载失败');
       }
+      setLoading(false);
     });
   }, []);
 
@@ -63,27 +66,31 @@ export function CategoriesAdminPage() {
         L1/L2/L3 知识库类目树（上传文档需选择 L3 类目）
       </p>
       {error && <p className="rl-form-error">{error}</p>}
-      <Card>
-        <div className="rl-data-table-wrap">
-          <table className="rl-data-table">
-            <thead>
-              <tr>
-                <th>名称</th>
-                <th>编码</th>
-                <th>层级</th>
-                <th>路径</th>
-                <th>类型</th>
-                <th>状态</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tree.map((node) => (
-                <CategoryRow key={node.id} node={node} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      {loading ? (
+        <Spinner />
+      ) : (
+        <Card>
+          <div className="rl-data-table-wrap">
+            <table className="rl-data-table">
+              <thead>
+                <tr>
+                  <th>名称</th>
+                  <th>编码</th>
+                  <th>层级</th>
+                  <th>路径</th>
+                  <th>类型</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tree.map((node) => (
+                  <CategoryRow key={node.id} node={node} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

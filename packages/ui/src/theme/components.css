@@ -456,6 +456,16 @@
   color: var(--rl-text-muted);
 }
 
+.rl-page-center {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.rl-page-center--wide {
+  max-width: 1200px;
+}
+
 .rl-main-header {
   display: flex;
   align-items: center;

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Badge, Button, Card, MainHeader } from '@raglaw/ui';
+import { Badge, Button, Card, MainHeader, Spinner } from '@raglaw/ui';
 import { api } from '../../lib/api';
 
 type Agent = {
@@ -19,6 +19,13 @@ type CategoryNode = { id: string; code: string; name: string; children: Category
 
 type FlatCategory = { id: string; label: string; depth: number };
 
+const AGENT_TYPE_LABELS: Record<string, string> = {
+  GENERAL: '通用',
+  STATUTE: '法规',
+  CASE: '案例',
+  CONTRACT: '合同',
+};
+
 function flattenCategories(nodes: CategoryNode[], depth = 0): FlatCategory[] {
   const result: FlatCategory[] = [];
   for (const node of nodes) {
@@ -35,18 +42,38 @@ export function AgentsAdminPage() {
   const [peers, setPeers] = useState<string[]>([]);
   const [scopes, setScopes] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   async function loadAgents() {
     const res = await api<Agent[]>('/api/v1/admin/agents');
-    if (res.success) setAgents(res.data);
+    if (res.success) {
+      setAgents(res.data);
+      setError(null);
+    } else {
+      setError(res.error?.message ?? '加载 Agent 列表失败');
+    }
   }
 
   useEffect(() => {
-    void loadAgents();
-    void api<CategoryNode[]>('/api/v1/admin/categories').then((res) => {
-      if (res.success) setCategories(flattenCategories(res.data));
-    });
+    void (async () => {
+      setLoading(true);
+      setError(null);
+      const agentsRes = await api<Agent[]>('/api/v1/admin/agents');
+      if (agentsRes.success) {
+        setAgents(agentsRes.data);
+      } else {
+        setError(agentsRes.error?.message ?? '加载 Agent 列表失败');
+      }
+      const catRes = await api<CategoryNode[]>('/api/v1/admin/categories');
+      if (catRes.success) {
+        setCategories(flattenCategories(catRes.data));
+      } else {
+        setError((prev) => prev ?? catRes.error?.message ?? '加载类目失败');
+      }
+      setLoading(false);
+    })();
   }, []);
 
   function openEdit(agent: Agent) {
@@ -92,41 +119,46 @@ export function AgentsAdminPage() {
       <p className="rl-muted" style={{ marginBottom: '1.25rem' }}>
         管理 Agent 模型、knowledgeScopes 与 A2A 白名单；保存后自动 reload。
       </p>
+      {error && <p className="rl-form-error">{error}</p>}
       {message && <p className="rl-form-success">{message}</p>}
-      <Card>
-        <div className="rl-data-table-wrap">
-          <table className="rl-data-table">
-            <thead>
-              <tr>
-                <th>编码</th>
-                <th>名称</th>
-                <th>类型</th>
-                <th>模型</th>
-                <th>状态</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {agents.map((a) => (
-                <tr key={a.code}>
-                  <td><code>{a.code}</code></td>
-                  <td>{a.name}</td>
-                  <td>{a.type}</td>
-                  <td>{a.model}</td>
-                  <td>
-                    <Badge variant={a.enabled ? 'success' : 'muted'}>
-                      {a.enabled ? '启用' : '禁用'}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Button variant="ghost" onClick={() => openEdit(a)}>编辑</Button>
-                  </td>
+      {loading ? (
+        <Spinner />
+      ) : (
+        <Card>
+          <div className="rl-data-table-wrap">
+            <table className="rl-data-table">
+              <thead>
+                <tr>
+                  <th>编码</th>
+                  <th>名称</th>
+                  <th>类型</th>
+                  <th>模型</th>
+                  <th>状态</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+              </thead>
+              <tbody>
+                {agents.map((a) => (
+                  <tr key={a.code}>
+                    <td><code>{a.code}</code></td>
+                    <td>{a.name}</td>
+                    <td>{AGENT_TYPE_LABELS[a.type] ?? a.type}</td>
+                    <td>{a.model}</td>
+                    <td>
+                      <Badge variant={a.enabled ? 'success' : 'muted'}>
+                        {a.enabled ? '启用' : '禁用'}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Button variant="ghost" onClick={() => openEdit(a)}>编辑</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
 
       {editing && (
         <Card className="rl-admin-modal">

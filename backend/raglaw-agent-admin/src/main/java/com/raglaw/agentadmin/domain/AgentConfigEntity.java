@@ -40,7 +40,7 @@ public class AgentConfigEntity {
     @Column(name = "a2a_peers_json")
     private String a2aPeersJson;
 
-    @Column(name = "system_prompt")
+    @Column(name = "system_prompt", columnDefinition = "MEDIUMTEXT")
     private String systemPrompt;
 
     @Column(name = "tools_json")

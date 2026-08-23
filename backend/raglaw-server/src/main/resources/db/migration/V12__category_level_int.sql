@@ -1,0 +1,2 @@
+ALTER TABLE raglaw_category
+    MODIFY COLUMN level INT NOT NULL COMMENT '1|2|3';

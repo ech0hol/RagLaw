@@ -81,7 +81,7 @@ export function ContractReviewPage() {
   const activeRisk = review.risks.find((risk) => risk.id === activeRiskId) ?? null;
 
   return (
-    <div>
+    <div className="rl-page-center rl-page-center--wide">
       <PageHeader
         title="合同风险审查"
         subtitle={`提取方式：${review.extractMethod}${review.ocrUsed ? '（含 OCR）' : ''} · 推荐助手：${review.suggestedAgentCode}`}

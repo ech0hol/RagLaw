@@ -78,7 +78,7 @@ export function KnowledgePage() {
   const totalPages = result ? Math.ceil(result.total / PAGE_SIZE) : 0;
 
   return (
-    <div>
+    <div className="rl-page-center">
       <PageHeader title="法规/案例查询" subtitle="全文检索已入库的法规条文与案例片段，支持 L2 领域筛选与分页。" />
       <Card>
         <form className="rl-admin-form" onSubmit={(e) => void onSearch(e, 0)}>
