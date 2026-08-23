@@ -1,7 +1,10 @@
 package com.raglaw.rag.dto;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raglaw.rag.domain.ContractRiskEntity;
 import java.time.Instant;
+import java.util.List;
 
 public record ContractRiskDto(
         String id,
@@ -13,9 +16,13 @@ public record ContractRiskDto(
         String excerpt,
         String suggestion,
         Integer pageNumber,
+        List<HighlightRect> highlightRects,
         boolean accepted,
+        String revisedExcerpt,
         Instant createdAt
 ) {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static ContractRiskDto from(ContractRiskEntity entity) {
         return new ContractRiskDto(
@@ -28,8 +35,22 @@ public record ContractRiskDto(
                 entity.getExcerpt(),
                 entity.getSuggestion(),
                 entity.getPageNumber(),
+                parseHighlightRects(entity.getHighlightRectsJson()),
                 entity.isAccepted(),
+                entity.getRevisedExcerpt(),
                 entity.getCreatedAt()
         );
+    }
+
+    private static List<HighlightRect> parseHighlightRects(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return MAPPER.readValue(json, new TypeReference<List<HighlightRect>>() {
+            });
+        } catch (Exception ex) {
+            return List.of();
+        }
     }
 }

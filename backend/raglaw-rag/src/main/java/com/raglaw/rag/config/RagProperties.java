@@ -192,6 +192,9 @@ public class RagProperties {
     public static class Rabbit {
         private boolean enabled;
         private String parseQueue = "raglaw.parse";
+        private String indexQueue = "raglaw.index";
+        private String parseDlq = "raglaw.parse.dlq";
+        private String indexDlq = "raglaw.index.dlq";
 
         public boolean isEnabled() {
             return enabled;
@@ -207,6 +210,30 @@ public class RagProperties {
 
         public void setParseQueue(String parseQueue) {
             this.parseQueue = parseQueue;
+        }
+
+        public String getIndexQueue() {
+            return indexQueue;
+        }
+
+        public void setIndexQueue(String indexQueue) {
+            this.indexQueue = indexQueue;
+        }
+
+        public String getParseDlq() {
+            return parseDlq;
+        }
+
+        public void setParseDlq(String parseDlq) {
+            this.parseDlq = parseDlq;
+        }
+
+        public String getIndexDlq() {
+            return indexDlq;
+        }
+
+        public void setIndexDlq(String indexDlq) {
+            this.indexDlq = indexDlq;
         }
     }
 }

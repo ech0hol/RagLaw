@@ -1,9 +1,11 @@
 package com.raglaw.rag.web;
 
 import com.raglaw.common.api.ApiResponse;
+import com.raglaw.rag.domain.DocStatus;
 import com.raglaw.rag.domain.DocumentEntity;
 import com.raglaw.rag.dto.KnowledgeDocumentDto;
 import com.raglaw.rag.dto.KnowledgeSearchPageDto;
+import com.raglaw.rag.dto.KnowledgeStatsDto;
 import com.raglaw.rag.repository.DocumentRepository;
 import com.raglaw.rag.service.IngestService;
 import com.raglaw.rag.service.KnowledgeDocumentService;
@@ -36,6 +38,13 @@ public class KnowledgeSearchController {
         this.knowledgeDocumentService = knowledgeDocumentService;
         this.ingestService = ingestService;
         this.documentRepository = documentRepository;
+    }
+
+    @GetMapping("/stats")
+    public ApiResponse<KnowledgeStatsDto> stats() {
+        long caseCount = documentRepository.countByDocTypeAndStatus("CASE", DocStatus.INDEXED);
+        long statuteCount = documentRepository.countByDocTypeAndStatus("STATUTE", DocStatus.INDEXED);
+        return ApiResponse.ok(new KnowledgeStatsDto(caseCount, statuteCount));
     }
 
     @GetMapping("/search")

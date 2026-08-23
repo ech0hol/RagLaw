@@ -37,8 +37,14 @@ public class ContractRiskEntity {
     @Column(name = "page_number")
     private Integer pageNumber;
 
+    @Column(name = "highlight_rects_json", columnDefinition = "TEXT")
+    private String highlightRectsJson;
+
     @Column(nullable = false)
     private boolean accepted;
+
+    @Column(name = "revised_excerpt", columnDefinition = "TEXT")
+    private String revisedExcerpt;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -119,12 +125,28 @@ public class ContractRiskEntity {
         return pageNumber;
     }
 
+    public String getHighlightRectsJson() {
+        return highlightRectsJson;
+    }
+
+    public void setHighlightRectsJson(String highlightRectsJson) {
+        this.highlightRectsJson = highlightRectsJson;
+    }
+
     public boolean isAccepted() {
         return accepted;
     }
 
     public void setAccepted(boolean accepted) {
         this.accepted = accepted;
+    }
+
+    public String getRevisedExcerpt() {
+        return revisedExcerpt;
+    }
+
+    public void setRevisedExcerpt(String revisedExcerpt) {
+        this.revisedExcerpt = revisedExcerpt;
     }
 
     public Instant getCreatedAt() {

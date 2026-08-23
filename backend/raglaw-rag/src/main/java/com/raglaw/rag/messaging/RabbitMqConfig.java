@@ -16,4 +16,19 @@ public class RabbitMqConfig {
     public Queue parseQueue(RagProperties ragProperties) {
         return new Queue(ragProperties.getRabbit().getParseQueue(), true);
     }
+
+    @Bean
+    public Queue parseDlq(RagProperties ragProperties) {
+        return new Queue(ragProperties.getRabbit().getParseDlq(), true);
+    }
+
+    @Bean
+    public Queue indexQueue(RagProperties ragProperties) {
+        return new Queue(ragProperties.getRabbit().getIndexQueue(), true);
+    }
+
+    @Bean
+    public Queue indexDlq(RagProperties ragProperties) {
+        return new Queue(ragProperties.getRabbit().getIndexDlq(), true);
+    }
 }

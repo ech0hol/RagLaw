@@ -171,6 +171,37 @@ export async function fetchContractFileUrl(documentId: string): Promise<string |
   return URL.createObjectURL(blob);
 }
 
+export async function deleteConversation(conversationId: string) {
+  return api<void>(`/api/v1/conversations/${conversationId}`, { method: 'DELETE' });
+}
+
+export type ContractSummary = {
+  documentId: string;
+  title: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  riskCount: number;
+  suggestedAgentCode: string;
+};
+
+export async function fetchContracts() {
+  return api<ContractSummary[]>('/api/v1/contracts');
+}
+
+export async function deleteContract(documentId: string) {
+  return api<void>(`/api/v1/contracts/${documentId}`, { method: 'DELETE' });
+}
+
+export type KnowledgeStats = {
+  caseCount: number;
+  statuteCount: number;
+};
+
+export async function fetchKnowledgeStats() {
+  return api<KnowledgeStats>('/api/v1/knowledge/stats');
+}
+
 async function downloadAuthedFile(path: string, filename: string) {
   const token = getToken();
   const headers: HeadersInit = {};

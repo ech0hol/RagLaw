@@ -15,16 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class ApprovalService {
 
     private final DocumentRepository documentRepository;
-    private final IngestService ingestService;
+    private final IngestPipeline ingestPipeline;
     private final ObjectProvider<VectorStoreService> vectorStoreService;
 
     public ApprovalService(
             DocumentRepository documentRepository,
-            IngestService ingestService,
+            IngestPipeline ingestPipeline,
             ObjectProvider<VectorStoreService> vectorStoreService
     ) {
         this.documentRepository = documentRepository;
-        this.ingestService = ingestService;
+        this.ingestPipeline = ingestPipeline;
         this.vectorStoreService = vectorStoreService;
     }
 
@@ -41,7 +41,8 @@ public class ApprovalService {
         document.setStatus(DocStatus.INDEXED);
         document.setRejectReason(null);
         documentRepository.save(document);
-        return DocumentDto.from(document);
+        ingestPipeline.index(document);
+        return DocumentDto.from(documentRepository.findById(documentId).orElseThrow());
     }
 
     @Transactional

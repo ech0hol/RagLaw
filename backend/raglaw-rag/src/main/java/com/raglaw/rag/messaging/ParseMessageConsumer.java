@@ -1,8 +1,7 @@
 package com.raglaw.rag.messaging;
 
-import com.raglaw.rag.domain.DocumentEntity;
 import com.raglaw.rag.repository.DocumentRepository;
-import com.raglaw.rag.service.IngestService;
+import com.raglaw.rag.service.IngestPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -16,22 +15,31 @@ public class ParseMessageConsumer {
     private static final Logger log = LoggerFactory.getLogger(ParseMessageConsumer.class);
 
     private final DocumentRepository documentRepository;
-    private final IngestService ingestService;
+    private final IngestPipeline ingestPipeline;
+    private final IndexMessagePublisher indexMessagePublisher;
 
-    public ParseMessageConsumer(DocumentRepository documentRepository, IngestService ingestService) {
+    public ParseMessageConsumer(
+            DocumentRepository documentRepository,
+            IngestPipeline ingestPipeline,
+            IndexMessagePublisher indexMessagePublisher
+    ) {
         this.documentRepository = documentRepository;
-        this.ingestService = ingestService;
+        this.ingestPipeline = ingestPipeline;
+        this.indexMessagePublisher = indexMessagePublisher;
     }
 
     @RabbitListener(queues = "${raglaw.rag.rabbit.parse-queue}")
     public void onParseJob(String documentId) {
         documentRepository.findById(documentId).ifPresentOrElse(document -> {
             try {
-                log.info("Async ingest started for document {}", documentId);
-                ingestService.ingest(document);
-                log.info("Async ingest completed for document {}", documentId);
+                log.info("Async parse started for document {}", documentId);
+                ingestPipeline.parse(document);
+                indexMessagePublisher.publishIndexJob(documentId);
+                log.info("Async parse completed for document {}", documentId);
             } catch (Exception ex) {
-                log.error("Async ingest failed for document {}: {}", documentId, ex.getMessage());
+                log.error("Async parse failed for document {}: {}", documentId, ex.getMessage());
+                ingestPipeline.markFailed(document, ex);
+                throw ex;
             }
         }, () -> log.warn("Parse job received for missing document {}", documentId));
     }

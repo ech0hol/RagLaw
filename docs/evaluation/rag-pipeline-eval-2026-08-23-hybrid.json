@@ -1,0 +1,57 @@
+﻿{
+    "evaluatedAt":  "2026-08-23T16:37:12.0815017+08:00",
+    "retrieval":  {
+                      "engine":  "MySQL FULLTEXT + pgvector RRF",
+                      "queries":  [
+                                      {
+                                          "Query":  "公司拖欠工资 违约金过高 加班费",
+                                          "HitCount":  5
+                                      }
+                                  ]
+                  },
+    "hybridReady":  true,
+    "answers":  [
+                    {
+                        "Query":  "公司拖欠工资劳动者如何维权?",
+                        "References":  5,
+                        "LatencyMs":  533,
+                        "KeywordHits":  0,
+                        "ExpectedKeywords":  2,
+                        "AnswerPreview":  "【民法商法规范助手】根据知识库检索到 5 条相关依据。例如：# 中华人民共和国民法典·合同编（节选） 等。\n\n针对您的问题「??????????????」，建议结合上述法规条文分析具体事实。本回复仅供参考，不构成法律意见。"
+                    },
+                    {
+                        "Query":  "合同约定的违约金过高怎么办?",
+                        "References":  5,
+                        "LatencyMs":  319,
+                        "KeywordHits":  0,
+                        "ExpectedKeywords":  1,
+                        "AnswerPreview":  "【民法商法规范助手】根据知识库检索到 5 条相关依据。例如：# 中华人民共和国民法典·合同编（节选） 等。\n\n针对您的问题「??????????????」，建议结合上述法规条文分析具体事实。本回复仅供参考，不构成法律意见。"
+                    }
+                ],
+    "documents":  [
+                      {
+                          "Id":  "0a49d60a-b171-4957-bc83-03331ea8c0a4",
+                          "Title":  "labor-contract-law-excerpt",
+                          "Status":  "INDEXED",
+                          "CategoryId":  "cat_l3_statute_civil_labor"
+                      },
+                      {
+                          "Id":  "1cefc7f0-6058-4d01-afe5-03ec682e2210",
+                          "Title":  "civil-code-contract-excerpt",
+                          "Status":  "INDEXED",
+                          "CategoryId":  "cat_l3_statute_civil_contract"
+                      },
+                      {
+                          "Id":  "8646663d-b2b8-4d3f-a472-7b1f0de5eb07",
+                          "Title":  "labor-overtime-case",
+                          "Status":  "INDEXED",
+                          "CategoryId":  "cat_l3_case_civil_labor"
+                      }
+                  ],
+    "retrievalMode":  "hybrid",
+    "stats":  {
+                  "chunkCount":  74,
+                  "indexedDocuments":  6,
+                  "vectorCount":  "74"
+              }
+}

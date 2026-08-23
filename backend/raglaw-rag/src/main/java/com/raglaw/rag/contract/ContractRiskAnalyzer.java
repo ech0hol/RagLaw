@@ -1,10 +1,13 @@
 package com.raglaw.rag.contract;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raglaw.common.util.Ids;
 import com.raglaw.rag.domain.ContractRiskEntity;
 import com.raglaw.rag.domain.DocumentChunkEntity;
 import com.raglaw.rag.domain.DocumentEntity;
+import com.raglaw.rag.dto.HighlightRect;
 import com.raglaw.rag.ingest.PdfPageLocator;
+import com.raglaw.rag.ingest.PdfTextLocator;
 import com.raglaw.rag.repository.ContractRiskRepository;
 import com.raglaw.rag.repository.DocumentChunkRepository;
 import com.raglaw.rag.repository.DocumentRepository;
@@ -33,19 +36,25 @@ public class ContractRiskAnalyzer {
     private final DocumentRepository documentRepository;
     private final DocumentStorageService documentStorageService;
     private final PdfPageLocator pdfPageLocator;
+    private final PdfTextLocator pdfTextLocator;
+    private final ObjectMapper objectMapper;
 
     public ContractRiskAnalyzer(
             DocumentChunkRepository chunkRepository,
             ContractRiskRepository riskRepository,
             DocumentRepository documentRepository,
             DocumentStorageService documentStorageService,
-            PdfPageLocator pdfPageLocator
+            PdfPageLocator pdfPageLocator,
+            PdfTextLocator pdfTextLocator,
+            ObjectMapper objectMapper
     ) {
         this.chunkRepository = chunkRepository;
         this.riskRepository = riskRepository;
         this.documentRepository = documentRepository;
         this.documentStorageService = documentStorageService;
         this.pdfPageLocator = pdfPageLocator;
+        this.pdfTextLocator = pdfTextLocator;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -75,10 +84,17 @@ public class ContractRiskAnalyzer {
                             ? chunk.getContent()
                             : chunk.getContent().substring(0, 200) + "…";
                     Integer pageNumber = null;
+                    String highlightRectsJson = null;
                     if (isPdf && pdfBytes != null) {
-                        pageNumber = pdfPageLocator.findPage(pdfBytes, excerpt);
+                        List<HighlightRect> rects = pdfTextLocator.findRects(pdfBytes, excerpt);
+                        if (!rects.isEmpty()) {
+                            pageNumber = rects.get(0).page();
+                            highlightRectsJson = writeRects(rects);
+                        } else {
+                            pageNumber = pdfPageLocator.findPage(pdfBytes, excerpt);
+                        }
                     }
-                    risks.add(new ContractRiskEntity(
+                    ContractRiskEntity risk = new ContractRiskEntity(
                             Ids.newId(),
                             documentId,
                             chunk.getId(),
@@ -88,11 +104,21 @@ public class ContractRiskAnalyzer {
                             excerpt,
                             rule.suggestion(),
                             pageNumber
-                    ));
+                    );
+                    risk.setHighlightRectsJson(highlightRectsJson);
+                    risks.add(risk);
                 }
             }
         }
         return riskRepository.saveAll(risks);
+    }
+
+    private String writeRects(List<HighlightRect> rects) {
+        try {
+            return objectMapper.writeValueAsString(rects);
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private static String resolveOriginalFilename(DocumentEntity document) {

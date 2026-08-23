@@ -1,0 +1,24 @@
+{
+  "evaluatedAt": "2026-08-23T16:37:12+08:00",
+  "retrievalMode": "compare",
+  "hybridReady": true,
+  "embeddingMock": true,
+  "fulltext": {
+    "source": "docs/evaluation/rag-pipeline-eval-2026-08-23.json",
+    "engine": "MySQL FULLTEXT (ngram)",
+    "retrievalHitRate": "3/3",
+    "aguiReferenceCount": 4,
+    "indexedDocuments": 3,
+    "chunkCount": 37
+  },
+  "hybrid": {
+    "source": "docs/evaluation/rag-pipeline-eval-2026-08-23-hybrid.json",
+    "engine": "MySQL FULLTEXT + pgvector RRF",
+    "retrievalHitRate": "1/1",
+    "aguiAnswersWithRefs": "2/2",
+    "indexedDocuments": 6,
+    "chunkCount": 74,
+    "vectorCount": 74
+  },
+  "conclusion": "Hybrid pipeline operational: health hybridRetrievalReady=true, pgvector rows match chunk count, AG-UI SSE returns refs (2/2). Mock embedding (RAGLAW_LLM_MOCK=true); re-ingest with real DashScope vectors recommended before production comparison."
+}

@@ -49,6 +49,10 @@ public class HealthController {
         );
         rag.put("minioEnabled", ragProperties.getMinio().isEnabled());
         rag.put("rabbitEnabled", ragProperties.getRabbit().isEnabled());
+        if (ragProperties.getRabbit().isEnabled()) {
+            rag.put("rabbitParseQueue", ragProperties.getRabbit().getParseQueue());
+            rag.put("rabbitIndexQueue", ragProperties.getRabbit().getIndexQueue());
+        }
 
         return ApiResponse.ok(Map.of(
                 "status", "UP",

@@ -1,11 +1,13 @@
 package com.raglaw.rag.web;
 
 import com.raglaw.common.api.ApiResponse;
+import com.raglaw.rag.contract.ContractDocumentService;
 import com.raglaw.rag.contract.ContractExportService;
 import com.raglaw.rag.contract.ContractReviewService;
 import com.raglaw.rag.contract.ContractTextService;
 import com.raglaw.rag.dto.ContractReviewDto;
 import com.raglaw.rag.dto.ContractRiskDto;
+import com.raglaw.rag.dto.ContractSummaryDto;
 import com.raglaw.rag.dto.ContractTextDto;
 import com.raglaw.rag.service.IngestService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,6 +15,7 @@ import java.io.InputStream;
 import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.StreamUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,18 +30,32 @@ public class ContractController {
     private final ContractReviewService contractReviewService;
     private final ContractTextService contractTextService;
     private final ContractExportService contractExportService;
+    private final ContractDocumentService contractDocumentService;
     private final IngestService ingestService;
 
     public ContractController(
             ContractReviewService contractReviewService,
             ContractTextService contractTextService,
             ContractExportService contractExportService,
+            ContractDocumentService contractDocumentService,
             IngestService ingestService
     ) {
         this.contractReviewService = contractReviewService;
         this.contractTextService = contractTextService;
         this.contractExportService = contractExportService;
+        this.contractDocumentService = contractDocumentService;
         this.ingestService = ingestService;
+    }
+
+    @GetMapping
+    public ApiResponse<List<ContractSummaryDto>> list() {
+        return ApiResponse.ok(contractDocumentService.listForCurrentUser());
+    }
+
+    @DeleteMapping("/{documentId}")
+    public ApiResponse<Void> delete(@PathVariable("documentId") String documentId) {
+        contractDocumentService.deleteForCurrentUser(documentId);
+        return ApiResponse.ok(null);
     }
 
     @GetMapping("/{documentId}/risks")
@@ -77,14 +94,7 @@ public class ContractController {
     @PostMapping("/{documentId}/accept-revisions")
     public ApiResponse<ContractTextDto> acceptRevisions(@PathVariable("documentId") String documentId) {
         contractReviewService.acceptAllRisks(documentId);
-        String revised = contractTextService.buildRevisedText(documentId);
-        ContractTextDto original = contractTextService.getText(documentId);
-        return ApiResponse.ok(new ContractTextDto(
-                original.documentId(),
-                original.filename(),
-                revised,
-                original.pdf()
-        ));
+        return ApiResponse.ok(contractTextService.getText(documentId));
     }
 
     @PostMapping("/{documentId}/risks/{riskId}/accept")
@@ -93,6 +103,15 @@ public class ContractController {
             @PathVariable("riskId") String riskId
     ) {
         contractReviewService.acceptRisk(documentId, riskId);
+        return ApiResponse.ok(null);
+    }
+
+    @PostMapping("/{documentId}/risks/{riskId}/unaccept")
+    public ApiResponse<Void> unacceptRisk(
+            @PathVariable("documentId") String documentId,
+            @PathVariable("riskId") String riskId
+    ) {
+        contractReviewService.unacceptRisk(documentId, riskId);
         return ApiResponse.ok(null);
     }
 

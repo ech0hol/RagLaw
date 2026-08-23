@@ -30,6 +30,12 @@ public class DocumentEntity {
     @Column(nullable = false, length = ColumnLengths.DOC_TYPE)
     private DocStatus status = DocStatus.PENDING;
 
+    @Column(name = "ingest_stage", length = 32)
+    private String ingestStage;
+
+    @Column(name = "ingest_error", columnDefinition = "TEXT")
+    private String ingestError;
+
     @Column(name = "uploader_id", length = ColumnLengths.UUID)
     private String uploaderId;
 
@@ -124,6 +130,24 @@ public class DocumentEntity {
 
     public void setTitle(String title) {
         this.title = title;
+        this.updatedAt = Instant.now();
+    }
+
+    public String getIngestStage() {
+        return ingestStage;
+    }
+
+    public void setIngestStage(String ingestStage) {
+        this.ingestStage = ingestStage;
+        this.updatedAt = Instant.now();
+    }
+
+    public String getIngestError() {
+        return ingestError;
+    }
+
+    public void setIngestError(String ingestError) {
+        this.ingestError = ingestError;
         this.updatedAt = Instant.now();
     }
 }

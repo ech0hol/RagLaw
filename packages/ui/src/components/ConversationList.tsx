@@ -1,3 +1,5 @@
+import { Trash2 } from 'lucide-react';
+
 export type ConversationItem = {
   id: string;
   title: string;
@@ -9,6 +11,7 @@ type ConversationListProps = {
   selectedId?: string | null;
   onSelect: (id: string) => void;
   onNewChat?: () => void;
+  onDelete?: (id: string) => void;
   loading?: boolean;
   emptyMessage?: string;
 };
@@ -37,6 +40,7 @@ export function ConversationList({
   selectedId,
   onSelect,
   onNewChat,
+  onDelete,
   loading,
   emptyMessage = '暂无会话',
 }: ConversationListProps) {
@@ -57,20 +61,37 @@ export function ConversationList({
           <p className="rl-conv-list__empty">{emptyMessage}</p>
         ) : (
           conversations.map((conv) => (
-            <button
+            <div
               key={conv.id}
-              type="button"
               className={[
                 'rl-conv-item',
                 selectedId === conv.id && 'rl-conv-item--active',
               ]
                 .filter(Boolean)
                 .join(' ')}
-              onClick={() => onSelect(conv.id)}
             >
-              <span className="rl-conv-item__title">{conv.title || '新对话'}</span>
-              {conv.updatedAt && <span className="rl-conv-item__time">{formatTime(conv.updatedAt)}</span>}
-            </button>
+              <button
+                type="button"
+                className="rl-conv-item__main"
+                onClick={() => onSelect(conv.id)}
+              >
+                <span className="rl-conv-item__title">{conv.title || '新对话'}</span>
+                {conv.updatedAt && <span className="rl-conv-item__time">{formatTime(conv.updatedAt)}</span>}
+              </button>
+              {onDelete && (
+                <button
+                  type="button"
+                  className="rl-conv-item__delete"
+                  aria-label="删除对话"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(conv.id);
+                  }}
+                >
+                  <Trash2 size={15} />
+                </button>
+              )}
+            </div>
           ))
         )}
       </div>

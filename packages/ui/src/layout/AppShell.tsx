@@ -14,6 +14,7 @@ import {
   Sun,
 } from 'lucide-react';
 import { NavItem, NavSection } from '../components/NavItem';
+import { MAIN_OVERLAY_ROOT_ID } from './constants';
 
 type AppShellUser = {
   displayName: string;
@@ -48,7 +49,7 @@ export function AppShell({
   const isAdmin = user.role === 'ADMIN';
 
   return (
-    <div className="rl-shell">
+    <div className={['rl-shell', collapsed && 'rl-shell--sidebar-collapsed'].filter(Boolean).join(' ')}>
       <aside className={['rl-sidebar', collapsed && 'rl-sidebar--collapsed'].filter(Boolean).join(' ')}>
         <div className="rl-sidebar-header">
           {!collapsed && <div className="rl-logo">RagLaw</div>}
@@ -106,6 +107,7 @@ export function AppShell({
       </aside>
       <main className="rl-main">
         <div className="rl-main-content">{children}</div>
+        <div id={MAIN_OVERLAY_ROOT_ID} className="rl-main-overlay-root" />
       </main>
     </div>
   );

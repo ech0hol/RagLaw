@@ -2,6 +2,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { useParams, useSearchParams } from 'react-router-dom';
 import { BookOpen, FileText, Gavel, Scale } from 'lucide-react';
 import {
+  ConfirmDialog,
   ConversationHistoryDropdown,
   ConversationPanel,
   QuickActionCard,
@@ -9,7 +10,7 @@ import {
   type ChatReference,
   type ConversationItem,
 } from '@raglaw/ui';
-import { api, getToken } from '../lib/api';
+import { api, deleteConversation, getToken } from '../lib/api';
 import { useStickyScroll } from '../hooks/useStickyScroll';
 
 const AGENT_LABELS: Record<string, string> = {
@@ -59,7 +60,10 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [thinkingSteps, setThinkingSteps] = useState<string[]>([]);
   const [recommendQuestions, setRecommendQuestions] = useState<string[]>([]);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const messageListRef = useRef<HTMLDivElement>(null);
   const skipLoadRef = useRef(false);
 
@@ -67,6 +71,7 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
     messages,
     streaming,
     statusMessage,
+    thinkingSteps,
   ]);
 
   const canRegenerate = useMemo(
@@ -175,6 +180,7 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
     let assistant = '';
     const references: ChatReference[] = [];
     setStatusMessage('');
+    setThinkingSteps([]);
     setRecommendQuestions([]);
     setMessages((prev) => [...prev, { role: 'assistant', content: '', references: [] }]);
 
@@ -195,9 +201,21 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
         }
         if (event === 'status' && data) {
           const parsed = JSON.parse(data) as { message?: string };
-          setStatusMessage(parsed.message ?? '');
+          const msg = parsed.message ?? '';
+          if (msg) {
+            setThinkingSteps((prev) => {
+              if (prev.length === 0 || prev[prev.length - 1] !== msg) {
+                return [...prev, msg];
+              }
+              return prev;
+            });
+            setStatusMessage(msg);
+          }
         } else if (event === 'text' && data) {
           const parsed = JSON.parse(data) as { delta?: string };
+          if (!assistant) {
+            setStatusMessage('');
+          }
           assistant += parsed.delta ?? '';
           setMessages((prev) => {
             const next = [...prev];
@@ -240,6 +258,8 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
       setMessages((prev) => [...prev, { role: 'assistant', content: err instanceof Error ? err.message : '发送失败' }]);
     } finally {
       setStreaming(false);
+      setThinkingSteps([]);
+      setStatusMessage('');
     }
   }
 
@@ -253,11 +273,32 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
       setMessages((prev) => [...prev, { role: 'assistant', content: err instanceof Error ? err.message : '重新生成失败' }]);
     } finally {
       setStreaming(false);
+      setThinkingSteps([]);
+      setStatusMessage('');
     }
   }
 
   function copyContent(content: string) {
     void navigator.clipboard.writeText(content);
+  }
+
+  function requestDeleteConversation(id: string) {
+    setDeleteTargetId(id);
+    setHistoryOpen(false);
+  }
+
+  async function confirmDeleteConversation() {
+    if (!deleteTargetId) return;
+    const id = deleteTargetId;
+    setDeleteLoading(true);
+    const res = await deleteConversation(id);
+    setDeleteLoading(false);
+    if (!res.success) return;
+    setDeleteTargetId(null);
+    if (conversationId === id) {
+      newChat();
+    }
+    void refreshConversations();
   }
 
   return (
@@ -270,6 +311,7 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
           selectedId={conversationId}
           onSelect={selectConversation}
           onNewChat={newChat}
+          onDelete={requestDeleteConversation}
           loading={convLoading}
           searchValue={searchFilter}
           onSearchChange={setSearchFilter}
@@ -285,6 +327,7 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
         onInputChange={setInput}
         onSubmit={(e: FormEvent) => { e.preventDefault(); void sendMessage(input); }}
         statusMessage={statusMessage}
+        thinkingSteps={thinkingSteps}
         recommendQuestions={recommendQuestions}
         onRecommendClick={(q) => void sendMessage(q)}
         onCopy={copyContent}
@@ -311,6 +354,16 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
             </div>
           </>
         }
+      />
+      <ConfirmDialog
+        open={deleteTargetId !== null}
+        title="删除对话"
+        description="删除后无法恢复，是否继续？"
+        confirmLabel="删除"
+        variant="danger"
+        loading={deleteLoading}
+        onConfirm={() => void confirmDeleteConversation()}
+        onCancel={() => !deleteLoading && setDeleteTargetId(null)}
       />
     </div>
   );

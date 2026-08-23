@@ -3,9 +3,10 @@ package com.raglaw.rag.service.storage;
 import com.raglaw.rag.config.RagProperties;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import io.minio.GetObjectArgs;
+import io.minio.RemoveObjectArgs;
 import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +57,21 @@ public class MinioDocumentStorage implements DocumentStorageService {
                     .build());
         } catch (Exception ex) {
             throw new IllegalStateException("MinIO 读取失败: " + ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public void delete(String storageKey) {
+        if (storageKey == null || storageKey.isBlank()) {
+            return;
+        }
+        try {
+            minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(storageKey)
+                    .build());
+        } catch (Exception ex) {
+            throw new IllegalStateException("MinIO 删除失败: " + ex.getMessage(), ex);
         }
     }
 

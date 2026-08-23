@@ -11,6 +11,8 @@ import com.raglaw.rag.repository.DocumentChunkRepository;
 import com.raglaw.rag.repository.DocumentRepository;
 import com.raglaw.rag.service.IngestService;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,31 +48,35 @@ public class ContractTextService {
     @Transactional(readOnly = true)
     public String buildRevisedText(String documentId) {
         ensureContract(documentId);
-        StringBuilder sb = new StringBuilder(buildFullText(documentId));
-        List<ContractRiskEntity> risks = riskRepository.findByDocumentIdOrderByCreatedAtAsc(documentId).stream()
-                .filter(ContractRiskEntity::isAccepted)
-                .toList();
-        if (!risks.isEmpty()) {
-            sb.append("\n\n---\n\n## 修订建议（已采纳）\n\n");
-            int index = 1;
-            for (ContractRiskEntity risk : risks) {
-                sb.append("### ").append(index++).append(". ").append(risk.getSummary()).append("\n\n");
-                if (risk.getExcerpt() != null && !risk.getExcerpt().isBlank()) {
-                    sb.append("**原文摘录：** ").append(risk.getExcerpt()).append("\n\n");
-                }
-                if (risk.getSuggestion() != null && !risk.getSuggestion().isBlank()) {
-                    sb.append("**修订建议：** ").append(risk.getSuggestion()).append("\n\n");
-                }
-            }
-        }
-        return sb.toString();
+        return buildFullText(documentId);
     }
 
-    private String buildFullText(String documentId) {
-        return chunkRepository.findByDocumentIdOrderByChunkIndexAsc(documentId).stream()
-                .map(DocumentChunkEntity::getContent)
+    String buildFullText(String documentId) {
+        List<DocumentChunkEntity> chunks = chunkRepository.findByDocumentIdOrderByChunkIndexAsc(documentId);
+        List<ContractRiskEntity> risks = riskRepository.findByDocumentIdOrderByCreatedAtAsc(documentId);
+        Map<String, List<ContractRiskEntity>> acceptedByChunk = risks.stream()
+                .filter(ContractRiskEntity::isAccepted)
+                .collect(Collectors.groupingBy(ContractRiskEntity::getChunkId));
+
+        return chunks.stream()
+                .map(chunk -> resolveChunkContent(chunk, acceptedByChunk.get(chunk.getId())))
                 .reduce((a, b) -> a + "\n\n" + b)
                 .orElse("");
+    }
+
+    private String resolveChunkContent(DocumentChunkEntity chunk, List<ContractRiskEntity> acceptedRisks) {
+        if (acceptedRisks == null || acceptedRisks.isEmpty()) {
+            return chunk.getContent();
+        }
+        String content = chunk.getContent();
+        for (ContractRiskEntity risk : acceptedRisks) {
+            if (risk.getRevisedExcerpt() != null && !risk.getRevisedExcerpt().isBlank()) {
+                content = risk.getRevisedExcerpt();
+            } else {
+                content = RevisionCalculator.compute(content, risk.getExcerpt(), risk.getSuggestion());
+            }
+        }
+        return content;
     }
 
     private DocumentEntity ensureContract(String documentId) {

@@ -43,6 +43,9 @@ public class SecurityConfig {
                             return new AuthorizationDecision(user != null && "ADMIN".equals(user.role()));
                         })
                         .anyRequest().access((authentication, context) -> {
+                            if (authentication.get().isAuthenticated()) {
+                                return new AuthorizationDecision(true);
+                            }
                             AuthUser user = UserContext.get();
                             return new AuthorizationDecision(user != null);
                         }))

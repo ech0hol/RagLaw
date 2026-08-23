@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useState } from 'react';
-import { Button, Card, MainHeader, Select } from '@raglaw/ui';
+import { useEffect, useState } from 'react';
+import { Select, Spinner, UploadWorkbench } from '@raglaw/ui';
 import { api, uploadDocument } from '../../lib/api';
 
 type CategoryNode = {
@@ -36,6 +36,7 @@ export function DocumentsAdminPage() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [recent, setRecent] = useState<DocumentRow[]>([]);
 
   useEffect(() => {
@@ -50,13 +51,11 @@ export function DocumentsAdminPage() {
     });
   }, []);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!file || !categoryId) {
-      return;
-    }
+  async function startIngest() {
+    if (!file || !categoryId) return;
     setUploading(true);
     setMessage(null);
+    setError(null);
     try {
       const upload = await uploadDocument(categoryId, file);
       if (!upload.success) {
@@ -72,70 +71,61 @@ export function DocumentsAdminPage() {
       setMessage(`已入库：${ingest.data.title}（${ingest.data.status}）`);
       setFile(null);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : '操作失败');
+      setError(err instanceof Error ? err.message : '操作失败');
     } finally {
       setUploading(false);
     }
   }
 
+  const categoryOptions = categories.map((cat) => ({
+    value: cat.id,
+    label: cat.name,
+  }));
+
   return (
-    <div>
-      <MainHeader title="文档入库" />
-      <p className="rl-muted" style={{ marginBottom: '1.25rem' }}>
-        上传 Markdown 法规/案例并触发分块索引
-      </p>
-      <Card>
-        <form className="rl-admin-form" onSubmit={(e) => void onSubmit(e)}>
-          <Select
-            label="L3 类目"
-            value={categoryId}
-            onChange={setCategoryId}
-            options={categories.map((cat) => ({
-              value: cat.id,
-              label: `${cat.name} (${cat.path})`,
-            }))}
-          />
-          <label className="rl-field">
-            <span className="rl-field__label">Markdown 文件</span>
-            <input
-              className="rl-input"
-              type="file"
-              accept=".md,text/markdown"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              required
-            />
-          </label>
-          <Button type="submit" disabled={uploading || !file}>
-            {uploading ? '处理中…' : '上传并入库'}
-          </Button>
-        </form>
-        {message && <p className="rl-form-hint">{message}</p>}
-      </Card>
-      {recent.length > 0 && (
-        <Card>
-          <h3 className="rl-section-title">最近入库</h3>
-          <div className="rl-data-table-wrap">
-            <table className="rl-data-table">
-              <thead>
-                <tr>
-                  <th>标题</th>
-                  <th>状态</th>
-                  <th>类目 ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recent.map((doc) => (
-                  <tr key={doc.id}>
-                    <td>{doc.title}</td>
-                    <td>{doc.status}</td>
-                    <td><code>{doc.categoryId}</code></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+    <div className="rl-chat-page rl-workbench-page">
+      <div className="rl-page-center">
+        <UploadWorkbench
+          title="文档入库"
+          subtitle="上传 Markdown 法规/案例并触发分块索引"
+          accept=".md,text/markdown"
+          formatHint="支持 Markdown（.md）文件"
+          submitLabel="开始入库"
+          loading={uploading}
+          disabled={!categoryId}
+          file={file}
+          onFileChange={setFile}
+          onSubmit={() => void startIngest()}
+          error={error}
+          footerSlot={
+            categoryOptions.length > 0 ? (
+              <Select
+                value={categoryId}
+                onChange={setCategoryId}
+                options={categoryOptions}
+              />
+            ) : undefined
+          }
+        />
+        {message && <p className="rl-form-hint" style={{ textAlign: 'center', marginTop: '1rem' }}>{message}</p>}
+
+        {recent.length > 0 && (
+          <div style={{ marginTop: '2rem' }}>
+            <h3 className="rl-section-title">最近入库</h3>
+            <div className="rl-contract-history-list">
+              {recent.map((doc) => (
+                <div key={doc.id} className="rl-contract-history-item">
+                  <p className="rl-contract-history-item__title">{doc.title}</p>
+                  <p className="rl-contract-history-item__meta">
+                    状态 {doc.status} · 类目 {doc.categoryId}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
-        </Card>
-      )}
+        )}
+        {uploading && <Spinner />}
+      </div>
     </div>
   );
 }

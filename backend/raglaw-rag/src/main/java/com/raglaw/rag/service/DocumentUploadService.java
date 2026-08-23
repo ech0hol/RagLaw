@@ -6,7 +6,7 @@ import com.raglaw.common.exception.BusinessException;
 import com.raglaw.common.util.Ids;
 import com.raglaw.rag.config.RagProperties;
 import com.raglaw.rag.domain.CategoryEntity;
-import com.raglaw.rag.domain.DocStatus;
+import com.raglaw.rag.domain.IngestStage;
 import com.raglaw.rag.domain.DocumentEntity;
 import com.raglaw.rag.dto.DocumentDto;
 import com.raglaw.rag.messaging.ParseMessagePublisher;
@@ -79,6 +79,8 @@ public class DocumentUploadService {
         );
         documentRepository.save(document);
         if (ragProperties.getRabbit().isEnabled()) {
+            document.setIngestStage(IngestStage.PENDING);
+            documentRepository.save(document);
             parseMessagePublisher.publishParseJob(documentId);
         } else {
             ingestService.ingest(document);

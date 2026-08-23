@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, PageHeader, Spinner } from '@raglaw/ui';
 import { ContractTextViewer } from '../components/ContractTextViewer';
@@ -12,6 +12,13 @@ type ContractRisk = {
   excerpt: string;
   suggestion: string;
   pageNumber?: number | null;
+  highlightRects?: Array<{
+    page: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }>;
   accepted?: boolean;
 };
 
@@ -41,6 +48,14 @@ export function ContractReviewPage() {
   const [activeRiskId, setActiveRiskId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const refreshText = useCallback(async () => {
+    if (!docId) return;
+    const textRes = await api<ContractText>(`/api/v1/contracts/${docId}/text`);
+    if (textRes.success) {
+      setText(textRes.data);
+    }
+  }, [docId]);
 
   useEffect(() => {
     if (!docId) {
@@ -79,6 +94,7 @@ export function ContractReviewPage() {
     ? `/chat/${review.suggestedAgentCode}?c=${conversationId}`
     : `/chat/${review.suggestedAgentCode}`;
   const activeRisk = review.risks.find((risk) => risk.id === activeRiskId) ?? null;
+  const acceptedRisks = review.risks.filter((risk) => risk.accepted);
 
   return (
     <div className="rl-page-center rl-page-center--wide">
@@ -92,7 +108,20 @@ export function ContractReviewPage() {
             <button type="button" className="rl-btn rl-btn--primary" onClick={() => navigate(chatHref)}>
               进入合同对话审查
             </button>
-            <button type="button" className="rl-btn" onClick={() => void api(`/api/v1/contracts/${review.documentId}/accept-revisions`, { method: 'POST' }).then(() => window.location.reload())}>
+            <button
+              type="button"
+              className="rl-btn"
+              onClick={() => void api<ContractText>(`/api/v1/contracts/${review.documentId}/accept-revisions`, { method: 'POST' })
+                .then(async (res) => {
+                  if (res.success) {
+                    setText(res.data);
+                  }
+                  setReview((prev) => prev ? {
+                    ...prev,
+                    risks: prev.risks.map((item) => ({ ...item, accepted: true })),
+                  } : prev);
+                })}
+            >
               采纳全部修订建议
             </button>
             <button type="button" className="rl-btn" onClick={() => void downloadContractExport(review.documentId, 'docx')}>
@@ -111,6 +140,7 @@ export function ContractReviewPage() {
               content={text.content}
               pdfUrl={text.pdf ? pdfUrl : null}
               activeRisk={activeRisk}
+              acceptedRisks={acceptedRisks}
             />
           </Card>
           <div className="rl-contract-risks">
@@ -135,20 +165,41 @@ export function ContractReviewPage() {
                 <h4>{risk.summary}</h4>
                 <p className="rl-text-muted">{risk.excerpt}</p>
                 <p>{risk.suggestion}</p>
-                {!risk.accepted && (
+                {!risk.accepted ? (
                   <button
                     type="button"
                     className="rl-btn rl-btn--sm"
                     onClick={(event) => {
                       event.stopPropagation();
                       void api(`/api/v1/contracts/${review.documentId}/risks/${risk.id}/accept`, { method: 'POST' })
-                        .then(() => setReview((prev) => prev ? {
-                          ...prev,
-                          risks: prev.risks.map((item) => item.id === risk.id ? { ...item, accepted: true } : item),
-                        } : prev));
+                        .then(async () => {
+                          setReview((prev) => prev ? {
+                            ...prev,
+                            risks: prev.risks.map((item) => item.id === risk.id ? { ...item, accepted: true } : item),
+                          } : prev);
+                          await refreshText();
+                        });
                     }}
                   >
                     采纳本条
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="rl-btn rl-btn--sm"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void api(`/api/v1/contracts/${review.documentId}/risks/${risk.id}/unaccept`, { method: 'POST' })
+                        .then(async () => {
+                          setReview((prev) => prev ? {
+                            ...prev,
+                            risks: prev.risks.map((item) => item.id === risk.id ? { ...item, accepted: false } : item),
+                          } : prev);
+                          await refreshText();
+                        });
+                    }}
+                  >
+                    撤销采纳
                   </button>
                 )}
               </Card>

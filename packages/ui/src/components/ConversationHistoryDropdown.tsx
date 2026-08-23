@@ -11,6 +11,7 @@ type ConversationHistoryDropdownProps = {
   selectedId?: string | null;
   onSelect: (id: string) => void;
   onNewChat?: () => void;
+  onDelete?: (id: string) => void;
   loading?: boolean;
   searchValue: string;
   onSearchChange: (value: string) => void;
@@ -25,6 +26,7 @@ export function ConversationHistoryDropdown({
   selectedId,
   onSelect,
   onNewChat,
+  onDelete,
   loading,
   searchValue,
   onSearchChange,
@@ -103,6 +105,7 @@ export function ConversationHistoryDropdown({
               selectedId={selectedId}
               onSelect={handleSelect}
               onNewChat={onNewChat ? handleNewChat : undefined}
+              onDelete={onDelete}
               loading={loading}
             />
           </div>,
