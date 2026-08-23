@@ -81,6 +81,17 @@ public class TraceRecorder {
                 writeJson(detail),
                 durationMs
         ));
+        String langfuseTraceId = traceRepository.findById(traceId)
+                .map(RagTraceEntity::getLangfuseTraceId)
+                .filter(id -> id != null && !id.isBlank())
+                .orElse(traceId);
+        langfuseBridge.recordSpan(
+                langfuseTraceId,
+                stage,
+                detail,
+                Map.of("durationMs", durationMs),
+                durationMs
+        );
     }
 
     @Transactional
@@ -101,6 +112,17 @@ public class TraceRecorder {
                 outputSummary,
                 latencyMs
         ));
+        String langfuseTraceId = traceRepository.findById(traceId)
+                .map(RagTraceEntity::getLangfuseTraceId)
+                .filter(id -> id != null && !id.isBlank())
+                .orElse(traceId);
+        langfuseBridge.recordSpan(
+                langfuseTraceId,
+                "a2a:" + toAgent,
+                Map.of("from", fromAgent, "input", inputSummary == null ? "" : inputSummary),
+                Map.of("output", outputSummary == null ? "" : outputSummary),
+                latencyMs
+        );
     }
 
     @Transactional

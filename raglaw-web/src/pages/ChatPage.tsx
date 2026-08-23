@@ -292,7 +292,6 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
         canRegenerate={canRegenerate}
         messageListRef={messageListRef}
         onMessageListScroll={onMessageListScroll}
-        disclaimer="AI 辅助参考，不构成法律意见。"
         welcome={
           <>
             <h1>欢迎使用 RagLaw</h1>

@@ -3,6 +3,7 @@ package com.raglaw.rag.contract;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raglaw.common.api.ErrorCodes;
 import com.raglaw.common.exception.BusinessException;
+import com.raglaw.rag.domain.ContractRiskEntity;
 import com.raglaw.rag.domain.DocumentEntity;
 import com.raglaw.rag.dto.ContractReviewDto;
 import com.raglaw.rag.dto.ContractRiskDto;
@@ -63,6 +64,27 @@ public class ContractReviewService {
                 .map(ContractRiskDto::from)
                 .toList();
         return toReviewDto(document, risks);
+    }
+
+    @Transactional
+    public void acceptRisk(String documentId, String riskId) {
+        ensureContractDocument(documentId);
+        ContractRiskEntity risk = riskRepository.findById(riskId)
+                .orElseThrow(() -> new BusinessException(ErrorCodes.NOT_FOUND, "风险项不存在"));
+        if (!documentId.equals(risk.getDocumentId())) {
+            throw new BusinessException(ErrorCodes.VALIDATION, "风险项与文档不匹配");
+        }
+        risk.setAccepted(true);
+        riskRepository.save(risk);
+    }
+
+    @Transactional
+    public void acceptAllRisks(String documentId) {
+        ensureContractDocument(documentId);
+        for (ContractRiskEntity risk : riskRepository.findByDocumentIdOrderByCreatedAtAsc(documentId)) {
+            risk.setAccepted(true);
+            riskRepository.save(risk);
+        }
     }
 
     private ContractReviewDto toReviewDto(DocumentEntity document, List<ContractRiskDto> risks) {

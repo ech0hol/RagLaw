@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface DocumentRepository extends JpaRepository<DocumentEntity, String> {
 
     List<DocumentEntity> findByStatusOrderByCreatedAtDesc(DocStatus status);
+
+    List<DocumentEntity> findByDocTypeAndStatus(String docType, DocStatus status);
 }

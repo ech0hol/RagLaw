@@ -12,6 +12,8 @@ public record ContractRiskDto(
         String summary,
         String excerpt,
         String suggestion,
+        Integer pageNumber,
+        boolean accepted,
         Instant createdAt
 ) {
 
@@ -25,6 +27,8 @@ public record ContractRiskDto(
                 entity.getSummary(),
                 entity.getExcerpt(),
                 entity.getSuggestion(),
+                entity.getPageNumber(),
+                entity.isAccepted(),
                 entity.getCreatedAt()
         );
     }

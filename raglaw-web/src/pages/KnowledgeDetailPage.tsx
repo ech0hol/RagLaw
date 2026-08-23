@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, PageHeader, Spinner } from '@raglaw/ui';
 import { KnowledgeGraphView } from '../components/KnowledgeGraphView';
-import { api, downloadKnowledgeDocument } from '../lib/api';
+import { api, downloadKnowledgeDocument, fetchKnowledgePreviewUrl } from '../lib/api';
 
 type KnowledgeDocument = {
   document: { id: string; title: string; docType: string; status: string };
@@ -16,6 +16,7 @@ export function KnowledgeDetailPage() {
   const [data, setData] = useState<KnowledgeDocument | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!docId) {
@@ -23,11 +24,20 @@ export function KnowledgeDetailPage() {
       setError('缺少文档 ID');
       return;
     }
-    void api<KnowledgeDocument>(`/api/v1/knowledge/documents/${docId}`).then((res) => {
-      if (res.success) setData(res.data);
-      else setError(res.error?.message ?? '加载失败');
+    let objectUrl: string | null = null;
+    void api<KnowledgeDocument>(`/api/v1/knowledge/documents/${docId}`).then(async (res) => {
+      if (res.success) {
+        setData(res.data);
+        objectUrl = await fetchKnowledgePreviewUrl(docId);
+        setPreviewUrl(objectUrl);
+      } else {
+        setError(res.error?.message ?? '加载失败');
+      }
       setLoading(false);
     });
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
   }, [docId]);
 
   if (loading) return <Spinner />;
@@ -38,7 +48,7 @@ export function KnowledgeDetailPage() {
   return (
     <div>
       <PageHeader title={data.document.title} subtitle={`${data.document.docType} · ${data.document.status}`} />
-      <p>
+      <p className="rl-admin-form__row">
         <button
           type="button"
           className="rl-btn"
@@ -46,7 +56,18 @@ export function KnowledgeDetailPage() {
         >
           下载原件
         </button>
+        {previewUrl && (
+          <a className="rl-btn" href={previewUrl} target="_blank" rel="noreferrer">
+            在线预览
+          </a>
+        )}
       </p>
+      {previewUrl && data.document.title.toLowerCase().endsWith('.pdf') && (
+        <Card>
+          <h3>原件预览</h3>
+          <iframe className="rl-contract-viewer__pdf" src={previewUrl} title="文档预览" />
+        </Card>
+      )}
       {related.length > 0 && (
         <>
           <h3>知识图谱</h3>

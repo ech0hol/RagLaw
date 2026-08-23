@@ -66,6 +66,37 @@ public class LangfuseBridge {
         }
     }
 
+    public void recordSpan(
+            String traceId,
+            String name,
+            Map<String, Object> input,
+            Map<String, Object> output,
+            long durationMs
+    ) {
+        if (!properties.isConfigured() || traceId == null || traceId.isBlank()) {
+            return;
+        }
+        try {
+            String spanId = UUID.randomUUID().toString();
+            ingest("span-create", Map.of(
+                    "id", spanId,
+                    "traceId", traceId,
+                    "name", name,
+                    "input", input == null ? Map.of() : input,
+                    "startTime", Instant.now().minusMillis(durationMs).toString()
+            ));
+            ingest("span-update", Map.of(
+                    "id", spanId,
+                    "traceId", traceId,
+                    "output", output == null ? Map.of() : output,
+                    "endTime", Instant.now().toString(),
+                    "metadata", Map.of("durationMs", durationMs)
+            ));
+        } catch (Exception e) {
+            log.warn("Langfuse span failed for {}: {}", name, e.getMessage());
+        }
+    }
+
     public String traceUrl(String traceId) {
         if (traceId == null || traceId.isBlank()) {
             return null;

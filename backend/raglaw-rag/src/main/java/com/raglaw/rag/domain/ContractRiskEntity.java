@@ -34,6 +34,12 @@ public class ContractRiskEntity {
     @Column(columnDefinition = "TEXT")
     private String suggestion;
 
+    @Column(name = "page_number")
+    private Integer pageNumber;
+
+    @Column(nullable = false)
+    private boolean accepted;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -50,6 +56,20 @@ public class ContractRiskEntity {
             String excerpt,
             String suggestion
     ) {
+        this(id, documentId, chunkId, severity, dimension, summary, excerpt, suggestion, null);
+    }
+
+    public ContractRiskEntity(
+            String id,
+            String documentId,
+            String chunkId,
+            String severity,
+            String dimension,
+            String summary,
+            String excerpt,
+            String suggestion,
+            Integer pageNumber
+    ) {
         this.id = id;
         this.documentId = documentId;
         this.chunkId = chunkId;
@@ -58,6 +78,8 @@ public class ContractRiskEntity {
         this.summary = summary;
         this.excerpt = excerpt;
         this.suggestion = suggestion;
+        this.pageNumber = pageNumber;
+        this.accepted = false;
         this.createdAt = Instant.now();
     }
 
@@ -91,6 +113,18 @@ public class ContractRiskEntity {
 
     public String getSuggestion() {
         return suggestion;
+    }
+
+    public Integer getPageNumber() {
+        return pageNumber;
+    }
+
+    public boolean isAccepted() {
+        return accepted;
+    }
+
+    public void setAccepted(boolean accepted) {
+        this.accepted = accepted;
     }
 
     public Instant getCreatedAt() {

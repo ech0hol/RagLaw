@@ -14,6 +14,12 @@ type CategoryNode = {
   children: CategoryNode[];
 };
 
+const DOC_TYPE_LABELS: Record<string, string> = {
+  STATUTE: '法规',
+  CASE: '案例',
+  CONTRACT: '合同',
+};
+
 function CategoryRow({ node, depth = 0 }: { node: CategoryNode; depth?: number }) {
   return (
     <>
@@ -22,7 +28,7 @@ function CategoryRow({ node, depth = 0 }: { node: CategoryNode; depth?: number }
         <td><code>{node.code}</code></td>
         <td>{node.level}</td>
         <td><code>{node.path}</code></td>
-        <td>{node.docType}</td>
+        <td>{DOC_TYPE_LABELS[node.docType] ?? node.docType}</td>
         <td>
           <Badge variant={node.enabled ? 'default' : 'muted'}>
             {node.enabled ? '启用' : '禁用'}

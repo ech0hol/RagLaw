@@ -34,7 +34,6 @@ export function HomePage() {
         </div>
       )}
       {error && <p className="error">后端未连接：{error}</p>}
-      <p className="disclaimer">AI 辅助参考，不构成法律意见。</p>
     </div>
   );
 }

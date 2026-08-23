@@ -146,8 +146,9 @@ if ($health.data.rag) {
     $hybridReady = [bool]$health.data.rag.hybridRetrievalReady
 }
 if ($RetrievalMode -eq "hybrid" -and -not $hybridReady) {
-    Write-Host "Hybrid mode requested but POSTGRES_ENABLED + EMBEDDING_ENABLED + DASHSCOPE_API_KEY are not all active." -ForegroundColor Yellow
-    Write-Host "Set in .env: POSTGRES_ENABLED=true, EMBEDDING_ENABLED=true, re-ingest fixtures, then re-run." -ForegroundColor Yellow
+    Write-Host "Hybrid mode requested but POSTGRES_ENABLED + EMBEDDING_ENABLED are not both active." -ForegroundColor Yellow
+    Write-Host "Set POSTGRES_ENABLED=true, EMBEDDING_ENABLED=true; with RAGLAW_LLM_MOCK=true mock vectors work without DASHSCOPE_API_KEY." -ForegroundColor Yellow
+    Write-Host "Re-ingest fixtures after enabling, then re-run." -ForegroundColor Yellow
 }
 
 Write-Section "Login"

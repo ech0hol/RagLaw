@@ -36,6 +36,7 @@ public class IngestService {
     private final ContractRiskAnalyzer contractRiskAnalyzer;
     private final EmbeddingService embeddingService;
     private final ObjectProvider<VectorStoreService> vectorStoreService;
+    private final CaseStatuteLinker caseStatuteLinker;
     private final ObjectMapper objectMapper;
 
     public IngestService(
@@ -48,6 +49,7 @@ public class IngestService {
             ContractRiskAnalyzer contractRiskAnalyzer,
             EmbeddingService embeddingService,
             ObjectProvider<VectorStoreService> vectorStoreService,
+            CaseStatuteLinker caseStatuteLinker,
             ObjectMapper objectMapper
     ) {
         this.documentRepository = documentRepository;
@@ -59,6 +61,7 @@ public class IngestService {
         this.contractRiskAnalyzer = contractRiskAnalyzer;
         this.embeddingService = embeddingService;
         this.vectorStoreService = vectorStoreService;
+        this.caseStatuteLinker = caseStatuteLinker;
         this.objectMapper = objectMapper;
     }
 
@@ -109,6 +112,9 @@ public class IngestService {
 
         if ("CONTRACT".equals(document.getDocType())) {
             contractRiskAnalyzer.analyze(document.getId());
+        }
+        if ("CASE".equals(document.getDocType())) {
+            caseStatuteLinker.linkCaseToStatutes(document.getId());
         }
     }
 

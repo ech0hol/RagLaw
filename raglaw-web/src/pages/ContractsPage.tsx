@@ -73,7 +73,6 @@ export function ContractsPage() {
         {error && <p className="rl-form-error">{error}</p>}
         <p className="rl-text-muted">PDF 优先使用文本层提取；扫描件在配置 API Key 后尝试 OCR。对话检索限定在当前合同内。</p>
       </Card>
-      <p className="rl-disclaimer">AI 辅助参考，不构成法律意见。</p>
     </div>
   );
 }

@@ -17,10 +17,12 @@ type Agent = {
 
 type CategoryNode = { id: string; code: string; name: string; children: CategoryNode[] };
 
-function flattenCategories(nodes: CategoryNode[], depth = 0): { id: string; label: string }[] {
-  const result: { id: string; label: string }[] = [];
+type FlatCategory = { id: string; label: string; depth: number };
+
+function flattenCategories(nodes: CategoryNode[], depth = 0): FlatCategory[] {
+  const result: FlatCategory[] = [];
   for (const node of nodes) {
-    result.push({ id: node.id, label: `${'—'.repeat(depth)} ${node.name} (${node.code})` });
+    result.push({ id: node.id, label: `${node.name}（${node.code}）`, depth });
     if (node.children?.length) result.push(...flattenCategories(node.children, depth + 1));
   }
   return result;
@@ -28,7 +30,7 @@ function flattenCategories(nodes: CategoryNode[], depth = 0): { id: string; labe
 
 export function AgentsAdminPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [categories, setCategories] = useState<{ id: string; label: string }[]>([]);
+  const [categories, setCategories] = useState<FlatCategory[]>([]);
   const [editing, setEditing] = useState<Agent | null>(null);
   const [peers, setPeers] = useState<string[]>([]);
   const [scopes, setScopes] = useState<string[]>([]);
@@ -91,48 +93,54 @@ export function AgentsAdminPage() {
         管理 Agent 模型、knowledgeScopes 与 A2A 白名单；保存后自动 reload。
       </p>
       {message && <p className="rl-form-success">{message}</p>}
-      <div className="rl-data-table-wrap">
-        <table className="rl-data-table">
-          <thead>
-            <tr>
-              <th>编码</th>
-              <th>名称</th>
-              <th>类型</th>
-              <th>模型</th>
-              <th>状态</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {agents.map((a) => (
-              <tr key={a.code}>
-                <td><code>{a.code}</code></td>
-                <td>{a.name}</td>
-                <td>{a.type}</td>
-                <td>{a.model}</td>
-                <td>
-                  <Badge variant={a.enabled ? 'success' : 'muted'}>
-                    {a.enabled ? '启用' : '禁用'}
-                  </Badge>
-                </td>
-                <td>
-                  <Button variant="ghost" onClick={() => openEdit(a)}>编辑</Button>
-                </td>
+      <Card>
+        <div className="rl-data-table-wrap">
+          <table className="rl-data-table">
+            <thead>
+              <tr>
+                <th>编码</th>
+                <th>名称</th>
+                <th>类型</th>
+                <th>模型</th>
+                <th>状态</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {agents.map((a) => (
+                <tr key={a.code}>
+                  <td><code>{a.code}</code></td>
+                  <td>{a.name}</td>
+                  <td>{a.type}</td>
+                  <td>{a.model}</td>
+                  <td>
+                    <Badge variant={a.enabled ? 'success' : 'muted'}>
+                      {a.enabled ? '启用' : '禁用'}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Button variant="ghost" onClick={() => openEdit(a)}>编辑</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       {editing && (
         <Card className="rl-admin-modal">
           <h2>编辑 {editing.code}</h2>
           <form className="rl-admin-form" onSubmit={saveEdit}>
             <fieldset>
-              <legend>knowledgeScopes（类目 ID）</legend>
+              <legend>knowledgeScopes（类目）</legend>
               <div className="rl-checkbox-grid">
                 {categories.map((c) => (
-                  <label key={c.id}>
+                  <label
+                    key={c.id}
+                    className="rl-checkbox-item"
+                    style={{ paddingLeft: `${c.depth * 0.75}rem` }}
+                  >
                     <input
                       type="checkbox"
                       checked={scopes.includes(c.id)}
@@ -147,13 +155,13 @@ export function AgentsAdminPage() {
               <legend>a2aPeers（专家 Agent 白名单）</legend>
               <div className="rl-checkbox-grid">
                 {agents.filter((a) => a.code !== editing.code).map((a) => (
-                  <label key={a.code}>
+                  <label key={a.code} className="rl-checkbox-item">
                     <input
                       type="checkbox"
                       checked={peers.includes(a.code)}
                       onChange={() => setPeers(toggleListItem(peers, a.code))}
                     />
-                    {a.code} — {a.name}
+                    {a.code}（{a.name}）
                   </label>
                 ))}
               </div>

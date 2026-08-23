@@ -137,6 +137,23 @@ export async function downloadContractExport(documentId: string, format: 'docx' 
   );
 }
 
+export async function fetchKnowledgePreviewUrl(documentId: string): Promise<string | null> {
+  const token = getToken();
+  const headers: HeadersInit = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const res = await fetch(`/api/v1/knowledge/documents/${documentId}/preview`, {
+    headers,
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    return null;
+  }
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
 export async function fetchContractFileUrl(documentId: string): Promise<string | null> {
   const token = getToken();
   const headers: HeadersInit = {};

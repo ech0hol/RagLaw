@@ -47,7 +47,9 @@ public class ContractTextService {
     public String buildRevisedText(String documentId) {
         ensureContract(documentId);
         StringBuilder sb = new StringBuilder(buildFullText(documentId));
-        List<ContractRiskEntity> risks = riskRepository.findByDocumentIdOrderByCreatedAtAsc(documentId);
+        List<ContractRiskEntity> risks = riskRepository.findByDocumentIdOrderByCreatedAtAsc(documentId).stream()
+                .filter(ContractRiskEntity::isAccepted)
+                .toList();
         if (!risks.isEmpty()) {
             sb.append("\n\n---\n\n## 修订建议（已采纳）\n\n");
             int index = 1;

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,26 +23,32 @@ public class HealthController {
 
     private final RagProperties ragProperties;
     private final Optional<EmbeddingService> embeddingService;
+    private final boolean llmMock;
 
     public HealthController(
             RagProperties ragProperties,
-            ObjectProvider<EmbeddingService> embeddingService
+            ObjectProvider<EmbeddingService> embeddingService,
+            @Value("${raglaw.llm.mock:false}") boolean llmMock
     ) {
         this.ragProperties = ragProperties;
         this.embeddingService = Optional.ofNullable(embeddingService.getIfAvailable());
+        this.llmMock = llmMock;
     }
 
     @GetMapping("/health")
     public ApiResponse<Map<String, Object>> health() {
+        boolean embeddingReady = embeddingService.map(EmbeddingService::isEnabled).orElse(false);
         Map<String, Object> rag = new LinkedHashMap<>();
         rag.put("postgresEnabled", ragProperties.getPostgres().isEnabled());
         rag.put("embeddingConfigured", ragProperties.getEmbedding().isEnabled());
-        rag.put("embeddingReady", embeddingService.map(EmbeddingService::isEnabled).orElse(false));
+        rag.put("embeddingReady", embeddingReady);
+        rag.put("embeddingMock", embeddingService.map(EmbeddingService::isMockMode).orElse(false));
         rag.put(
                 "hybridRetrievalReady",
-                ragProperties.getPostgres().isEnabled()
-                        && embeddingService.map(EmbeddingService::isEnabled).orElse(false)
+                ragProperties.getPostgres().isEnabled() && embeddingReady
         );
+        rag.put("minioEnabled", ragProperties.getMinio().isEnabled());
+        rag.put("rabbitEnabled", ragProperties.getRabbit().isEnabled());
 
         return ApiResponse.ok(Map.of(
                 "status", "UP",
@@ -52,7 +59,8 @@ public class HealthController {
                         AgentAdminModule.NAME,
                         RagModule.NAME
                 ),
-                "rag", rag
+                "rag", rag,
+                "llmMock", llmMock
         ));
     }
 }

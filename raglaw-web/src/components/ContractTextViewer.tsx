@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { ContractPdfViewer } from './ContractPdfViewer';
 
 type ContractRisk = {
   id: string;
   excerpt: string;
+  pageNumber?: number | null;
 };
 
 type ContractTextViewerProps = {
@@ -37,7 +39,7 @@ export function ContractTextViewer({ content, pdfUrl, activeRisk }: ContractText
   }, [activeRisk?.id]);
 
   if (pdfUrl) {
-    return <iframe className="rl-contract-viewer__pdf" src={pdfUrl} title="合同 PDF 预览" />;
+    return <ContractPdfViewer pdfUrl={pdfUrl} activeRisk={activeRisk} />;
   }
 
   return (

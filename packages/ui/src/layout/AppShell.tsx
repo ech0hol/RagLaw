@@ -79,25 +79,29 @@ export function AppShell({
         </nav>
 
         <div className="rl-sidebar-footer">
-          <div className="rl-avatar" aria-hidden="true">{avatarLetter(user.displayName)}</div>
-          {!collapsed && (
-            <div className="rl-sidebar-footer__info">
-              <span className="rl-sidebar-footer__name">{user.displayName}</span>
-              {user.email && <span className="rl-sidebar-footer__email">{user.email}</span>}
+          {onThemeToggle && (
+            <div className="rl-sidebar-footer__tools">
+              <button
+                type="button"
+                className="rl-btn rl-theme-toggle"
+                onClick={onThemeToggle}
+                aria-label={theme === 'dark' ? '切换浅色模式' : '切换深色模式'}
+                title={theme === 'dark' ? '切换浅色模式' : '切换深色模式'}
+              >
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                {!collapsed && <span>{theme === 'dark' ? '浅色' : '深色'}</span>}
+              </button>
             </div>
           )}
-          {onThemeToggle && (
-            <button
-              type="button"
-              className="rl-btn rl-theme-toggle"
-              onClick={onThemeToggle}
-              aria-label={theme === 'dark' ? '切换浅色模式' : '切换深色模式'}
-              title={theme === 'dark' ? '切换浅色模式' : '切换深色模式'}
-            >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-              {!collapsed && <span>{theme === 'dark' ? '浅色' : '深色'}</span>}
-            </button>
-          )}
+          <div className="rl-sidebar-footer__profile">
+            <div className="rl-avatar" aria-hidden="true">{avatarLetter(user.displayName)}</div>
+            {!collapsed && (
+              <div className="rl-sidebar-footer__info">
+                <span className="rl-sidebar-footer__name">{user.displayName}</span>
+                {user.email && <span className="rl-sidebar-footer__email">{user.email}</span>}
+              </div>
+            )}
+          </div>
         </div>
       </aside>
       <main className="rl-main">

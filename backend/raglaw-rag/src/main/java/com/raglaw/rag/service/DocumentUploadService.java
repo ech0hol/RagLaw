@@ -4,6 +4,7 @@ import com.raglaw.common.api.ErrorCodes;
 import com.raglaw.common.auth.CurrentUserHolder;
 import com.raglaw.common.exception.BusinessException;
 import com.raglaw.common.util.Ids;
+import com.raglaw.rag.config.RagProperties;
 import com.raglaw.rag.domain.CategoryEntity;
 import com.raglaw.rag.domain.DocStatus;
 import com.raglaw.rag.domain.DocumentEntity;
@@ -24,19 +25,22 @@ public class DocumentUploadService {
     private final DocumentStorageService documentStorageService;
     private final IngestService ingestService;
     private final ParseMessagePublisher parseMessagePublisher;
+    private final RagProperties ragProperties;
 
     public DocumentUploadService(
             DocumentRepository documentRepository,
             CategoryService categoryService,
             DocumentStorageService documentStorageService,
             IngestService ingestService,
-            ParseMessagePublisher parseMessagePublisher
+            ParseMessagePublisher parseMessagePublisher,
+            RagProperties ragProperties
     ) {
         this.documentRepository = documentRepository;
         this.categoryService = categoryService;
         this.documentStorageService = documentStorageService;
         this.ingestService = ingestService;
         this.parseMessagePublisher = parseMessagePublisher;
+        this.ragProperties = ragProperties;
     }
 
     @Transactional
@@ -74,7 +78,11 @@ public class DocumentUploadService {
                 storageKey
         );
         documentRepository.save(document);
-        parseMessagePublisher.publishParseJob(documentId);
+        if (ragProperties.getRabbit().isEnabled()) {
+            parseMessagePublisher.publishParseJob(documentId);
+        } else {
+            ingestService.ingest(document);
+        }
         return DocumentDto.from(document);
     }
 

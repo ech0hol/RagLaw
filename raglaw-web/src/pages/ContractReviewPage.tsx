@@ -11,6 +11,8 @@ type ContractRisk = {
   summary: string;
   excerpt: string;
   suggestion: string;
+  pageNumber?: number | null;
+  accepted?: boolean;
 };
 
 type ContractReview = {
@@ -90,7 +92,7 @@ export function ContractReviewPage() {
             <button type="button" className="rl-btn rl-btn--primary" onClick={() => navigate(chatHref)}>
               进入合同对话审查
             </button>
-            <button type="button" className="rl-btn" onClick={() => void api(`/api/v1/contracts/${review.documentId}/accept-revisions`, { method: 'POST' })}>
+            <button type="button" className="rl-btn" onClick={() => void api(`/api/v1/contracts/${review.documentId}/accept-revisions`, { method: 'POST' }).then(() => window.location.reload())}>
               采纳全部修订建议
             </button>
             <button type="button" className="rl-btn" onClick={() => void downloadContractExport(review.documentId, 'docx')}>
@@ -127,16 +129,33 @@ export function ContractReviewPage() {
                 <div className="rl-risk-card__header">
                   <span className="rl-risk-card__severity">{risk.severity}</span>
                   <span className="rl-risk-card__dimension">{risk.dimension}</span>
+                  {risk.pageNumber ? <span className="rl-text-muted">P{risk.pageNumber}</span> : null}
+                  {risk.accepted ? <span className="rl-text-muted">已采纳</span> : null}
                 </div>
                 <h4>{risk.summary}</h4>
                 <p className="rl-text-muted">{risk.excerpt}</p>
                 <p>{risk.suggestion}</p>
+                {!risk.accepted && (
+                  <button
+                    type="button"
+                    className="rl-btn rl-btn--sm"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void api(`/api/v1/contracts/${review.documentId}/risks/${risk.id}/accept`, { method: 'POST' })
+                        .then(() => setReview((prev) => prev ? {
+                          ...prev,
+                          risks: prev.risks.map((item) => item.id === risk.id ? { ...item, accepted: true } : item),
+                        } : prev));
+                    }}
+                  >
+                    采纳本条
+                  </button>
+                )}
               </Card>
             ))}
           </div>
         </div>
       </div>
-      <p className="rl-disclaimer">AI 辅助参考，不构成法律意见。</p>
     </div>
   );
 }

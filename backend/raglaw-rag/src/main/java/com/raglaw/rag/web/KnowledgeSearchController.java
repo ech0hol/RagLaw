@@ -60,13 +60,44 @@ public class KnowledgeSearchController {
             @PathVariable("documentId") String documentId,
             HttpServletResponse response
     ) throws Exception {
+        streamDocument(documentId, response, true);
+    }
+
+    @GetMapping("/documents/{documentId}/preview")
+    public void preview(
+            @PathVariable("documentId") String documentId,
+            HttpServletResponse response
+    ) throws Exception {
+        streamDocument(documentId, response, false);
+    }
+
+    private void streamDocument(String documentId, HttpServletResponse response, boolean attachment) throws Exception {
         DocumentEntity document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Document not found"));
         String filename = ingestService.resolveOriginalFilename(document);
-        response.setContentType("application/octet-stream");
-        response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+        String contentType = resolveContentType(filename);
+        response.setContentType(contentType);
+        String disposition = attachment ? "attachment" : "inline";
+        response.setHeader("Content-Disposition", disposition + "; filename=\"" + filename + "\"");
         try (InputStream inputStream = ingestService.download(documentId)) {
             StreamUtils.copy(inputStream, response.getOutputStream());
         }
+    }
+
+    private static String resolveContentType(String filename) {
+        String lower = filename == null ? "" : filename.toLowerCase();
+        if (lower.endsWith(".pdf")) {
+            return "application/pdf";
+        }
+        if (lower.endsWith(".docx")) {
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        }
+        if (lower.endsWith(".doc")) {
+            return "application/msword";
+        }
+        if (lower.endsWith(".md") || lower.endsWith(".txt")) {
+            return "text/plain; charset=utf-8";
+        }
+        return "application/octet-stream";
     }
 }

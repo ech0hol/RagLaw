@@ -76,6 +76,7 @@ public class ContractController {
 
     @PostMapping("/{documentId}/accept-revisions")
     public ApiResponse<ContractTextDto> acceptRevisions(@PathVariable("documentId") String documentId) {
+        contractReviewService.acceptAllRisks(documentId);
         String revised = contractTextService.buildRevisedText(documentId);
         ContractTextDto original = contractTextService.getText(documentId);
         return ApiResponse.ok(new ContractTextDto(
@@ -84,6 +85,15 @@ public class ContractController {
                 revised,
                 original.pdf()
         ));
+    }
+
+    @PostMapping("/{documentId}/risks/{riskId}/accept")
+    public ApiResponse<Void> acceptRisk(
+            @PathVariable("documentId") String documentId,
+            @PathVariable("riskId") String riskId
+    ) {
+        contractReviewService.acceptRisk(documentId, riskId);
+        return ApiResponse.ok(null);
     }
 
     @GetMapping("/{documentId}/export")
