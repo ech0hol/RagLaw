@@ -113,6 +113,8 @@ export async function uploadDocument(categoryId: string, file: File) {
     title: string;
     status: string;
     categoryId: string;
+    ingestStage?: string | null;
+    ingestError?: string | null;
   }>(res);
 }
 

@@ -6,7 +6,8 @@ param(
     [string]$AdminPassword = $env:RAGLAW_ADMIN_PASSWORD,
     [string]$AdminEmail = "admin@raglaw.local",
     [ValidateSet("fulltext", "hybrid", "both")]
-    [string]$RetrievalMode = "fulltext"
+    [string]$RetrievalMode = "fulltext",
+    [switch]$UseRealEmbedding
 )
 
 $ErrorActionPreference = "Stop"
@@ -142,8 +143,15 @@ try {
 }
 
 $hybridReady = $false
+$embeddingMock = $true
 if ($health.data.rag) {
     $hybridReady = [bool]$health.data.rag.hybridRetrievalReady
+    if ($null -ne $health.data.rag.embeddingMock) {
+        $embeddingMock = [bool]$health.data.rag.embeddingMock
+    }
+}
+if ($UseRealEmbedding) {
+    $embeddingMock = $false
 }
 if ($RetrievalMode -eq "hybrid" -and -not $hybridReady) {
     Write-Host "Hybrid mode requested but POSTGRES_ENABLED + EMBEDDING_ENABLED are not both active." -ForegroundColor Yellow
@@ -250,6 +258,8 @@ New-Item -ItemType Directory -Force -Path (Split-Path $reportPath) | Out-Null
     evaluatedAt = (Get-Date).ToString("o")
     retrievalMode = $RetrievalMode
     hybridReady = $hybridReady
+    embeddingMock = $embeddingMock
+    useRealEmbedding = [bool]$UseRealEmbedding
     documents = $docs
     retrieval = @{
         engine = if ($hybridReady -and $RetrievalMode -ne "fulltext") { "MySQL FULLTEXT + pgvector RRF" } else { "MySQL FULLTEXT (ngram)" }

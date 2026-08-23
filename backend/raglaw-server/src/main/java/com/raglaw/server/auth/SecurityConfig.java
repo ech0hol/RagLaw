@@ -1,11 +1,13 @@
 package com.raglaw.server.auth;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -36,6 +38,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/api/v1/health", "/actuator/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").access((authentication, context) -> {
@@ -43,7 +46,10 @@ public class SecurityConfig {
                             return new AuthorizationDecision(user != null && "ADMIN".equals(user.role()));
                         })
                         .anyRequest().access((authentication, context) -> {
-                            if (authentication.get().isAuthenticated()) {
+                            var principal = authentication.get();
+                            if (principal != null
+                                    && principal.isAuthenticated()
+                                    && !(principal instanceof AnonymousAuthenticationToken)) {
                                 return new AuthorizationDecision(true);
                             }
                             AuthUser user = UserContext.get();

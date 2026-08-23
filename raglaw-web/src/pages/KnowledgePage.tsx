@@ -150,6 +150,8 @@ export function KnowledgePage() {
               value={l2Path}
               onChange={setL2Path}
               options={l2ScopeOptions}
+              menuWidthFromOptions
+              labelAlign="center"
             />
           </div>
           <input

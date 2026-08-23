@@ -23,6 +23,13 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunkEnti
             INNER JOIN raglaw_document d ON d.id = c.document_id
             WHERE d.status = 'INDEXED'
               AND MATCH(c.content) AGAINST(:query IN NATURAL LANGUAGE MODE)
+              AND (
+                c.parent_id IS NOT NULL
+                OR NOT EXISTS (
+                  SELECT 1 FROM raglaw_document_chunk child
+                  WHERE child.document_id = c.document_id AND child.parent_id IS NOT NULL
+                )
+              )
               AND (:scopeCount = 0 OR c.l3_path IN (:scopes) OR c.l2_path IN (:scopes))
             ORDER BY score DESC
             LIMIT :limit
@@ -42,6 +49,13 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunkEnti
             WHERE d.status = 'INDEXED'
               AND c.document_id = :documentId
               AND MATCH(c.content) AGAINST(:query IN NATURAL LANGUAGE MODE)
+              AND (
+                c.parent_id IS NOT NULL
+                OR NOT EXISTS (
+                  SELECT 1 FROM raglaw_document_chunk child
+                  WHERE child.document_id = c.document_id AND child.parent_id IS NOT NULL
+                )
+              )
             ORDER BY score DESC
             LIMIT :limit
             """, nativeQuery = true)

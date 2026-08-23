@@ -76,6 +76,10 @@ SSE 事件：`meta` / `status` / `text` / `reference` / `recommend` / `done` / `
 | POST | `/api/v1/admin/approvals/{id}/approve` | 审批 |
 | GET/PUT | `/api/v1/admin/agents` | Agent 配置 |
 | POST | `/api/v1/admin/agents/reload` | 热加载 |
+| GET/POST | `/api/v1/admin/users` | 用户列表 / 创建账号 |
+| GET | `/api/v1/admin/documents/recent` | 最近文档 |
+| GET | `/api/v1/admin/documents/{id}` | 文档详情（含 ingest 状态） |
+| POST | `/api/v1/admin/documents/{id}/retry-ingest` | 失败重试入库 |
 | GET | `/api/v1/admin/traces` | Trace 列表 |
 | GET | `/api/v1/admin/traces/{id}` | Trace 详情 |
 | POST | `/api/v1/admin/knowledge/refs` | 案例-法条关联 |

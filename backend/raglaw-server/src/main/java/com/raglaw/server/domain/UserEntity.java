@@ -71,4 +71,8 @@ public class UserEntity {
     public boolean isEnabled() {
         return enabled;
     }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
 }

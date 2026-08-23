@@ -66,6 +66,58 @@ public class LangfuseBridge {
         }
     }
 
+    public void recordGeneration(
+            String traceId,
+            String model,
+            String inputPreview,
+            String outputPreview,
+            Integer promptTokens,
+            Integer completionTokens,
+            long durationMs
+    ) {
+        if (!properties.isConfigured() || traceId == null || traceId.isBlank()) {
+            return;
+        }
+        try {
+            String generationId = UUID.randomUUID().toString();
+            ingest("generation-create", Map.of(
+                    "id", generationId,
+                    "traceId", traceId,
+                    "name", "llm",
+                    "model", model == null ? "" : model,
+                    "input", inputPreview == null ? "" : inputPreview,
+                    "startTime", Instant.now().minusMillis(durationMs).toString()
+            ));
+            Map<String, Object> update = new java.util.HashMap<>();
+            update.put("id", generationId);
+            update.put("traceId", traceId);
+            update.put("output", outputPreview == null ? "" : outputPreview);
+            update.put("endTime", Instant.now().toString());
+            if (promptTokens != null || completionTokens != null) {
+                int prompt = promptTokens == null ? 0 : promptTokens;
+                int completion = completionTokens == null ? 0 : completionTokens;
+                update.put("usage", Map.of(
+                        "input", prompt,
+                        "output", completion,
+                        "total", prompt + completion,
+                        "unit", "TOKENS"
+                ));
+            }
+            ingest("generation-update", update);
+        } catch (Exception e) {
+            log.warn("Langfuse generation failed: {}", e.getMessage());
+        }
+    }
+
+    public void recordToolResult(
+            String traceId,
+            String toolName,
+            Map<String, Object> input,
+            Map<String, Object> output
+    ) {
+        recordSpan(traceId, "tool:" + toolName, input, output, 0);
+    }
+
     public void recordSpan(
             String traceId,
             String name,

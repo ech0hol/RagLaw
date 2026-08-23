@@ -40,6 +40,8 @@ mvn -q test
 cp ../.env.example ../.env   # 填入 DASHSCOPE_API_KEY（可选，开发可用 mock）
 ```
 
+> **运行测试**：集成测试通过 `@RagLawIntegrationTest` 强制使用 `admin-test-password`，无需（也不应依赖）shell 中的 `RAGLAW_SEED_ADMIN_PASSWORD`。`RagPipelineEvaluationIT` 覆盖上传→入库→分块索引链路。
+
 启动（推荐设置固定管理员密码）：
 
 ```bash
@@ -69,10 +71,18 @@ pnpm dev:web
    POSTGRES_ENABLED=true
    EMBEDDING_ENABLED=true
    DASHSCOPE_API_KEY=sk-...
+   RAGLAW_LLM_MOCK=false
    ```
 2. 确保 `docker compose` 中 postgres 已启动
 3. **重新 ingest** 已有文档（embedding 在入库时写入）
 4. 检查健康接口：`GET /api/v1/health` → `rag.hybridRetrievalReady: true`
+5. **真实向量对比评测**（与 mock 区分）：
+   ```powershell
+   $env:RAGLAW_ADMIN_PASSWORD="raglaw-eval"
+   $env:RAGLAW_LLM_MOCK="false"
+   .\scripts\eval-rag-quality.ps1 -RetrievalMode both -UseRealEmbedding
+   ```
+   报告写入 `docs/evaluation/rag-pipeline-eval-*-compare.json`，其中 `embeddingMock: false` 表示使用 DashScope 向量。
 
 ## RAG 质量评测
 
@@ -113,6 +123,9 @@ E2E_WITH_CORPUS=1 E2E_ADMIN_PASSWORD=raglaw-eval pnpm e2e
 | 可观测 L1 | `/admin/observability` | trace 列表 + 阶段/片段详情 |
 | 可观测 L2 | Langfuse（可选） | 设置 `LANGFUSE_ENABLED=true` + keys，见 `.env.example` |
 | Agent 配置 | `/admin/agents` | 编辑 knowledgeScopes / a2aPeers + reload |
+| 用户管理 | `/admin/users` | 创建律师/管理员账号 |
+
+生产部署见 [`docs/deployment.md`](docs/deployment.md)。
 
 ## 技术栈
 
@@ -131,7 +144,7 @@ cd docker
 docker compose --profile observability up -d
 ```
 
-在 `.env` 中配置 `LANGFUSE_ENABLED=true`、`LANGFUSE_PUBLIC_KEY`、`LANGFUSE_SECRET_KEY`，管理端 trace 详情可跳转 Langfuse UI。
+在 `.env` 中配置 `LANGFUSE_ENABLED=true`、`LANGFUSE_PUBLIC_KEY`、`LANGFUSE_SECRET_KEY`，管理端 trace 详情可跳转 Langfuse UI。L2 双写包含 A2A span、RAG tool 命中、LLM generation（含 token 用量）。
 
 ## 旧代码
 

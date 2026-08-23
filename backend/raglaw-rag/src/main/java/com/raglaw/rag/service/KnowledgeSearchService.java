@@ -69,7 +69,7 @@ public class KnowledgeSearchService {
         return filtered.stream()
                 .map(hit -> {
                     DocumentEntity doc = documents.get(hit.documentId());
-                    String path = joinPath(hit.l1Path(), hit.l2Path(), hit.l3Path());
+                    String path = KnowledgePathJoiner.joinPath(hit.l1Path(), hit.l2Path(), hit.l3Path());
                     return new KnowledgeHitDto(
                             hit.chunkId(),
                             hit.documentId(),
@@ -80,20 +80,6 @@ public class KnowledgeSearchService {
                     );
                 })
                 .toList();
-    }
-
-    private static String joinPath(String l1, String l2, String l3) {
-        StringBuilder sb = new StringBuilder();
-        if (l1 != null) {
-            sb.append(l1);
-        }
-        if (l2 != null) {
-            sb.append(l2);
-        }
-        if (l3 != null) {
-            sb.append(l3);
-        }
-        return sb.toString();
     }
 
     private static String excerpt(String content) {

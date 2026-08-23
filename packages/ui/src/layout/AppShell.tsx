@@ -12,6 +12,7 @@ import {
   PanelLeft,
   PanelLeftClose,
   Sun,
+  Users,
 } from 'lucide-react';
 import { NavItem, NavSection } from '../components/NavItem';
 import { MAIN_OVERLAY_ROOT_ID } from './constants';
@@ -74,6 +75,7 @@ export function AppShell({
               <NavItem to="/admin/categories" icon={<FolderTree size={18} />}>类目管理</NavItem>
               <NavItem to="/admin/documents" icon={<FileText size={18} />}>文档管理</NavItem>
               <NavItem to="/admin/approvals" icon={<CheckCircle size={18} />}>审批管理</NavItem>
+              <NavItem to="/admin/users" icon={<Users size={18} />}>用户管理</NavItem>
               <NavItem to="/admin/observability" icon={<Activity size={18} />}>可观测性</NavItem>
             </>
           )}

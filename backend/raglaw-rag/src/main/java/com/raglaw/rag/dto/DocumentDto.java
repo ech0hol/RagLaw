@@ -13,6 +13,8 @@ public record DocumentDto(
         String uploaderId,
         String minioKey,
         String rejectReason,
+        String ingestStage,
+        String ingestError,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -27,6 +29,8 @@ public record DocumentDto(
                 entity.getUploaderId(),
                 entity.getMinioKey(),
                 entity.getRejectReason(),
+                entity.getIngestStage(),
+                entity.getIngestError(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );

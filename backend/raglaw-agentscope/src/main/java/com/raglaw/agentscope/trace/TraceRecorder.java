@@ -140,6 +140,24 @@ public class TraceRecorder {
                     hit.excerpt()
             ));
         }
+        String langfuseTraceId = traceRepository.findById(traceId)
+                .map(RagTraceEntity::getLangfuseTraceId)
+                .filter(id -> id != null && !id.isBlank())
+                .orElse(traceId);
+        List<Map<String, Object>> topHits = hits.stream()
+                .limit(5)
+                .map(hit -> Map.<String, Object>of(
+                        "chunkId", hit.chunkId() == null ? "" : hit.chunkId(),
+                        "score", hit.score(),
+                        "path", hit.l1L2L3Path() == null ? "" : hit.l1L2L3Path()
+                ))
+                .toList();
+        langfuseBridge.recordToolResult(
+                langfuseTraceId,
+                "rag_search",
+                Map.of("hitCount", hits.size()),
+                Map.of("hits", topHits)
+        );
     }
 
     @Transactional
@@ -147,7 +165,9 @@ public class TraceRecorder {
             String traceId,
             String model,
             Integer promptTokens,
-            Integer completionTokens
+            Integer completionTokens,
+            String outputPreview,
+            long durationMs
     ) {
         usageLogRepository.save(new LlmUsageLogEntity(
                 UUID.randomUUID().toString(),
@@ -156,6 +176,32 @@ public class TraceRecorder {
                 promptTokens,
                 completionTokens
         ));
+        String langfuseTraceId = traceRepository.findById(traceId)
+                .map(RagTraceEntity::getLangfuseTraceId)
+                .filter(id -> id != null && !id.isBlank())
+                .orElse(traceId);
+        String queryPreview = traceRepository.findById(traceId)
+                .map(RagTraceEntity::getQueryText)
+                .orElse("");
+        langfuseBridge.recordGeneration(
+                langfuseTraceId,
+                model,
+                queryPreview,
+                truncate(outputPreview, 2000),
+                promptTokens,
+                completionTokens,
+                durationMs
+        );
+    }
+
+    private static String truncate(String value, int maxLen) {
+        if (value == null) {
+            return "";
+        }
+        if (value.length() <= maxLen) {
+            return value;
+        }
+        return value.substring(0, maxLen) + "…";
     }
 
     @Transactional

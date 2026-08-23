@@ -13,6 +13,7 @@ import { KnowledgeDetailPage } from './pages/KnowledgeDetailPage';
 import { KnowledgePage } from './pages/KnowledgePage';
 import { LoginPage } from './pages/LoginPage';
 import { ObservabilityAdminPage } from './pages/admin/ObservabilityAdminPage';
+import { UsersAdminPage } from './pages/admin/UsersAdminPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -85,6 +86,14 @@ export default function App() {
                     element={
                       <AdminOnly>
                         <ApprovalsAdminPage />
+                      </AdminOnly>
+                    }
+                  />
+                  <Route
+                    path="/admin/users"
+                    element={
+                      <AdminOnly>
+                        <UsersAdminPage />
                       </AdminOnly>
                     }
                   />

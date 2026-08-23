@@ -1,4 +1,4 @@
-import type { FormEvent, KeyboardEvent, ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { Paperclip, Send } from 'lucide-react';
 import { MarkdownContent } from './MarkdownContent';
 import { ReferenceList, type ChatReference } from './ReferenceList';
@@ -66,6 +66,12 @@ export function ConversationPanel({
   canRegenerate = false,
   onMessageListScroll,
 }: ConversationPanelProps) {
+  const [recommendOpen, setRecommendOpen] = useState(false);
+
+  useEffect(() => {
+    setRecommendOpen(false);
+  }, [recommendQuestions]);
+
   function onTextareaKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -127,6 +133,31 @@ export function ConversationPanel({
               </div>
             );
           })}
+          {recommendQuestions.length > 0 && !streaming && onRecommendClick && (
+            <div className="rl-recommend-block">
+              <button
+                type="button"
+                className="rl-recommend-toggle"
+                onClick={() => setRecommendOpen((v) => !v)}
+              >
+                {recommendOpen ? '收起推荐' : '推荐问题'}
+              </button>
+              {recommendOpen && (
+                <div className="rl-recommend-chips" data-testid="recommend-chips">
+                  {recommendQuestions.map((question) => (
+                    <button
+                      key={question}
+                      type="button"
+                      className="rl-recommend-chip"
+                      onClick={() => onRecommendClick(question)}
+                    >
+                      {question}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -162,20 +193,6 @@ export function ConversationPanel({
             </div>
           </div>
         </form>
-        {recommendQuestions.length > 0 && !streaming && onRecommendClick && (
-          <div className="rl-recommend-chips" data-testid="recommend-chips">
-            {recommendQuestions.map((question) => (
-              <button
-                key={question}
-                type="button"
-                className="rl-recommend-chip"
-                onClick={() => onRecommendClick(question)}
-              >
-                {question}
-              </button>
-            ))}
-          </div>
-        )}
         {disclaimer && <p className="rl-disclaimer">{disclaimer}</p>}
       </div>
     </div>

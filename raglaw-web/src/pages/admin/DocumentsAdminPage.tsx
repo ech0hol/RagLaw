@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Select, Spinner, UploadWorkbench } from '@raglaw/ui';
 import { api, uploadDocument } from '../../lib/api';
 
@@ -15,7 +15,11 @@ type DocumentRow = {
   title: string;
   status: string;
   categoryId: string;
+  ingestStage?: string | null;
+  ingestError?: string | null;
 };
+
+const POLLING_STAGES = new Set(['PENDING', 'PARSING', 'PARSED', 'INDEXING']);
 
 function flattenL3(nodes: CategoryNode[]): CategoryNode[] {
   const result: CategoryNode[] = [];
@@ -38,6 +42,16 @@ export function DocumentsAdminPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recent, setRecent] = useState<DocumentRow[]>([]);
+  const [pollingId, setPollingId] = useState<string | null>(null);
+  const pollTimer = useRef<number | null>(null);
+
+  const loadRecent = useCallback(() => {
+    void api<DocumentRow[]>('/api/v1/admin/documents/recent?limit=10').then((res) => {
+      if (res.success) {
+        setRecent(res.data);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     void api<CategoryNode[]>('/api/v1/admin/categories').then((res) => {
@@ -49,9 +63,45 @@ export function DocumentsAdminPage() {
         }
       }
     });
+    loadRecent();
+  }, [loadRecent]);
+
+  const pollDocument = useCallback(async (documentId: string) => {
+    const res = await api<DocumentRow>(`/api/v1/admin/documents/${documentId}`);
+    if (!res.success) {
+      return;
+    }
+    setRecent((prev) => {
+      const others = prev.filter((doc) => doc.id !== documentId);
+      return [res.data, ...others].slice(0, 10);
+    });
+    if (!res.data.ingestStage || !POLLING_STAGES.has(res.data.ingestStage)) {
+      setPollingId(null);
+      setMessage(`入库完成：${res.data.title}（${res.data.status}${res.data.ingestStage ? ` / ${res.data.ingestStage}` : ''}）`);
+    }
   }, []);
 
-  async function startIngest() {
+  useEffect(() => {
+    if (!pollingId) {
+      if (pollTimer.current) {
+        window.clearInterval(pollTimer.current);
+        pollTimer.current = null;
+      }
+      return;
+    }
+    void pollDocument(pollingId);
+    pollTimer.current = window.setInterval(() => {
+      void pollDocument(pollingId);
+    }, 2000);
+    return () => {
+      if (pollTimer.current) {
+        window.clearInterval(pollTimer.current);
+        pollTimer.current = null;
+      }
+    };
+  }, [pollingId, pollDocument]);
+
+  async function startUpload() {
     if (!file || !categoryId) return;
     setUploading(true);
     setMessage(null);
@@ -61,20 +111,32 @@ export function DocumentsAdminPage() {
       if (!upload.success) {
         throw new Error(upload.error?.message ?? '上传失败');
       }
-      const ingest = await api<DocumentRow>(`/api/v1/admin/documents/${upload.data.id}/ingest`, {
-        method: 'POST',
-      });
-      if (!ingest.success) {
-        throw new Error(ingest.error?.message ?? '入库失败');
+      const doc = upload.data;
+      setRecent((prev) => [doc, ...prev.filter((item) => item.id !== doc.id)].slice(0, 10));
+      if (doc.ingestStage && POLLING_STAGES.has(doc.ingestStage)) {
+        setPollingId(doc.id);
+        setMessage(`已上传：${doc.title}，正在入库（${doc.ingestStage}）…`);
+      } else {
+        setMessage(`已入库：${doc.title}（${doc.status}）`);
       }
-      setRecent((prev) => [ingest.data, ...prev].slice(0, 10));
-      setMessage(`已入库：${ingest.data.title}（${ingest.data.status}）`);
       setFile(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : '操作失败');
     } finally {
       setUploading(false);
     }
+  }
+
+  async function retryIngest(documentId: string) {
+    setError(null);
+    const res = await api<DocumentRow>(`/api/v1/admin/documents/${documentId}/retry-ingest`, { method: 'POST' });
+    if (!res.success) {
+      setError(res.error?.message ?? '重试失败');
+      return;
+    }
+    setPollingId(documentId);
+    setMessage(`已重新提交入库：${res.data.title}`);
+    loadRecent();
   }
 
   const categoryOptions = categories.map((cat) => ({
@@ -87,15 +149,15 @@ export function DocumentsAdminPage() {
       <div className="rl-page-center">
         <UploadWorkbench
           title="文档入库"
-          subtitle="上传 Markdown 法规/案例并触发分块索引"
+          subtitle="上传 Markdown 法规/案例；RabbitMQ 开启时自动异步入库"
           accept=".md,text/markdown"
           formatHint="支持 Markdown（.md）文件"
-          submitLabel="开始入库"
+          submitLabel="上传并入库"
           loading={uploading}
           disabled={!categoryId}
           file={file}
           onFileChange={setFile}
-          onSubmit={() => void startIngest()}
+          onSubmit={() => void startUpload()}
           error={error}
           footerSlot={
             categoryOptions.length > 0 ? (
@@ -117,8 +179,19 @@ export function DocumentsAdminPage() {
                 <div key={doc.id} className="rl-contract-history-item">
                   <p className="rl-contract-history-item__title">{doc.title}</p>
                   <p className="rl-contract-history-item__meta">
-                    状态 {doc.status} · 类目 {doc.categoryId}
+                    状态 {doc.status}
+                    {doc.ingestStage ? ` · 阶段 ${doc.ingestStage}` : ''}
+                    {doc.ingestError ? ` · 错误 ${doc.ingestError}` : ''}
                   </p>
+                  {doc.ingestStage === 'FAILED' && (
+                    <button
+                      type="button"
+                      className="rl-btn rl-btn--sm"
+                      onClick={() => void retryIngest(doc.id)}
+                    >
+                      重试入库
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

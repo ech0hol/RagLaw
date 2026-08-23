@@ -244,7 +244,9 @@ public class AguiRunService {
                 trace.traceId(),
                 agent.model(),
                 promptTokens,
-                completionTokens
+                completionTokens,
+                fullText,
+                System.currentTimeMillis() - llmStart
         );
 
         long latency = System.currentTimeMillis() - startMs;

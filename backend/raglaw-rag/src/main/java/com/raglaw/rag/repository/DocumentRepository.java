@@ -14,4 +14,6 @@ public interface DocumentRepository extends JpaRepository<DocumentEntity, String
     List<DocumentEntity> findByDocTypeAndUploaderIdOrderByCreatedAtDesc(String docType, String uploaderId);
 
     long countByDocTypeAndStatus(String docType, DocStatus status);
+
+    List<DocumentEntity> findTop50ByOrderByCreatedAtDesc();
 }

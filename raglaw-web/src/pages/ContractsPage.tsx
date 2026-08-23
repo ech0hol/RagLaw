@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import {
   ConfirmDialog,
-  Select,
   SlidePanel,
   Spinner,
   UploadWorkbench,
@@ -47,7 +46,6 @@ export function ContractsPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [reviewMode, setReviewMode] = useState('basic');
 
   const refreshContracts = useCallback(async () => {
     setHistoryLoading(true);
@@ -124,7 +122,7 @@ export function ContractsPage() {
 
       <div className="rl-page-center">
         <UploadWorkbench
-          title="智能合同"
+          title="合同审查"
           subtitle="上传合同文档，自动提取文本、识别风险并进入专项对话"
           accept=".pdf,.doc,.docx,.md,.txt"
           formatHint="支持 doc、docx、pdf、md、txt，文件最大不超过 50M"
@@ -134,13 +132,6 @@ export function ContractsPage() {
           onFileChange={setFile}
           onSubmit={() => void startReview()}
           error={error}
-          footerSlot={
-            <Select
-              value={reviewMode}
-              onChange={setReviewMode}
-              options={[{ value: 'basic', label: '基础审查' }]}
-            />
-          }
         />
       </div>
 
