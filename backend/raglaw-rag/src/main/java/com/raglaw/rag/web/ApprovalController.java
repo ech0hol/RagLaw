@@ -29,13 +29,13 @@ public class ApprovalController {
     }
 
     @PostMapping("/{documentId}/approve")
-    public ApiResponse<DocumentDto> approve(@PathVariable String documentId) {
+    public ApiResponse<DocumentDto> approve(@PathVariable("documentId") String documentId) {
         return ApiResponse.ok(approvalService.approve(documentId));
     }
 
     @PostMapping("/{documentId}/reject")
     public ApiResponse<DocumentDto> reject(
-            @PathVariable String documentId,
+            @PathVariable("documentId") String documentId,
             @Valid @RequestBody ApprovalActionRequest request
     ) {
         return ApiResponse.ok(approvalService.reject(documentId, request.reason()));

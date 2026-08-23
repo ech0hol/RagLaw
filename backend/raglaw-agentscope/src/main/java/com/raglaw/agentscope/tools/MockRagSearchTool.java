@@ -4,8 +4,10 @@ import com.raglaw.rag.tool.RagSearchHit;
 import com.raglaw.rag.tool.RagSearchTool;
 import java.util.List;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+@Profile("test")
 @Primary
 @Component
 public class MockRagSearchTool implements RagSearchTool {

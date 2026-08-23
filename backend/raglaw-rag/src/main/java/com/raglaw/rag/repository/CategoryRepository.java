@@ -14,5 +14,7 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, String
 
     boolean existsByCodeAndIdNot(String code, String id);
 
+    java.util.Optional<CategoryEntity> findByCode(String code);
+
     List<CategoryEntity> findByEnabledTrueOrderBySortOrderAsc();
 }

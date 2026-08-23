@@ -30,7 +30,7 @@ public class DocumentController {
     }
 
     @PostMapping("/{documentId}/ingest")
-    public ApiResponse<DocumentDto> ingest(@PathVariable String documentId) {
+    public ApiResponse<DocumentDto> ingest(@PathVariable("documentId") String documentId) {
         return ApiResponse.ok(documentUploadService.ingestNow(documentId));
     }
 }

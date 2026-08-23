@@ -38,7 +38,7 @@ public class CategoryController {
     }
 
     @GetMapping("/admin/categories/{id}")
-    public ApiResponse<CategoryDto> get(@PathVariable String id) {
+    public ApiResponse<CategoryDto> get(@PathVariable("id") String id) {
         return ApiResponse.ok(categoryService.getById(id));
     }
 
@@ -49,14 +49,14 @@ public class CategoryController {
 
     @PutMapping("/admin/categories/{id}")
     public ApiResponse<CategoryDto> update(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             @Valid @RequestBody UpdateCategoryRequest request
     ) {
         return ApiResponse.ok(categoryService.update(id, request));
     }
 
     @DeleteMapping("/admin/categories/{id}")
-    public ApiResponse<Void> delete(@PathVariable String id) {
+    public ApiResponse<Void> delete(@PathVariable("id") String id) {
         categoryService.delete(id);
         return ApiResponse.ok(null);
     }

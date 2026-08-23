@@ -1,0 +1,35 @@
+{
+  "evaluatedAt": "2026-08-23T01:05:00+08:00",
+  "corpus": {
+    "fixtures": [
+      "docs/fixtures/statutes/labor-contract-law-excerpt.md",
+      "docs/fixtures/statutes/civil-code-contract-excerpt.md",
+      "docs/fixtures/cases/labor-overtime-case.md"
+    ],
+    "indexedDocuments": 3,
+    "totalChunks": 37,
+    "categories": [
+      "cat_l3_statute_civil_labor",
+      "cat_l3_statute_civil_contract",
+      "cat_l3_case_civil_labor"
+    ]
+  },
+  "retrieval": {
+    "engine": "MySQL FULLTEXT (ngram)",
+    "queries": [
+      { "query": "拖欠工资 维权", "hitCount": 3 },
+      { "query": "违约金过高", "hitCount": 6 },
+      { "query": "加班费", "hitCount": 7 }
+    ],
+    "hitRate": "3/3"
+  },
+  "agui": {
+    "agent": "STATUTE_CIVIL",
+    "query": "公司拖欠工资如何维权",
+    "referenceCount": 4,
+    "topReference": "劳动争议案例（加班费）",
+    "statuteInTop3": true,
+    "ragContextInjected": true,
+    "referenceSseEmitted": true
+  }
+}

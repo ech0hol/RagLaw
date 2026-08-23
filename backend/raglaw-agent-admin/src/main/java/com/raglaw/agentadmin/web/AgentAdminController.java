@@ -30,13 +30,13 @@ public class AgentAdminController {
     }
 
     @GetMapping("/{code}")
-    public ApiResponse<AgentConfigDto> get(@PathVariable String code) {
+    public ApiResponse<AgentConfigDto> get(@PathVariable("code") String code) {
         return ApiResponse.ok(agentConfigService.get(code));
     }
 
     @PutMapping("/{code}")
     public ApiResponse<AgentConfigDto> update(
-            @PathVariable String code,
+            @PathVariable("code") String code,
             @RequestBody AgentConfigUpdateRequest request
     ) {
         return ApiResponse.ok(agentConfigService.update(code, request));

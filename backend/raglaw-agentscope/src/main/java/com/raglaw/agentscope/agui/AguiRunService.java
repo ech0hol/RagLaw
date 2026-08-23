@@ -136,9 +136,24 @@ public class AguiRunService {
                     Map.of("hitCount", hits.size(), "scopes", agent.knowledgeScopes()),
                     System.currentTimeMillis() - ragStart
             );
+            for (int i = 0; i < hits.size(); i++) {
+                RagSearchHit hit = hits.get(i);
+                AguiSseWriter.send(emitter, "reference", Map.of(
+                        "index", i + 1,
+                        "chunkId", hit.chunkId(),
+                        "path", hit.l1L2L3Path(),
+                        "excerpt", hit.excerpt(),
+                        "score", hit.score()
+                ));
+            }
         }
 
         checkCancelled(taskId);
+
+        String ragContext = buildRagContext(hits);
+        String userMessageWithContext = ragContext.isBlank()
+                ? request.message()
+                : ragContext + "\n\n用户问题：" + request.message();
 
         String fullText;
         Integer promptTokens = null;
@@ -146,15 +161,15 @@ public class AguiRunService {
         long llmStart = System.currentTimeMillis();
 
         if (useMockLlm()) {
-            fullText = streamMockResponse(emitter, taskId, request.message(), agent);
-            promptTokens = estimateTokens(request.message());
+            fullText = streamMockResponse(emitter, taskId, userMessageWithContext, agent, hits);
+            promptTokens = estimateTokens(userMessageWithContext);
             completionTokens = estimateTokens(fullText);
         } else {
             String apiKey = environment.getProperty("DASHSCOPE_API_KEY");
             if (apiKey == null || apiKey.isBlank()) {
                 log.warn("DASHSCOPE_API_KEY not set, falling back to mock LLM");
-                fullText = streamMockResponse(emitter, taskId, request.message(), agent);
-                promptTokens = estimateTokens(request.message());
+                fullText = streamMockResponse(emitter, taskId, userMessageWithContext, agent, hits);
+                promptTokens = estimateTokens(userMessageWithContext);
                 completionTokens = estimateTokens(fullText);
             } else {
                 DashScopeClient.LlmStreamResult result = streamDashScope(
@@ -162,7 +177,7 @@ public class AguiRunService {
                         taskId,
                         apiKey,
                         agent,
-                        request.message()
+                        userMessageWithContext
                 );
                 fullText = result.text();
                 promptTokens = result.promptTokens();
@@ -238,15 +253,48 @@ public class AguiRunService {
             SseEmitter emitter,
             String taskId,
             String userMessage,
-            AgentConfigSnapshot agent
+            AgentConfigSnapshot agent,
+            List<RagSearchHit> hits
     ) throws IOException {
-        String response = "这是模拟回复（" + agent.name() + "）：" + userMessage;
+        StringBuilder sb = new StringBuilder();
+        sb.append("【").append(agent.name()).append("】");
+        if (!hits.isEmpty()) {
+            sb.append("根据知识库检索到 ").append(hits.size()).append(" 条相关依据。");
+            sb.append("例如：").append(hits.get(0).excerpt());
+            if (hits.size() > 1) {
+                sb.append(" 等。");
+            }
+            sb.append("\n\n");
+        }
+        sb.append("针对您的问题「").append(extractUserQuestion(userMessage)).append("」，");
+        sb.append("建议结合上述法规条文分析具体事实。本回复仅供参考，不构成法律意见。");
+        String response = sb.toString();
         for (int i = 0; i < response.length(); i++) {
             checkCancelled(taskId);
             String delta = response.substring(i, i + 1);
             AguiSseWriter.send(emitter, "text", Map.of("delta", delta));
         }
         return response;
+    }
+
+    private static String buildRagContext(List<RagSearchHit> hits) {
+        if (hits == null || hits.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder("以下是从知识库检索到的参考条文（请优先依据这些内容回答，并标注引用序号）：\n");
+        for (int i = 0; i < hits.size(); i++) {
+            RagSearchHit hit = hits.get(i);
+            sb.append('[').append(i + 1).append("] ").append(hit.excerpt()).append('\n');
+        }
+        return sb.toString();
+    }
+
+    private static String extractUserQuestion(String userMessageWithContext) {
+        int marker = userMessageWithContext.lastIndexOf("用户问题：");
+        if (marker >= 0) {
+            return userMessageWithContext.substring(marker + "用户问题：".length()).trim();
+        }
+        return userMessageWithContext;
     }
 
     private boolean useMockLlm() {
