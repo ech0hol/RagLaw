@@ -90,6 +90,15 @@ public class ConversationService {
                         .toList());
     }
 
+    @Transactional(readOnly = true)
+    public Optional<String> findLastUserMessageContent(String userId, String conversationId) {
+        return conversationRepository.findById(conversationId)
+                .filter(conversation -> conversation.getUserId().equals(userId))
+                .flatMap(conversation -> messageRepository
+                        .findTopByConversationIdAndRoleOrderByCreatedAtDesc(conversationId, "user")
+                        .map(MessageEntity::getContent));
+    }
+
     @Transactional
     public Optional<MessageDto> appendMessage(
             String userId,

@@ -1,5 +1,6 @@
 package com.raglaw.rag.domain;
 
+import com.raglaw.common.jpa.ColumnLengths;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -11,12 +12,13 @@ import java.time.Instant;
 public class DocumentChunkEntity {
 
     @Id
+    @Column(length = ColumnLengths.UUID)
     private String id;
 
-    @Column(name = "document_id", nullable = false)
+    @Column(name = "document_id", nullable = false, length = ColumnLengths.UUID)
     private String documentId;
 
-    @Column(name = "parent_id")
+    @Column(name = "parent_id", length = ColumnLengths.UUID)
     private String parentId;
 
     @Column(name = "chunk_index", nullable = false)
@@ -25,13 +27,13 @@ public class DocumentChunkEntity {
     @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String content;
 
-    @Column(name = "l1_path", nullable = false)
+    @Column(name = "l1_path", nullable = false, length = ColumnLengths.CHUNK_PATH)
     private String l1Path;
 
-    @Column(name = "l2_path", nullable = false)
+    @Column(name = "l2_path", nullable = false, length = ColumnLengths.CHUNK_PATH)
     private String l2Path;
 
-    @Column(name = "l3_path", nullable = false)
+    @Column(name = "l3_path", nullable = false, length = ColumnLengths.CHUNK_PATH)
     private String l3Path;
 
     @Column(name = "metadata_json", columnDefinition = "JSON")

@@ -1,0 +1,18 @@
+{
+  "queries": [
+    {
+      "text": "拖欠工资",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE"
+    },
+    {
+      "text": "违约金过高",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE/CIVIL/CONTRACT"
+    },
+    {
+      "text": "加班费",
+      "minHitCount": 1
+    }
+  ]
+}

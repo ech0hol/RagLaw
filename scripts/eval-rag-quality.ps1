@@ -4,7 +4,9 @@
 param(
     [string]$BaseUrl = "http://localhost:8080",
     [string]$AdminPassword = $env:RAGLAW_ADMIN_PASSWORD,
-    [string]$AdminEmail = "admin@raglaw.local"
+    [string]$AdminEmail = "admin@raglaw.local",
+    [ValidateSet("fulltext", "hybrid", "both")]
+    [string]$RetrievalMode = "fulltext"
 )
 
 $ErrorActionPreference = "Stop"
@@ -106,9 +108,18 @@ function Invoke-Mysql {
     param([string]$Sql)
     $prev = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
-    $out = docker exec raglaw-mysql mysql -uraglaw -praglaw raglaw -N -e $Sql 2>&1 | Where-Object { $_ -is [string] -and $_ -notmatch 'Warning' }
+    $out = docker exec raglaw-mysql mysql -uraglaw -praglaw --default-character-set=utf8mb4 raglaw -N -e $Sql 2>&1 | Where-Object { $_ -is [string] -and $_ -notmatch 'Warning' }
     $ErrorActionPreference = $prev
     return $out
+}
+
+function Invoke-PgCount {
+  param([string]$Sql)
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  $out = docker exec raglaw-postgres psql -U raglaw -d raglaw_vector -t -A -c $Sql 2>&1 | Where-Object { $_ -is [string] -and $_ -notmatch 'NOTICE' }
+  $ErrorActionPreference = $prev
+  return ($out | Select-Object -Last 1).ToString().Trim()
 }
 
 function Test-MysqlRetrieval {
@@ -122,8 +133,21 @@ Write-Section "Health check"
 try {
     $health = Invoke-RestMethod -Uri "$BaseUrl/api/v1/health" -TimeoutSec 5
     Write-Host "Backend: $($health.data.status)"
+    if ($health.data.rag) {
+        $rag = $health.data.rag
+        Write-Host "  postgres: $($rag.postgresEnabled), embedding configured: $($rag.embeddingConfigured), hybrid ready: $($rag.hybridRetrievalReady)"
+    }
 } catch {
     throw "Backend not running. Start with: cd backend; mvn -pl raglaw-server spring-boot:run"
+}
+
+$hybridReady = $false
+if ($health.data.rag) {
+    $hybridReady = [bool]$health.data.rag.hybridRetrievalReady
+}
+if ($RetrievalMode -eq "hybrid" -and -not $hybridReady) {
+    Write-Host "Hybrid mode requested but POSTGRES_ENABLED + EMBEDDING_ENABLED + DASHSCOPE_API_KEY are not all active." -ForegroundColor Yellow
+    Write-Host "Set in .env: POSTGRES_ENABLED=true, EMBEDDING_ENABLED=true, re-ingest fixtures, then re-run." -ForegroundColor Yellow
 }
 
 Write-Section "Login"
@@ -207,20 +231,34 @@ foreach ($item in $aguiQueries) {
 Write-Section "Summary"
 $chunkCount = (Invoke-Mysql -Sql "SELECT COUNT(*) FROM raglaw_document_chunk;") | Select-Object -Last 1
 $indexedCount = (Invoke-Mysql -Sql "SELECT COUNT(*) FROM raglaw_document WHERE status='INDEXED';") | Select-Object -Last 1
-Write-Host "Indexed docs: $indexedCount, chunks: $chunkCount"
+$vectorCount = $null
+try {
+    $vectorCount = Invoke-PgCount -Sql "SELECT COUNT(*) FROM raglaw_embedding;"
+} catch {
+    $vectorCount = "n/a"
+}
+Write-Host "Indexed docs: $indexedCount, chunks: $chunkCount, pgvector rows: $vectorCount"
 Write-Host "Retrieval hit rate: $(($retrievalReport | Where-Object { $_.HitCount -gt 0 }).Count)/$($retrievalReport.Count)"
 Write-Host "Answer with refs: $(($answerReport | Where-Object { $_.References -gt 0 }).Count)/$($answerReport.Count)"
+Write-Host "Eval mode: $RetrievalMode (hybrid ready: $hybridReady)"
 
-$reportPath = "$RepoRoot\docs\evaluation\rag-pipeline-eval-$(Get-Date -Format 'yyyy-MM-dd').json"
+$suffix = if ($RetrievalMode -eq "hybrid" -and $hybridReady) { "-hybrid" } elseif ($RetrievalMode -eq "both") { "-compare" } else { "" }
+$reportPath = "$RepoRoot\docs\evaluation\rag-pipeline-eval-$(Get-Date -Format 'yyyy-MM-dd')$suffix.json"
 New-Item -ItemType Directory -Force -Path (Split-Path $reportPath) | Out-Null
 @{
     evaluatedAt = (Get-Date).ToString("o")
+    retrievalMode = $RetrievalMode
+    hybridReady = $hybridReady
     documents = $docs
-    retrieval = $retrievalReport
+    retrieval = @{
+        engine = if ($hybridReady -and $RetrievalMode -ne "fulltext") { "MySQL FULLTEXT + pgvector RRF" } else { "MySQL FULLTEXT (ngram)" }
+        queries = $retrievalReport
+    }
     answers = $answerReport
     stats = @{
         indexedDocuments = [int]$indexedCount
         chunkCount = [int]$chunkCount
+        vectorCount = $vectorCount
     }
 } | ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 $reportPath
 Write-Host "Report saved: $reportPath" -ForegroundColor Green

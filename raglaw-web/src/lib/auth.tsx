@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { clearToken, fetchMe, getToken, login as apiLogin, logout as apiLogout, type User } from './api';
+import { clearToken, fetchMe, getToken, login as apiLogin, logout as apiLogout, refreshAccessToken, type User } from './api';
 
 type AuthState = {
   user: User | null;
@@ -15,19 +15,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-    fetchMe().then((res) => {
+    async function bootstrap() {
+      if (!getToken()) {
+        await refreshAccessToken();
+      }
+      const res = await fetchMe();
       if (res.success) {
         setUser(res.data);
       } else {
         clearToken();
       }
       setLoading(false);
-    });
+    }
+    void bootstrap();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

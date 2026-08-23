@@ -1,5 +1,6 @@
 package com.raglaw.agentscope.domain;
 
+import com.raglaw.common.jpa.ColumnLengths;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -10,12 +11,13 @@ import jakarta.persistence.Table;
 public class LlmUsageLogEntity {
 
     @Id
+    @Column(length = ColumnLengths.UUID)
     private String id;
 
-    @Column(name = "trace_id", nullable = false)
+    @Column(name = "trace_id", nullable = false, length = ColumnLengths.UUID)
     private String traceId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = ColumnLengths.MODEL)
     private String model;
 
     @Column(name = "prompt_tokens")

@@ -1,5 +1,6 @@
 package com.raglaw.rag.domain;
 
+import com.raglaw.common.jpa.ColumnLengths;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -11,24 +12,25 @@ import java.time.Instant;
 public class CategoryEntity {
 
     @Id
+    @Column(length = ColumnLengths.UUID)
     private String id;
 
-    @Column(name = "parent_id")
+    @Column(name = "parent_id", length = ColumnLengths.UUID)
     private String parentId;
 
     @Column(nullable = false)
     private int level;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = ColumnLengths.CATEGORY_CODE)
     private String code;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = ColumnLengths.CATEGORY_NAME)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = ColumnLengths.CATEGORY_PATH)
     private String path;
 
-    @Column(name = "doc_type", nullable = false)
+    @Column(name = "doc_type", nullable = false, length = ColumnLengths.DOC_TYPE)
     private String docType;
 
     @Column(name = "sort_order", nullable = false)

@@ -8,4 +8,9 @@ public interface MessageRepository extends JpaRepository<MessageEntity, String> 
     List<MessageEntity> findByConversationIdOrderByCreatedAtAsc(String conversationId);
 
     long countByConversationIdAndRole(String conversationId, String role);
+
+    java.util.Optional<MessageEntity> findTopByConversationIdAndRoleOrderByCreatedAtDesc(
+            String conversationId,
+            String role
+    );
 }

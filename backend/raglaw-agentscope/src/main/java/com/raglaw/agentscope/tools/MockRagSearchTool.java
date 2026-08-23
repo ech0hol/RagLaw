@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class MockRagSearchTool implements RagSearchTool {
 
     @Override
-    public List<RagSearchHit> search(String query, List<String> knowledgeScopes, int limit) {
+    public List<RagSearchHit> search(String query, List<String> knowledgeScopes, int limit, String agentCode) {
         return List.of();
     }
 }

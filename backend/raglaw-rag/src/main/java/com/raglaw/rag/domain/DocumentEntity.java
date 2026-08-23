@@ -1,5 +1,6 @@
 package com.raglaw.rag.domain;
 
+import com.raglaw.common.jpa.ColumnLengths;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,28 +14,29 @@ import java.time.Instant;
 public class DocumentEntity {
 
     @Id
+    @Column(length = ColumnLengths.UUID)
     private String id;
 
-    @Column(name = "category_id", nullable = false)
+    @Column(name = "category_id", nullable = false, length = ColumnLengths.UUID)
     private String categoryId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = ColumnLengths.TITLE)
     private String title;
 
-    @Column(name = "doc_type", nullable = false)
+    @Column(name = "doc_type", nullable = false, length = ColumnLengths.DOC_TYPE)
     private String docType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = ColumnLengths.DOC_TYPE)
     private DocStatus status = DocStatus.PENDING;
 
-    @Column(name = "uploader_id")
+    @Column(name = "uploader_id", length = ColumnLengths.UUID)
     private String uploaderId;
 
-    @Column(name = "minio_key")
+    @Column(name = "minio_key", length = ColumnLengths.MINIO_KEY)
     private String minioKey;
 
-    @Column(name = "reject_reason")
+    @Column(name = "reject_reason", length = ColumnLengths.REJECT_REASON)
     private String rejectReason;
 
     @Column(name = "created_at", nullable = false)

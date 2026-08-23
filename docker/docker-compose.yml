@@ -17,7 +17,6 @@ services:
       --ngram_token_size=2
     volumes:
       - raglaw-mysql-data:/var/lib/mysql
-      - ../docs/sql/mysql:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uraglaw", "-praglaw"]
       interval: 10s

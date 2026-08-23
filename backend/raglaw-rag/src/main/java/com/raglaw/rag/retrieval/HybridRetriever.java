@@ -19,25 +19,32 @@ public class HybridRetriever {
     private final DocumentChunkRepository documentChunkRepository;
     private final EmbeddingService embeddingService;
     private final ObjectProvider<VectorStoreService> vectorStoreProvider;
+    private final RetrievalReranker retrievalReranker;
 
     public HybridRetriever(
             DocumentChunkRepository documentChunkRepository,
             EmbeddingService embeddingService,
-            ObjectProvider<VectorStoreService> vectorStoreProvider
+            ObjectProvider<VectorStoreService> vectorStoreProvider,
+            RetrievalReranker retrievalReranker
     ) {
         this.documentChunkRepository = documentChunkRepository;
         this.embeddingService = embeddingService;
         this.vectorStoreProvider = vectorStoreProvider;
+        this.retrievalReranker = retrievalReranker;
     }
 
     public List<RetrievalHit> search(String query, List<String> scopePaths, int limit) {
+        return search(query, scopePaths, limit, null);
+    }
+
+    public List<RetrievalHit> search(String query, List<String> scopePaths, int limit, String agentCode) {
         List<String> scopes = scopePaths == null ? List.of() : scopePaths;
         List<RetrievalHit> fulltextHits = toHits(
                 documentChunkRepository.searchFullText(query, scopes, scopes.size(), limit));
 
         VectorStoreService vectorStore = vectorStoreProvider.getIfAvailable();
         if (vectorStore == null || !vectorStore.isEnabled() || !embeddingService.isEnabled()) {
-            return fulltextHits.stream().limit(limit).toList();
+            return retrievalReranker.rerank(fulltextHits, agentCode).stream().limit(limit).toList();
         }
 
         List<RetrievalHit> vectorHits = embeddingService.embed(query)
@@ -45,9 +52,10 @@ public class HybridRetriever {
                 .orElse(List.of());
 
         if (vectorHits.isEmpty()) {
-            return fulltextHits.stream().limit(limit).toList();
+            return retrievalReranker.rerank(fulltextHits, agentCode).stream().limit(limit).toList();
         }
-        return RrfFusion.fuse(List.of(fulltextHits, vectorHits), RrfFusion.DEFAULT_K, limit);
+        List<RetrievalHit> fused = RrfFusion.fuse(List.of(fulltextHits, vectorHits), RrfFusion.DEFAULT_K, limit);
+        return retrievalReranker.rerank(fused, agentCode).stream().limit(limit).toList();
     }
 
     private List<RetrievalHit> toHits(List<Object[]> rows) {

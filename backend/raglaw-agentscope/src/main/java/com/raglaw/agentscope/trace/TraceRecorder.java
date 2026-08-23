@@ -2,12 +2,18 @@ package com.raglaw.agentscope.trace;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.raglaw.agentscope.domain.A2aCallLogEntity;
+import com.raglaw.agentscope.domain.A2aCallLogRepository;
 import com.raglaw.agentscope.domain.LlmUsageLogEntity;
 import com.raglaw.agentscope.domain.LlmUsageLogRepository;
+import com.raglaw.agentscope.domain.RagTraceChunkEntity;
+import com.raglaw.agentscope.domain.RagTraceChunkRepository;
 import com.raglaw.agentscope.domain.RagTraceEntity;
 import com.raglaw.agentscope.domain.RagTraceRepository;
 import com.raglaw.agentscope.domain.RagTraceStageEntity;
 import com.raglaw.agentscope.domain.RagTraceStageRepository;
+import com.raglaw.rag.tool.RagSearchHit;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -19,17 +25,23 @@ public class TraceRecorder {
     private final RagTraceRepository traceRepository;
     private final RagTraceStageRepository stageRepository;
     private final LlmUsageLogRepository usageLogRepository;
+    private final A2aCallLogRepository a2aCallLogRepository;
+    private final RagTraceChunkRepository chunkRepository;
     private final ObjectMapper objectMapper;
 
     public TraceRecorder(
             RagTraceRepository traceRepository,
             RagTraceStageRepository stageRepository,
             LlmUsageLogRepository usageLogRepository,
+            A2aCallLogRepository a2aCallLogRepository,
+            RagTraceChunkRepository chunkRepository,
             ObjectMapper objectMapper
     ) {
         this.traceRepository = traceRepository;
         this.stageRepository = stageRepository;
         this.usageLogRepository = usageLogRepository;
+        this.a2aCallLogRepository = a2aCallLogRepository;
+        this.chunkRepository = chunkRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -61,6 +73,43 @@ public class TraceRecorder {
                 writeJson(detail),
                 durationMs
         ));
+    }
+
+    @Transactional
+    public void recordA2aCall(
+            String traceId,
+            String fromAgent,
+            String toAgent,
+            String inputSummary,
+            String outputSummary,
+            long latencyMs
+    ) {
+        a2aCallLogRepository.save(new A2aCallLogEntity(
+                UUID.randomUUID().toString(),
+                traceId,
+                fromAgent,
+                toAgent,
+                inputSummary,
+                outputSummary,
+                latencyMs
+        ));
+    }
+
+    @Transactional
+    public void recordChunks(String traceId, List<RagSearchHit> hits) {
+        if (hits == null || hits.isEmpty()) {
+            return;
+        }
+        for (RagSearchHit hit : hits) {
+            chunkRepository.save(new RagTraceChunkEntity(
+                    UUID.randomUUID().toString(),
+                    traceId,
+                    hit.chunkId(),
+                    hit.score(),
+                    hit.l1L2L3Path(),
+                    hit.excerpt()
+            ));
+        }
     }
 
     @Transactional

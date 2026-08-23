@@ -64,6 +64,61 @@ class AguiControllerTest {
         assertThat(ragTraceRepository.count()).isGreaterThan(tracesBefore);
     }
 
+    @Test
+    void regenerateAppendsAssistantWithoutNewUserMessage() throws Exception {
+        String token = loginToken();
+
+        MvcResult createConv = mockMvc.perform(post("/api/v1/conversations")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        String conversationId = objectMapper.readTree(createConv.getResponse().getContentAsString())
+                .path("data").path("id").asText();
+
+        Map<String, Object> firstRun = Map.of(
+                "conversationId", conversationId,
+                "message", "劳动合同解除条件？"
+        );
+        MvcResult first = mockMvc.perform(post("/api/v1/agui/run")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(firstRun)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        first.getAsyncResult(10_000L);
+
+        Map<String, Object> regenerate = Map.of(
+                "conversationId", conversationId,
+                "message", "",
+                "regenerate", true
+        );
+        MvcResult second = mockMvc.perform(post("/api/v1/agui/run")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(regenerate)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        second.getAsyncResult(10_000L);
+
+        MvcResult messages = mockMvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(
+                                        "/api/v1/conversations/" + conversationId + "/messages")
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        int assistantCount = objectMapper.readTree(messages.getResponse().getContentAsString())
+                .path("data")
+                .findValues("role")
+                .stream()
+                .map(node -> node.asText())
+                .filter(role -> "assistant".equals(role))
+                .toList()
+                .size();
+        assertThat(assistantCount).isEqualTo(2);
+    }
+
     private String loginToken() throws Exception {
         MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

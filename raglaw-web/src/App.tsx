@@ -1,14 +1,25 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { AppShell } from '@raglaw/ui';
+import { PageTransition, PlaceholderPage, Spinner } from '@raglaw/ui';
 import { useAuth } from './lib/auth';
+import { AuthenticatedLayout } from './layout/AuthenticatedLayout';
 import { AgentsAdminPage } from './pages/admin/AgentsAdminPage';
+import { ApprovalsAdminPage } from './pages/admin/ApprovalsAdminPage';
+import { CategoriesAdminPage } from './pages/admin/CategoriesAdminPage';
+import { DocumentsAdminPage } from './pages/admin/DocumentsAdminPage';
 import { ChatPage } from './pages/ChatPage';
+import { ContractsPage } from './pages/ContractsPage';
+import { KnowledgePage } from './pages/KnowledgePage';
 import { LoginPage } from './pages/LoginPage';
+import { ObservabilityAdminPage } from './pages/admin/ObservabilityAdminPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) {
-    return <p>加载中…</p>;
+    return (
+      <div className="rl-loading-page">
+        <Spinner />
+      </div>
+    );
   }
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -34,22 +45,64 @@ export default function App() {
         path="/*"
         element={
           <Protected>
-            <AppShell user={user!}>
-              <Routes>
-                <Route path="/" element={<ChatPage />} />
-                <Route path="/contracts" element={<p>合同审查（Phase 4）</p>} />
-                <Route path="/knowledge/statutes" element={<p>法规/案例查询（Phase 5）</p>} />
-                <Route
-                  path="/admin/agents"
-                  element={
-                    <AdminOnly>
-                      <AgentsAdminPage />
-                    </AdminOnly>
-                  }
-                />
-                <Route path="/admin/*" element={<p>更多管理功能开发中</p>} />
-              </Routes>
-            </AppShell>
+            <AuthenticatedLayout>
+              <PageTransition>
+                <Routes>
+                  <Route path="/" element={<ChatPage />} />
+                  <Route path="/chat/:agentCode" element={<ChatPage />} />
+                  <Route path="/contracts" element={<ContractsPage />} />
+                  <Route path="/knowledge/statutes" element={<KnowledgePage />} />
+                  <Route
+                    path="/admin/agents"
+                    element={
+                      <AdminOnly>
+                        <AgentsAdminPage />
+                      </AdminOnly>
+                    }
+                  />
+                  <Route
+                    path="/admin/categories"
+                    element={
+                      <AdminOnly>
+                        <CategoriesAdminPage />
+                      </AdminOnly>
+                    }
+                  />
+                  <Route
+                    path="/admin/documents"
+                    element={
+                      <AdminOnly>
+                        <DocumentsAdminPage />
+                      </AdminOnly>
+                    }
+                  />
+                  <Route
+                    path="/admin/approvals"
+                    element={
+                      <AdminOnly>
+                        <ApprovalsAdminPage />
+                      </AdminOnly>
+                    }
+                  />
+                  <Route
+                    path="/admin/observability"
+                    element={
+                      <AdminOnly>
+                        <ObservabilityAdminPage />
+                      </AdminOnly>
+                    }
+                  />
+                  <Route
+                    path="/admin/*"
+                    element={
+                      <AdminOnly>
+                        <PlaceholderPage title="更多管理功能" description="更多管理功能开发中。" />
+                      </AdminOnly>
+                    }
+                  />
+                </Routes>
+              </PageTransition>
+            </AuthenticatedLayout>
           </Protected>
         }
       />

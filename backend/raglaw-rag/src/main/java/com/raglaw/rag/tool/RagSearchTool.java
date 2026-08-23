@@ -4,5 +4,5 @@ import java.util.List;
 
 public interface RagSearchTool {
 
-    List<RagSearchHit> search(String query, List<String> knowledgeScopes, int limit);
+    List<RagSearchHit> search(String query, List<String> knowledgeScopes, int limit, String agentCode);
 }

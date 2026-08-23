@@ -1,5 +1,6 @@
 package com.raglaw.agentscope.domain;
 
+import com.raglaw.common.jpa.ColumnLengths;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -11,24 +12,25 @@ import java.time.Instant;
 public class RagTraceEntity {
 
     @Id
+    @Column(length = ColumnLengths.UUID)
     private String id;
 
-    @Column(name = "conversation_id")
+    @Column(name = "conversation_id", length = ColumnLengths.UUID)
     private String conversationId;
 
-    @Column(name = "message_id")
+    @Column(name = "message_id", length = ColumnLengths.UUID)
     private String messageId;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", length = ColumnLengths.UUID)
     private String userId;
 
     @Column(name = "query_text")
     private String queryText;
 
-    @Column(name = "agent_code")
+    @Column(name = "agent_code", length = ColumnLengths.AGENT_CODE)
     private String agentCode;
 
-    @Column(name = "langfuse_trace_id")
+    @Column(name = "langfuse_trace_id", length = ColumnLengths.LANGFUSE_TRACE_ID)
     private String langfuseTraceId;
 
     @Column(name = "latency_ms")

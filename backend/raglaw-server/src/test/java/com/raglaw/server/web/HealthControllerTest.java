@@ -25,6 +25,7 @@ class HealthControllerTest {
         mockMvc.perform(get("/api/v1/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.status").value("UP"));
+                .andExpect(jsonPath("$.data.status").value("UP"))
+                .andExpect(jsonPath("$.data.rag.postgresEnabled").exists());
     }
 }

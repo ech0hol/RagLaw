@@ -1,158 +1,279 @@
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { BookOpen, FileText, Gavel, Scale } from 'lucide-react';
+import {
+  ConversationList,
+  ConversationPanel,
+  MainHeader,
+  QuickActionCard,
+  type ChatMessage,
+  type ChatReference,
+  type ConversationItem,
+} from '@raglaw/ui';
 import { api, getToken } from '../lib/api';
+import { useShellConfig } from '../layout/ShellConfigContext';
 
-type Message = { id?: string; role: string; content: string };
+const AGENT_LABELS: Record<string, string> = {
+  GENERAL: '通用法律助手',
+  STATUTE_CIVIL: '民法商法规范助手',
+  CASE_CIVIL: '民事案例助手',
+  CONTRACT_GENERAL: '合同审查助手',
+};
 
 const QUICK_PROMPTS = [
-  '劳动合同解除有哪些法定情形？',
-  '借款合同未约定利息如何认定？',
-  '公司拖欠工资如何维权？',
-  '房屋租赁违约责任的常见约定有哪些？',
+  { text: '劳动合同解除有哪些法定情形？', color: 'yellow' as const, icon: <Gavel size={18} /> },
+  { text: '借款合同未约定利息如何认定？', color: 'blue' as const, icon: <Scale size={18} /> },
+  { text: '公司拖欠工资如何维权？', color: 'green' as const, icon: <FileText size={18} /> },
+  { text: '房屋租赁违约责任的常见约定有哪些？', color: 'pink' as const, icon: <BookOpen size={18} /> },
 ];
 
-export function ChatPage() {
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+type ConversationDto = { id: string; title: string; updatedAt: string; agentCode?: string };
+type MessageDto = { id: string; role: string; content: string; citationsJson?: string | null };
+
+function parseReferences(citationsJson?: string | null): ChatReference[] | undefined {
+  if (!citationsJson) return undefined;
+  try {
+    const parsed = JSON.parse(citationsJson) as ChatReference[];
+    return Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+type ChatPageProps = {
+  fixedAgentCode?: string;
+};
+
+export function ChatPage({ fixedAgentCode }: ChatPageProps) {
+  const { agentCode: routeAgentCode } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const conversationId = searchParams.get('c');
+  const { setConfig } = useShellConfig();
+
+  const defaultAgent = fixedAgentCode ?? routeAgentCode ?? 'GENERAL';
+  const [agentCode, setAgentCode] = useState(defaultAgent);
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [convLoading, setConvLoading] = useState(true);
+  const [searchFilter, setSearchFilter] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [recommendQuestions, setRecommendQuestions] = useState<string[]>([]);
+  const messageListRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streaming]);
+    setAgentCode(defaultAgent);
+  }, [defaultAgent]);
 
-  async function ensureConversation() {
-    if (conversationId) {
-      return conversationId;
+  const pageTitle = fixedAgentCode || routeAgentCode
+    ? AGENT_LABELS[defaultAgent] ?? defaultAgent
+    : '智能对话';
+
+  const refreshConversations = useCallback(async () => {
+    const res = await api<ConversationDto[]>('/api/v1/conversations');
+    if (res.success) {
+      setConversations(res.data.map((c) => ({ id: c.id, title: c.title, updatedAt: c.updatedAt })));
     }
-    const res = await api<{ id: string }>('/api/v1/conversations', { method: 'POST', body: '{}' });
-    if (!res.success) {
-      throw new Error(res.error?.message ?? '创建会话失败');
+    setConvLoading(false);
+  }, []);
+
+  useEffect(() => { void refreshConversations(); }, [refreshConversations]);
+
+  const filteredConversations = useMemo(() => {
+    if (!searchFilter.trim()) return conversations;
+    const q = searchFilter.toLowerCase();
+    return conversations.filter((c) => (c.title || '新对话').toLowerCase().includes(q));
+  }, [conversations, searchFilter]);
+
+  const loadMessages = useCallback(async (id: string) => {
+    const res = await api<MessageDto[]>(`/api/v1/conversations/${id}/messages`);
+    if (res.success) {
+      setMessages(res.data.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        references: parseReferences(m.citationsJson),
+      })));
     }
-    setConversationId(res.data.id);
+  }, []);
+
+  useEffect(() => {
+    if (conversationId) void loadMessages(conversationId);
+    else setMessages([]);
+  }, [conversationId, loadMessages]);
+
+  const selectConversation = useCallback((id: string) => setSearchParams({ c: id }), [setSearchParams]);
+  const newChat = useCallback(() => {
+    setSearchParams({});
+    setMessages([]);
+    setInput('');
+    setRecommendQuestions([]);
+  }, [setSearchParams]);
+
+  useEffect(() => {
+    setConfig({
+      showSearch: true,
+      searchValue: searchFilter,
+      onSearchChange: setSearchFilter,
+      sidebarExtra: (
+        <ConversationList
+          conversations={filteredConversations}
+          selectedId={conversationId}
+          onSelect={selectConversation}
+          onNewChat={newChat}
+          loading={convLoading}
+        />
+      ),
+    });
+    return () => setConfig({});
+  }, [filteredConversations, conversationId, convLoading, searchFilter, selectConversation, newChat, setConfig]);
+
+  useEffect(() => {
+    messageListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, streaming, statusMessage]);
+
+  async function ensureConversation(): Promise<string> {
+    if (conversationId) return conversationId;
+    const res = await api<ConversationDto>('/api/v1/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ agentCode }),
+    });
+    if (!res.success) throw new Error(res.error?.message ?? '创建会话失败');
+    setSearchParams({ c: res.data.id });
+    void refreshConversations();
     return res.data.id;
   }
 
-  async function sendMessage(text: string) {
-    if (!text.trim() || streaming) {
-      return;
+  async function streamAgui(text: string, regenerate = false) {
+    const convId = await ensureConversation();
+    const token = getToken();
+    const res = await fetch('/api/v1/agui/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ conversationId: convId, message: text, agentCode, regenerate }),
+    });
+    if (!res.ok) throw new Error(`对话请求失败 (${res.status})`);
+
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error('无法读取流式响应');
+
+    const decoder = new TextDecoder();
+    let assistant = '';
+    const references: ChatReference[] = [];
+    setStatusMessage('');
+    setRecommendQuestions([]);
+    setMessages((prev) => [...prev, { role: 'assistant', content: '', references: [] }]);
+
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop() ?? '';
+      for (const part of parts) {
+        const lines = part.split('\n');
+        let event = '';
+        let data = '';
+        for (const line of lines) {
+          if (line.startsWith('event:')) event = line.slice(6).trim();
+          else if (line.startsWith('data:')) data = line.slice(5).trim();
+        }
+        if (event === 'status' && data) {
+          const parsed = JSON.parse(data) as { message?: string };
+          setStatusMessage(parsed.message ?? '');
+        } else if (event === 'text' && data) {
+          const parsed = JSON.parse(data) as { delta?: string };
+          assistant += parsed.delta ?? '';
+          setMessages((prev) => {
+            const next = [...prev];
+            const last = next[next.length - 1];
+            next[next.length - 1] = { ...last, content: assistant, references: [...references] };
+            return next;
+          });
+        } else if (event === 'reference' && data) {
+          const parsed = JSON.parse(data) as ChatReference;
+          references.push(parsed);
+          setMessages((prev) => {
+            const next = [...prev];
+            const last = next[next.length - 1];
+            next[next.length - 1] = { ...last, references: [...references] };
+            return next;
+          });
+        } else if (event === 'recommend' && data) {
+          const parsed = JSON.parse(data) as { questions?: string[] };
+          setRecommendQuestions(parsed.questions ?? []);
+        } else if (event === 'error' && data) {
+          const parsed = JSON.parse(data) as { message?: string };
+          throw new Error(parsed.message ?? '流式响应错误');
+        }
+      }
     }
+    setStatusMessage('');
+    void refreshConversations();
+  }
+
+  async function sendMessage(text: string) {
+    if (!text.trim() || streaming) return;
     setStreaming(true);
     setMessages((prev) => [...prev, { role: 'user', content: text }]);
     setInput('');
-
     try {
-      const convId = await ensureConversation();
-      const token = getToken();
-      const res = await fetch('/api/v1/agui/run', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ conversationId: convId, message: text }),
-      });
-
-      if (!res.ok) {
-        throw new Error(`对话请求失败 (${res.status})`);
-      }
-
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder();
-      let assistant = '';
-      setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
-
-      if (!reader) {
-        throw new Error('无法读取流式响应');
-      }
-
-      let buffer = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split('\n\n');
-        buffer = parts.pop() ?? '';
-        for (const part of parts) {
-          const lines = part.split('\n');
-          let event = '';
-          let data = '';
-          for (const line of lines) {
-            if (line.startsWith('event:')) {
-              event = line.slice(6).trim();
-            } else if (line.startsWith('data:')) {
-              data = line.slice(5).trim();
-            }
-          }
-          if (event === 'text' && data) {
-            const parsed = JSON.parse(data) as { delta?: string };
-            assistant += parsed.delta ?? '';
-            setMessages((prev) => {
-              const next = [...prev];
-              next[next.length - 1] = { role: 'assistant', content: assistant };
-              return next;
-            });
-          } else if (event === 'error' && data) {
-            const parsed = JSON.parse(data) as { message?: string };
-            throw new Error(parsed.message ?? '流式响应错误');
-          }
-        }
-      }
+      await streamAgui(text);
     } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: err instanceof Error ? err.message : '发送失败' },
-      ]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: err instanceof Error ? err.message : '发送失败' }]);
     } finally {
       setStreaming(false);
     }
   }
 
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    void sendMessage(input);
-  }
-
   return (
-    <div className="chat-page">
-      {messages.length === 0 ? (
-        <div className="welcome">
-          <h1>智能法律咨询</h1>
-          <p>输入问题，或选择快捷卡片开始对话</p>
-          <div className="quick-cards">
-            {QUICK_PROMPTS.map((prompt) => (
-              <button key={prompt} type="button" onClick={() => void sendMessage(prompt)}>
-                {prompt}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="message-list">
-          {messages.map((msg, i) => (
-            <div key={i} className={`bubble ${msg.role}`}>
-              {msg.content || (streaming && msg.role === 'assistant' ? '…' : '')}
+    <div className="rl-chat-page">
+      <MainHeader
+        title={pageTitle}
+        actions={
+          !fixedAgentCode && !routeAgentCode ? (
+            <label className="rl-chat-toolbar__label">
+              助手
+              <select
+                className="rl-chat-toolbar__select"
+                value={agentCode}
+                onChange={(e) => setAgentCode(e.target.value)}
+                disabled={streaming}
+              >
+                {Object.entries(AGENT_LABELS).map(([code, label]) => (
+                  <option key={code} value={code}>{label}</option>
+                ))}
+              </select>
+            </label>
+          ) : undefined
+        }
+      />
+      <ConversationPanel
+        messages={messages}
+        input={input}
+        streaming={streaming}
+        onInputChange={setInput}
+        onSubmit={(e: FormEvent) => { e.preventDefault(); void sendMessage(input); }}
+        statusMessage={statusMessage}
+        recommendQuestions={recommendQuestions}
+        onRecommendClick={(q) => void sendMessage(q)}
+        messageListRef={messageListRef}
+        welcome={
+          <>
+            <h1>欢迎使用 RagLaw</h1>
+            <p>输入问题，或选择快捷卡片开始对话</p>
+            <div className="rl-quick-cards">
+              {QUICK_PROMPTS.map((prompt, index) => (
+                <QuickActionCard key={prompt.text} color={prompt.color} icon={prompt.icon} delayIndex={index} onClick={() => void sendMessage(prompt.text)}>
+                  {prompt.text}
+                </QuickActionCard>
+              ))}
             </div>
-          ))}
-          <div ref={bottomRef} />
-        </div>
-      )}
-
-      <form className="composer" onSubmit={onSubmit}>
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="描述您的法律问题…"
-          rows={2}
-          disabled={streaming}
-        />
-        <button type="submit" disabled={streaming || !input.trim()}>
-          发送
-        </button>
-      </form>
-      <p className="disclaimer">AI 辅助参考，不构成法律意见。</p>
+          </>
+        }
+      />
     </div>
   );
 }

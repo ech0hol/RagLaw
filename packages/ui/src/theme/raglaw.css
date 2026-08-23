@@ -1,0 +1,87 @@
+@import './components.css';
+
+:root {
+  /* Background & surfaces */
+  --rl-bg: #f7f8fa;
+  --rl-surface: #ffffff;
+  --rl-surface-hover: #f3f4f6;
+  --rl-sidebar-bg: #f7f8fa;
+
+  /* Primary (neutral navy) */
+  --rl-primary: #1a1d26;
+  --rl-primary-hover: #2d3142;
+  --rl-primary-soft: #e8e9ec;
+
+  /* Danger (errors) */
+  --rl-danger: #dc2626;
+  --rl-danger-soft: #fef2f2;
+
+  /* Pastel accents */
+  --rl-pastel-yellow-bg: #fef9c3;
+  --rl-pastel-yellow: #ca8a04;
+  --rl-pastel-blue-bg: #dbeafe;
+  --rl-pastel-blue: #2563eb;
+  --rl-pastel-green-bg: #dcfce7;
+  --rl-pastel-green: #16a34a;
+  --rl-pastel-pink-bg: #fce7f3;
+  --rl-pastel-pink: #db2777;
+
+  /* Text */
+  --rl-text: #1a1d26;
+  --rl-text-muted: #6b7280;
+
+  /* Borders & shadows */
+  --rl-border: rgba(0, 0, 0, 0.05);
+  --rl-border-subtle: rgba(0, 0, 0, 0.06);
+  --rl-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --rl-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --rl-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --rl-shadow-nav-active: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  /* Radius */
+  --rl-radius-sm: 10px;
+  --rl-radius-md: 14px;
+  --rl-radius-lg: 18px;
+  --rl-radius-xl: 22px;
+  --rl-radius-pill: 999px;
+
+  /* Motion */
+  --rl-duration-fast: 0.18s;
+  --rl-duration: 0.28s;
+  --rl-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --rl-ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Legacy aliases */
+  --accent: var(--rl-primary);
+  --rl-accent: var(--rl-primary);
+  --rl-accent-hover: var(--rl-primary-hover);
+  --rl-accent-soft: var(--rl-primary-soft);
+  --rl-accent-muted: rgba(26, 29, 38, 0.15);
+
+  --bg: var(--rl-bg);
+  --panel: var(--rl-surface);
+  --text: var(--rl-text);
+  --muted: var(--rl-text-muted);
+
+  font-family: 'Noto Sans SC', 'Inter', system-ui, sans-serif;
+  color: var(--rl-text);
+  background: var(--rl-bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

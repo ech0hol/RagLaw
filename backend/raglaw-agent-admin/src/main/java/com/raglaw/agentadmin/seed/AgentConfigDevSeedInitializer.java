@@ -39,6 +39,10 @@ public class AgentConfigDevSeedInitializer implements ApplicationRunner {
                 "[]", "[\"cat_l2_statute_civil\"]", "[]",
                 "你是法规专家，专注民法商法领域，回答需引用依据。", "[\"rag_search\"]"));
         repository.save(new AgentConfigEntity(
+                "agent_case_civil", "CASE_CIVIL", "民事案例助手", "CASE", true, "dashscope:qwen-plus",
+                "[]", "[\"cat_l2_case_civil\"]", "[]",
+                "你是案例检索专家，擅长从裁判文书中提炼要点。", "[\"rag_search\"]"));
+        repository.save(new AgentConfigEntity(
                 "agent_contract_general", "CONTRACT_GENERAL", "合同审查通用助手", "CONTRACT", true, "dashscope:qwen-max",
                 "[\"risk-dimension-review\"]", "[\"cat_l2_contract_civil\"]", "[]",
                 "你是合同审查专家，识别风险并给出修订建议。", "[\"rag_search\"]"));

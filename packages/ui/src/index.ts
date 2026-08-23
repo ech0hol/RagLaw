@@ -1,1 +1,16 @@
 export { AppShell } from './layout/AppShell';
+export { Badge } from './components/Badge';
+export { Button } from './components/Button';
+export { Card } from './components/Card';
+export { ConversationList, type ConversationItem } from './components/ConversationList';
+export { ConversationPanel, type ChatMessage } from './components/ConversationPanel';
+export { MainHeader } from './components/MainHeader';
+export { QuickActionCard } from './components/QuickActionCard';
+export { ReferenceList, type ChatReference } from './components/ReferenceList';
+export { SearchInput } from './components/SearchInput';
+export { Input, Textarea } from './components/Input';
+export { NavItem, NavSection } from './components/NavItem';
+export { PageHeader } from './components/PageHeader';
+export { PageTransition } from './components/PageTransition';
+export { PlaceholderPage } from './components/PlaceholderPage';
+export { Spinner } from './components/Spinner';

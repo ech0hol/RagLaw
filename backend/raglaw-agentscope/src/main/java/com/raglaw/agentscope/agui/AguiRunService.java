@@ -2,6 +2,8 @@ package com.raglaw.agentscope.agui;
 
 import com.raglaw.agentadmin.model.AgentConfigSnapshot;
 import com.raglaw.agentadmin.registry.AgentRegistry;
+import com.raglaw.agentscope.a2a.A2aOrchestrator;
+import com.raglaw.agentscope.a2a.QuestionRecommender;
 import com.raglaw.agentscope.agui.dto.AguiRunRequest;
 import com.raglaw.agentscope.config.AgentscopeLlmProperties;
 import com.raglaw.agentscope.trace.TraceContext;
@@ -37,6 +39,8 @@ public class AguiRunService {
     private final DashScopeClient dashScopeClient;
     private final AgentscopeLlmProperties llmProperties;
     private final Environment environment;
+    private final A2aOrchestrator a2aOrchestrator;
+    private final QuestionRecommender questionRecommender;
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public AguiRunService(
@@ -47,7 +51,9 @@ public class AguiRunService {
             TaskCancellationRegistry cancellationRegistry,
             DashScopeClient dashScopeClient,
             AgentscopeLlmProperties llmProperties,
-            Environment environment
+            Environment environment,
+            A2aOrchestrator a2aOrchestrator,
+            QuestionRecommender questionRecommender
     ) {
         this.agentRegistry = agentRegistry;
         this.ragSearchTool = ragSearchTool;
@@ -57,6 +63,8 @@ public class AguiRunService {
         this.dashScopeClient = dashScopeClient;
         this.llmProperties = llmProperties;
         this.environment = environment;
+        this.a2aOrchestrator = a2aOrchestrator;
+        this.questionRecommender = questionRecommender;
     }
 
     public SseEmitter run(AguiRunRequest request) {
@@ -101,17 +109,28 @@ public class AguiRunService {
             String userId
     ) throws IOException {
         long startMs = System.currentTimeMillis();
-        String agentCode = resolveAgentCode(request.agentCode());
+        String agentCode = resolveAgentCode(request, userId);
         AgentConfigSnapshot agent = resolveAgent(agentCode);
         String conversationId = resolveConversationId(request, userId, agentCode);
+        boolean regenerate = Boolean.TRUE.equals(request.regenerate());
 
-        conversationService.appendMessage(userId, conversationId, "user", request.message(), null)
-                .orElseThrow(() -> new IllegalArgumentException("会话不存在或无权访问"));
+        String userMessage;
+        if (regenerate) {
+            userMessage = conversationService.findLastUserMessageContent(userId, conversationId)
+                    .orElseThrow(() -> new IllegalArgumentException("找不到可重新生成的用户消息"));
+        } else {
+            userMessage = request.message();
+            if (userMessage == null || userMessage.isBlank()) {
+                throw new IllegalArgumentException("消息不能为空");
+            }
+            conversationService.appendMessage(userId, conversationId, "user", userMessage, null)
+                    .orElseThrow(() -> new IllegalArgumentException("会话不存在或无权访问"));
+        }
 
         TraceContext trace = traceRecorder.start(
                 conversationId,
                 userId,
-                request.message(),
+                userMessage,
                 agent.code()
         );
 
@@ -127,33 +146,40 @@ public class AguiRunService {
         AguiSseWriter.send(emitter, "status", Map.of("message", "正在处理您的问题…"));
 
         List<RagSearchHit> hits = List.of();
-        if (agent.tools().contains("rag_search")) {
+        String delegatedPeer = null;
+        if ("GENERAL".equals(agent.code())
+                && agent.a2aPeers() != null
+                && !agent.a2aPeers().isEmpty()) {
+            A2aOrchestrator.A2aResult a2aResult = a2aOrchestrator.delegate(
+                    agent,
+                    userMessage,
+                    trace.traceId(),
+                    emitter
+            );
+            if (a2aResult.hasPeer()) {
+                hits = a2aResult.hits();
+                delegatedPeer = a2aResult.peerName();
+            }
+        } else if (agent.tools().contains("rag_search")) {
             long ragStart = System.currentTimeMillis();
-            hits = ragSearchTool.search(request.message(), agent.knowledgeScopes(), 5);
+            hits = ragSearchTool.search(userMessage, agent.knowledgeScopes(), 5, agent.code());
             traceRecorder.recordStage(
                     trace.traceId(),
                     "rag_search",
                     Map.of("hitCount", hits.size(), "scopes", agent.knowledgeScopes()),
                     System.currentTimeMillis() - ragStart
             );
-            for (int i = 0; i < hits.size(); i++) {
-                RagSearchHit hit = hits.get(i);
-                AguiSseWriter.send(emitter, "reference", Map.of(
-                        "index", i + 1,
-                        "chunkId", hit.chunkId(),
-                        "path", hit.l1L2L3Path(),
-                        "excerpt", hit.excerpt(),
-                        "score", hit.score()
-                ));
-            }
         }
+
+        emitReferences(emitter, hits);
+        traceRecorder.recordChunks(trace.traceId(), hits);
 
         checkCancelled(taskId);
 
-        String ragContext = buildRagContext(hits);
+        String ragContext = buildRagContext(hits, delegatedPeer);
         String userMessageWithContext = ragContext.isBlank()
-                ? request.message()
-                : ragContext + "\n\n用户问题：" + request.message();
+                ? userMessage
+                : ragContext + "\n\n用户问题：" + userMessage;
 
         String fullText;
         Integer promptTokens = null;
@@ -190,7 +216,7 @@ public class AguiRunService {
                 "llm",
                 Map.of(
                         "model", agent.model(),
-                        "regenerate", Boolean.TRUE.equals(request.regenerate()),
+                        "regenerate", regenerate,
                         "mock", useMockLlm()
                 ),
                 System.currentTimeMillis() - llmStart
@@ -208,6 +234,9 @@ public class AguiRunService {
 
         conversationService.appendMessage(userId, conversationId, "assistant", fullText, null)
                 .orElseThrow(() -> new IllegalArgumentException("会话不存在或无权访问"));
+
+        List<String> recommendations = questionRecommender.recommend(userMessage, agent.code(), 3);
+        AguiSseWriter.send(emitter, "recommend", Map.of("questions", recommendations));
 
         AguiSseWriter.send(emitter, "done", Map.of(
                 "messageId", trace.messageId(),
@@ -277,11 +306,30 @@ public class AguiRunService {
         return response;
     }
 
-    private static String buildRagContext(List<RagSearchHit> hits) {
+    private static void emitReferences(SseEmitter emitter, List<RagSearchHit> hits) throws IOException {
+        for (int i = 0; i < hits.size(); i++) {
+            RagSearchHit hit = hits.get(i);
+            AguiSseWriter.send(emitter, "reference", Map.of(
+                    "index", i + 1,
+                    "chunkId", hit.chunkId(),
+                    "documentId", hit.documentId() != null ? hit.documentId() : "",
+                    "path", hit.l1L2L3Path(),
+                    "excerpt", hit.excerpt(),
+                    "score", hit.score()
+            ));
+        }
+    }
+
+    private static String buildRagContext(List<RagSearchHit> hits, String delegatedPeer) {
         if (hits == null || hits.isEmpty()) {
             return "";
         }
-        StringBuilder sb = new StringBuilder("以下是从知识库检索到的参考条文（请优先依据这些内容回答，并标注引用序号）：\n");
+        StringBuilder sb = new StringBuilder();
+        if (delegatedPeer != null && !delegatedPeer.isBlank()) {
+            sb.append("已通过专家助手「").append(delegatedPeer).append("」检索到参考依据：\n");
+        } else {
+            sb.append("以下是从知识库检索到的参考条文（请优先依据这些内容回答，并标注引用序号）：\n");
+        }
         for (int i = 0; i < hits.size(); i++) {
             RagSearchHit hit = hits.get(i);
             sb.append('[').append(i + 1).append("] ").append(hit.excerpt()).append('\n');
@@ -305,6 +353,15 @@ public class AguiRunService {
         if (userId == null || userId.isBlank()) {
             throw new IllegalArgumentException("未登录，无法创建会话");
         }
+        if (Boolean.TRUE.equals(request.regenerate())) {
+            if (request.conversationId() == null || request.conversationId().isBlank()) {
+                throw new IllegalArgumentException("重新生成需要已有会话");
+            }
+            if (conversationService.get(userId, request.conversationId()).isEmpty()) {
+                throw new IllegalArgumentException("会话不存在或无权访问");
+            }
+            return request.conversationId();
+        }
         if (request.conversationId() != null && !request.conversationId().isBlank()
                 && conversationService.get(userId, request.conversationId()).isPresent()) {
             return request.conversationId();
@@ -312,11 +369,19 @@ public class AguiRunService {
         return conversationService.create(userId, agentCode).id();
     }
 
-    private String resolveAgentCode(String agentCode) {
-        if (agentCode == null || agentCode.isBlank()) {
-            return DEFAULT_AGENT;
+    private String resolveAgentCode(AguiRunRequest request, String userId) {
+        if (request.agentCode() != null && !request.agentCode().isBlank()) {
+            return request.agentCode();
         }
-        return agentCode;
+        if (userId != null
+                && request.conversationId() != null
+                && !request.conversationId().isBlank()) {
+            return conversationService.get(userId, request.conversationId())
+                    .map(conversation -> conversation.agentCode())
+                    .filter(code -> code != null && !code.isBlank())
+                    .orElse(DEFAULT_AGENT);
+        }
+        return DEFAULT_AGENT;
     }
 
     private AgentConfigSnapshot resolveAgent(String agentCode) {

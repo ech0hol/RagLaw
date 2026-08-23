@@ -40,7 +40,12 @@ class HybridRetrieverTest {
 
     @BeforeEach
     void setUp() {
-        hybridRetriever = new HybridRetriever(documentChunkRepository, embeddingService, vectorStoreProvider);
+        hybridRetriever = new HybridRetriever(
+                documentChunkRepository,
+                embeddingService,
+                vectorStoreProvider,
+                new RetrievalReranker()
+        );
     }
 
     @Test

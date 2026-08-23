@@ -21,9 +21,9 @@ public class HybridRagSearchTool implements RagSearchTool {
     }
 
     @Override
-    public List<RagSearchHit> search(String query, List<String> knowledgeScopes, int limit) {
+    public List<RagSearchHit> search(String query, List<String> knowledgeScopes, int limit, String agentCode) {
         List<String> scopePaths = knowledgeScopeResolver.resolvePaths(knowledgeScopes);
-        return hybridRetriever.search(query, scopePaths, limit).stream()
+        return hybridRetriever.search(query, scopePaths, limit, agentCode).stream()
                 .map(this::toHit)
                 .toList();
     }
@@ -31,6 +31,6 @@ public class HybridRagSearchTool implements RagSearchTool {
     private RagSearchHit toHit(RetrievalHit hit) {
         String path = hit.l3Path() != null && !hit.l3Path().isBlank() ? hit.l3Path() : hit.l2Path();
         String excerpt = hit.content().length() <= 200 ? hit.content() : hit.content().substring(0, 200) + "…";
-        return new RagSearchHit(hit.chunkId(), hit.score(), path, excerpt);
+        return new RagSearchHit(hit.chunkId(), hit.documentId(), hit.score(), path, excerpt);
     }
 }

@@ -26,7 +26,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
+    SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtAuthFilter jwtAuthFilter,
+            LoginRateLimitFilter loginRateLimitFilter,
+            AguiRateLimitFilter aguiRateLimitFilter
+    ) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -54,7 +59,9 @@ public class SecurityConfig {
                             response.getWriter().write(
                                     "{\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"无权限\"}}");
                         }))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(aguiRateLimitFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
