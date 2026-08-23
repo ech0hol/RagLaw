@@ -23,7 +23,21 @@ public class HybridRagSearchTool implements RagSearchTool {
     @Override
     public List<RagSearchHit> search(String query, List<String> knowledgeScopes, int limit, String agentCode) {
         List<String> scopePaths = knowledgeScopeResolver.resolvePaths(knowledgeScopes);
-        return hybridRetriever.search(query, scopePaths, limit, agentCode).stream()
+        return hybridRetriever.search(query, scopePaths, limit, agentCode, null).stream()
+                .map(this::toHit)
+                .toList();
+    }
+
+    @Override
+    public List<RagSearchHit> searchScopedToDocument(
+            String query,
+            List<String> knowledgeScopes,
+            int limit,
+            String agentCode,
+            String documentId
+    ) {
+        List<String> scopePaths = knowledgeScopeResolver.resolvePaths(knowledgeScopes);
+        return hybridRetriever.search(query, scopePaths, limit, agentCode, documentId).stream()
                 .map(this::toHit)
                 .toList();
     }

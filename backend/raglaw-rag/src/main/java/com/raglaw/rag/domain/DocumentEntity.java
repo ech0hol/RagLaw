@@ -36,6 +36,9 @@ public class DocumentEntity {
     @Column(name = "minio_key", length = ColumnLengths.MINIO_KEY)
     private String minioKey;
 
+    @Column(name = "metadata_json", columnDefinition = "JSON")
+    private String metadataJson;
+
     @Column(name = "reject_reason", length = ColumnLengths.REJECT_REASON)
     private String rejectReason;
 
@@ -86,6 +89,15 @@ public class DocumentEntity {
 
     public String getMinioKey() {
         return minioKey;
+    }
+
+    public String getMetadataJson() {
+        return metadataJson;
+    }
+
+    public void setMetadataJson(String metadataJson) {
+        this.metadataJson = metadataJson;
+        this.updatedAt = Instant.now();
     }
 
     public String getRejectReason() {

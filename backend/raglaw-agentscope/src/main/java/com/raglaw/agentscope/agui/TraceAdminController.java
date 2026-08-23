@@ -1,6 +1,7 @@
 package com.raglaw.agentscope.agui;
 
 import com.raglaw.agentscope.domain.RagTraceStageEntity;
+import com.raglaw.agentscope.dto.TraceDetailDto;
 import com.raglaw.agentscope.dto.TraceSummaryDto;
 import com.raglaw.agentscope.trace.TraceQueryService;
 import com.raglaw.common.api.ApiResponse;
@@ -23,6 +24,11 @@ public class TraceAdminController {
     @GetMapping
     public ApiResponse<List<TraceSummaryDto>> list() {
         return ApiResponse.ok(traceQueryService.listRecent());
+    }
+
+    @GetMapping("/{traceId}")
+    public ApiResponse<TraceDetailDto> get(@PathVariable("traceId") String traceId) {
+        return ApiResponse.ok(traceQueryService.getDetail(traceId));
     }
 
     @GetMapping("/{traceId}/stages")

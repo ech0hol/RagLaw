@@ -1,5 +1,6 @@
 import type { FormEvent, ReactNode } from 'react';
 import { Paperclip, Mic, BookOpen, Send } from 'lucide-react';
+import { MarkdownContent } from './MarkdownContent';
 import { ReferenceList, type ChatReference } from './ReferenceList';
 
 export type ChatMessage = {
@@ -23,6 +24,10 @@ type ConversationPanelProps = {
   statusMessage?: string;
   recommendQuestions?: string[];
   onRecommendClick?: (question: string) => void;
+  onCopy?: (content: string) => void;
+  onRegenerate?: () => void;
+  canRegenerate?: boolean;
+  onMessageListScroll?: () => void;
 };
 
 export function ConversationPanel({
@@ -32,11 +37,15 @@ export function ConversationPanel({
   onInputChange,
   onSubmit,
   welcome,
-  disclaimer = 'AI 辅助参考，不构成法律意见。',
+  disclaimer,
   messageListRef,
   statusMessage,
   recommendQuestions = [],
   onRecommendClick,
+  onCopy,
+  onRegenerate,
+  canRegenerate = false,
+  onMessageListScroll,
 }: ConversationPanelProps) {
   const charCount = input.length;
 
@@ -45,7 +54,7 @@ export function ConversationPanel({
       {messages.length === 0 && welcome ? (
         <div className="rl-chat-welcome">{welcome}</div>
       ) : (
-        <div className="rl-message-list" ref={messageListRef}>
+        <div className="rl-message-list" ref={messageListRef} onScroll={onMessageListScroll}>
           {statusMessage && streaming && (
             <p className="rl-chat-status" data-testid="chat-status">{statusMessage}</p>
           )}
@@ -63,10 +72,32 @@ export function ConversationPanel({
                   msg.role === 'user' ? 'rl-bubble--user' : 'rl-bubble--assistant',
                 ].join(' ')}
               >
-                {msg.content || (streaming && msg.role === 'assistant' ? '…' : '')}
+                {msg.role === 'assistant' ? (
+                  msg.content ? (
+                    <MarkdownContent content={msg.content} />
+                  ) : (
+                    streaming ? '…' : ''
+                  )
+                ) : (
+                  msg.content
+                )}
               </div>
               {msg.role === 'assistant' && msg.references && msg.references.length > 0 && (
                 <ReferenceList references={msg.references} />
+              )}
+              {msg.role === 'assistant' && msg.content && !streaming && (
+                <div className="rl-message-actions">
+                  {onCopy && (
+                    <button type="button" className="rl-message-actions__btn" onClick={() => onCopy(msg.content)}>
+                      复制
+                    </button>
+                  )}
+                  {onRegenerate && canRegenerate && i === messages.length - 1 && (
+                    <button type="button" className="rl-message-actions__btn" onClick={onRegenerate}>
+                      重新生成
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           ))}

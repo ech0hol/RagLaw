@@ -47,4 +47,24 @@ public class RagTraceChunkEntity {
         this.path = path;
         this.excerpt = excerpt;
     }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getChunkId() {
+        return chunkId;
+    }
+
+    public Double getScore() {
+        return score;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public String getExcerpt() {
+        return excerpt;
+    }
 }

@@ -99,6 +99,19 @@ class HybridRetrieverTest {
     }
 
     @Test
+    void searchScopedToDocumentUsesDocumentQuery() {
+        when(documentChunkRepository.searchFullTextForDocument(eq("违约金"), eq("doc-contract-1"), eq(5)))
+                .thenReturn(List.<Object[]>of(new Object[]{
+                        "chunk-1", "doc-contract-1", "违约金条款", "/CONTRACT", "/CONTRACT/CIVIL", "/CONTRACT/CIVIL/GENERAL", 2.0d
+                }));
+
+        List<RetrievalHit> hits = hybridRetriever.search("违约金", List.of(), 5, null, "doc-contract-1");
+
+        assertThat(hits).hasSize(1);
+        assertThat(hits.get(0).documentId()).isEqualTo("doc-contract-1");
+    }
+
+    @Test
     void rrfFusionPrefersItemsPresentInBothLists() {
         RetrievalHit a = new RetrievalHit("a", "d1", "content-a", "/l1", "/l2", "/l3", 0);
         RetrievalHit b = new RetrievalHit("b", "d2", "content-b", "/l1", "/l2", "/l3", 0);

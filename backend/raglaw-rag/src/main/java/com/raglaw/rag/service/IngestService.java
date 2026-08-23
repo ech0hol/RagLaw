@@ -3,18 +3,22 @@ package com.raglaw.rag.service;
 import com.raglaw.common.api.ErrorCodes;
 import com.raglaw.common.exception.BusinessException;
 import com.raglaw.common.util.Ids;
+import com.raglaw.rag.contract.ContractClassifier;
+import com.raglaw.rag.contract.ContractRiskAnalyzer;
 import com.raglaw.rag.domain.CategoryEntity;
 import com.raglaw.rag.domain.DocStatus;
 import com.raglaw.rag.domain.DocumentChunkEntity;
 import com.raglaw.rag.domain.DocumentEntity;
+import com.raglaw.rag.ingest.DocumentTextExtractor;
 import com.raglaw.rag.ingest.MarkdownChunker;
 import com.raglaw.rag.repository.DocumentChunkRepository;
 import com.raglaw.rag.repository.DocumentRepository;
 import com.raglaw.rag.service.storage.DocumentStorageService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
@@ -27,23 +31,35 @@ public class IngestService {
     private final DocumentChunkRepository documentChunkRepository;
     private final CategoryService categoryService;
     private final DocumentStorageService documentStorageService;
+    private final DocumentTextExtractor documentTextExtractor;
+    private final ContractClassifier contractClassifier;
+    private final ContractRiskAnalyzer contractRiskAnalyzer;
     private final EmbeddingService embeddingService;
     private final ObjectProvider<VectorStoreService> vectorStoreService;
+    private final ObjectMapper objectMapper;
 
     public IngestService(
             DocumentRepository documentRepository,
             DocumentChunkRepository documentChunkRepository,
             CategoryService categoryService,
             DocumentStorageService documentStorageService,
+            DocumentTextExtractor documentTextExtractor,
+            ContractClassifier contractClassifier,
+            ContractRiskAnalyzer contractRiskAnalyzer,
             EmbeddingService embeddingService,
-            ObjectProvider<VectorStoreService> vectorStoreService
+            ObjectProvider<VectorStoreService> vectorStoreService,
+            ObjectMapper objectMapper
     ) {
         this.documentRepository = documentRepository;
         this.documentChunkRepository = documentChunkRepository;
         this.categoryService = categoryService;
         this.documentStorageService = documentStorageService;
+        this.documentTextExtractor = documentTextExtractor;
+        this.contractClassifier = contractClassifier;
+        this.contractRiskAnalyzer = contractRiskAnalyzer;
         this.embeddingService = embeddingService;
         this.vectorStoreService = vectorStoreService;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -51,8 +67,12 @@ public class IngestService {
         CategoryEntity category = categoryService.findEntity(document.getCategoryId());
         CategoryPaths paths = resolveCategoryPaths(category);
 
-        String markdown = readContent(document.getMinioKey());
-        List<String> chunks = MarkdownChunker.chunkByParagraph(markdown);
+        DocumentTextExtractor.ExtractionResult extraction = readContent(document.getMinioKey());
+        if ("CONTRACT".equals(document.getDocType())) {
+            applyContractMetadata(document, extraction);
+        }
+
+        List<String> chunks = MarkdownChunker.chunkByParagraph(extraction.text());
 
         documentChunkRepository.deleteByDocumentId(document.getId());
         VectorStoreService vectorStore = vectorStoreService.getIfAvailable();
@@ -86,12 +106,41 @@ public class IngestService {
             }
             documentRepository.save(document);
         }
+
+        if ("CONTRACT".equals(document.getDocType())) {
+            contractRiskAnalyzer.analyze(document.getId());
+        }
     }
 
     public InputStream download(String documentId) {
         DocumentEntity document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new BusinessException(ErrorCodes.NOT_FOUND, "文档不存在"));
         return documentStorageService.load(document.getMinioKey());
+    }
+
+    public String resolveOriginalFilename(DocumentEntity document) {
+        String key = document.getMinioKey();
+        if (key == null || key.isBlank()) {
+            return document.getTitle() + ".md";
+        }
+        int slash = Math.max(key.lastIndexOf('/'), key.lastIndexOf('\\'));
+        return slash >= 0 ? key.substring(slash + 1) : key;
+    }
+
+    private void applyContractMetadata(DocumentEntity document, DocumentTextExtractor.ExtractionResult extraction) {
+        ContractClassifier.ClassificationResult classification = contractClassifier.classify(extraction.text());
+        try {
+            document.setMetadataJson(objectMapper.writeValueAsString(Map.of(
+                    "contractDomain", classification.domain(),
+                    "suggestedAgentCode", classification.suggestedAgentCode(),
+                    "keywordHits", classification.keywordHits(),
+                    "extractMethod", extraction.method(),
+                    "ocrUsed", extraction.ocrUsed()
+            )));
+        } catch (Exception ex) {
+            document.setMetadataJson(classification.toMetadataJson());
+        }
+        documentRepository.save(document);
     }
 
     private void embedChunk(VectorStoreService vectorStore, DocumentChunkEntity chunk, String docType) {
@@ -110,9 +159,9 @@ public class IngestService {
         ));
     }
 
-    private String readContent(String storageKey) {
+    private DocumentTextExtractor.ExtractionResult readContent(String storageKey) {
         try (InputStream inputStream = documentStorageService.load(storageKey)) {
-            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            return documentTextExtractor.extractFromStorageKey(inputStream, storageKey);
         } catch (IOException ex) {
             throw new BusinessException(ErrorCodes.INTERNAL, "读取文档内容失败");
         }

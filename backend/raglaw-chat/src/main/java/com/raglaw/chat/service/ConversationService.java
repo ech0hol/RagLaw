@@ -38,7 +38,7 @@ public class ConversationService {
     }
 
     @Transactional
-    public ConversationDto create(String userId, String agentCode) {
+    public ConversationDto create(String userId, String agentCode, String contextDocumentId) {
         Instant now = Instant.now();
         String resolvedAgentCode = agentCode == null || agentCode.isBlank() ? DEFAULT_AGENT_CODE : agentCode;
         ConversationEntity entity = new ConversationEntity(
@@ -46,10 +46,19 @@ public class ConversationService {
                 userId,
                 DEFAULT_TITLE,
                 resolvedAgentCode,
+                blankToNull(contextDocumentId),
                 now,
                 now
         );
         return toDto(conversationRepository.save(entity));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<String> findContextDocumentId(String userId, String conversationId) {
+        return conversationRepository.findById(conversationId)
+                .filter(conversation -> conversation.getUserId().equals(userId))
+                .map(ConversationEntity::getContextDocumentId)
+                .filter(id -> id != null && !id.isBlank());
     }
 
     @Transactional(readOnly = true)
@@ -149,9 +158,14 @@ public class ConversationService {
                 entity.getUserId(),
                 entity.getTitle(),
                 entity.getAgentCode(),
+                entity.getContextDocumentId(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     private MessageDto toDto(MessageEntity entity) {

@@ -115,3 +115,63 @@ export async function uploadDocument(categoryId: string, file: File) {
     categoryId: string;
   }>(res);
 }
+
+export async function ingestDocument(documentId: string) {
+  return api<{ id: string; title: string; status: string }>(
+    `/api/v1/admin/documents/${documentId}/ingest`,
+    { method: 'POST' },
+  );
+}
+
+export async function downloadKnowledgeDocument(documentId: string, filename: string) {
+  await downloadAuthedFile(
+    `/api/v1/knowledge/documents/${documentId}/download`,
+    filename,
+  );
+}
+
+export async function downloadContractExport(documentId: string, format: 'docx' | 'pdf') {
+  await downloadAuthedFile(
+    `/api/v1/contracts/${documentId}/export?format=${format}`,
+    `contract-revised.${format}`,
+  );
+}
+
+export async function fetchContractFileUrl(documentId: string): Promise<string | null> {
+  const token = getToken();
+  const headers: HeadersInit = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const res = await fetch(`/api/v1/contracts/${documentId}/file`, {
+    headers,
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    return null;
+  }
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
+async function downloadAuthedFile(path: string, filename: string) {
+  const token = getToken();
+  const headers: HeadersInit = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const res = await fetch(path, {
+    headers,
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error(`下载失败 (${res.status})`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}

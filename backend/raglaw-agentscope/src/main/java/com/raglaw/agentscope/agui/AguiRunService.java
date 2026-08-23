@@ -1,5 +1,7 @@
 package com.raglaw.agentscope.agui;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raglaw.agentadmin.model.AgentConfigSnapshot;
 import com.raglaw.agentadmin.registry.AgentRegistry;
 import com.raglaw.agentscope.a2a.A2aOrchestrator;
@@ -13,6 +15,7 @@ import com.raglaw.common.auth.CurrentUserHolder;
 import com.raglaw.rag.tool.RagSearchHit;
 import com.raglaw.rag.tool.RagSearchTool;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +44,7 @@ public class AguiRunService {
     private final Environment environment;
     private final A2aOrchestrator a2aOrchestrator;
     private final QuestionRecommender questionRecommender;
+    private final ObjectMapper objectMapper;
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public AguiRunService(
@@ -53,7 +57,8 @@ public class AguiRunService {
             AgentscopeLlmProperties llmProperties,
             Environment environment,
             A2aOrchestrator a2aOrchestrator,
-            QuestionRecommender questionRecommender
+            QuestionRecommender questionRecommender,
+            ObjectMapper objectMapper
     ) {
         this.agentRegistry = agentRegistry;
         this.ragSearchTool = ragSearchTool;
@@ -65,6 +70,7 @@ public class AguiRunService {
         this.environment = environment;
         this.a2aOrchestrator = a2aOrchestrator;
         this.questionRecommender = questionRecommender;
+        this.objectMapper = objectMapper;
     }
 
     public SseEmitter run(AguiRunRequest request) {
@@ -134,6 +140,8 @@ public class AguiRunService {
                 agent.code()
         );
 
+        String contextDocumentId = conversationService.findContextDocumentId(userId, conversationId).orElse(null);
+
         AguiSseWriter.send(emitter, "meta", Map.of(
                 "taskId", taskId,
                 "traceId", trace.traceId(),
@@ -162,11 +170,21 @@ public class AguiRunService {
             }
         } else if (agent.tools().contains("rag_search")) {
             long ragStart = System.currentTimeMillis();
-            hits = ragSearchTool.search(userMessage, agent.knowledgeScopes(), 5, agent.code());
+            hits = ragSearchTool.search(
+                    userMessage,
+                    agent.knowledgeScopes(),
+                    5,
+                    agent.code(),
+                    contextDocumentId
+            );
             traceRecorder.recordStage(
                     trace.traceId(),
                     "rag_search",
-                    Map.of("hitCount", hits.size(), "scopes", agent.knowledgeScopes()),
+                    Map.of(
+                            "hitCount", hits.size(),
+                            "scopes", agent.knowledgeScopes(),
+                            "contextDocumentId", contextDocumentId == null ? "" : contextDocumentId
+                    ),
                     System.currentTimeMillis() - ragStart
             );
         }
@@ -232,7 +250,12 @@ public class AguiRunService {
         long latency = System.currentTimeMillis() - startMs;
         traceRecorder.complete(trace.traceId(), latency);
 
-        conversationService.appendMessage(userId, conversationId, "assistant", fullText, null)
+        conversationService.appendMessage(
+                        userId,
+                        conversationId,
+                        "assistant",
+                        fullText,
+                        serializeReferences(hits))
                 .orElseThrow(() -> new IllegalArgumentException("会话不存在或无权访问"));
 
         List<String> recommendations = questionRecommender.recommend(userMessage, agent.code(), 3);
@@ -366,7 +389,7 @@ public class AguiRunService {
                 && conversationService.get(userId, request.conversationId()).isPresent()) {
             return request.conversationId();
         }
-        return conversationService.create(userId, agentCode).id();
+        return conversationService.create(userId, agentCode, null).id();
     }
 
     private String resolveAgentCode(AguiRunRequest request, String userId) {
@@ -401,6 +424,30 @@ public class AguiRunService {
     private void checkCancelled(String taskId) {
         if (cancellationRegistry.isCancelled(taskId)) {
             throw new TaskCancelledException(taskId);
+        }
+    }
+
+    private String serializeReferences(List<RagSearchHit> hits) {
+        if (hits == null || hits.isEmpty()) {
+            return null;
+        }
+        try {
+            List<Map<String, Object>> refs = new ArrayList<>();
+            for (int i = 0; i < hits.size(); i++) {
+                RagSearchHit hit = hits.get(i);
+                refs.add(Map.of(
+                        "index", i + 1,
+                        "chunkId", hit.chunkId(),
+                        "documentId", hit.documentId() != null ? hit.documentId() : "",
+                        "path", hit.l1L2L3Path(),
+                        "excerpt", hit.excerpt(),
+                        "score", hit.score()
+                ));
+            }
+            return objectMapper.writeValueAsString(refs);
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize references", e);
+            return null;
         }
     }
 

@@ -8,11 +8,12 @@ import {
   FileText,
   FolderTree,
   MessageSquare,
+  Moon,
   PanelLeft,
   PanelLeftClose,
+  Sun,
 } from 'lucide-react';
 import { NavItem, NavSection } from '../components/NavItem';
-import { SearchInput } from '../components/SearchInput';
 
 type AppShellUser = {
   displayName: string;
@@ -23,12 +24,10 @@ type AppShellUser = {
 type AppShellProps = {
   children: ReactNode;
   user: AppShellUser;
-  sidebarExtra?: ReactNode;
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
-  searchValue?: string;
-  onSearchChange?: (value: string) => void;
-  showSearch?: boolean;
+  theme?: 'light' | 'dark';
+  onThemeToggle?: () => void;
 };
 
 function avatarLetter(name: string) {
@@ -38,12 +37,10 @@ function avatarLetter(name: string) {
 export function AppShell({
   children,
   user,
-  sidebarExtra,
   collapsed: collapsedProp,
   onCollapsedChange,
-  searchValue,
-  onSearchChange,
-  showSearch = false,
+  theme = 'light',
+  onThemeToggle,
 }: AppShellProps) {
   const [collapsedInternal, setCollapsedInternal] = useState(false);
   const collapsed = collapsedProp ?? collapsedInternal;
@@ -54,7 +51,7 @@ export function AppShell({
     <div className="rl-shell">
       <aside className={['rl-sidebar', collapsed && 'rl-sidebar--collapsed'].filter(Boolean).join(' ')}>
         <div className="rl-sidebar-header">
-          <div className="rl-logo">RagLaw</div>
+          {!collapsed && <div className="rl-logo">RagLaw</div>}
           <button
             type="button"
             className="rl-sidebar-toggle"
@@ -64,17 +61,6 @@ export function AppShell({
             {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
           </button>
         </div>
-
-        {showSearch && onSearchChange && (
-          <div className="rl-sidebar-search">
-            <SearchInput
-              placeholder="搜索会话…"
-              value={searchValue ?? ''}
-              onChange={(e) => onSearchChange(e.target.value)}
-              showShortcutHint={!collapsed}
-            />
-          </div>
-        )}
 
         <nav className="rl-nav">
           <NavItem to="/" end icon={<MessageSquare size={18} />}>智能对话</NavItem>
@@ -92,14 +78,26 @@ export function AppShell({
           )}
         </nav>
 
-        {sidebarExtra && <div className="rl-sidebar-extra">{sidebarExtra}</div>}
-
         <div className="rl-sidebar-footer">
           <div className="rl-avatar" aria-hidden="true">{avatarLetter(user.displayName)}</div>
-          <div className="rl-sidebar-footer__info">
-            <span className="rl-sidebar-footer__name">{user.displayName}</span>
-            {user.email && <span className="rl-sidebar-footer__email">{user.email}</span>}
-          </div>
+          {!collapsed && (
+            <div className="rl-sidebar-footer__info">
+              <span className="rl-sidebar-footer__name">{user.displayName}</span>
+              {user.email && <span className="rl-sidebar-footer__email">{user.email}</span>}
+            </div>
+          )}
+          {onThemeToggle && (
+            <button
+              type="button"
+              className="rl-btn rl-theme-toggle"
+              onClick={onThemeToggle}
+              aria-label={theme === 'dark' ? '切换浅色模式' : '切换深色模式'}
+              title={theme === 'dark' ? '切换浅色模式' : '切换深色模式'}
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              {!collapsed && <span>{theme === 'dark' ? '浅色' : '深色'}</span>}
+            </button>
+          )}
         </div>
       </aside>
       <main className="rl-main">

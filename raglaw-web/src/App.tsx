@@ -8,6 +8,8 @@ import { CategoriesAdminPage } from './pages/admin/CategoriesAdminPage';
 import { DocumentsAdminPage } from './pages/admin/DocumentsAdminPage';
 import { ChatPage } from './pages/ChatPage';
 import { ContractsPage } from './pages/ContractsPage';
+import { ContractReviewPage } from './pages/ContractReviewPage';
+import { KnowledgeDetailPage } from './pages/KnowledgeDetailPage';
 import { KnowledgePage } from './pages/KnowledgePage';
 import { LoginPage } from './pages/LoginPage';
 import { ObservabilityAdminPage } from './pages/admin/ObservabilityAdminPage';
@@ -51,7 +53,9 @@ export default function App() {
                   <Route path="/" element={<ChatPage />} />
                   <Route path="/chat/:agentCode" element={<ChatPage />} />
                   <Route path="/contracts" element={<ContractsPage />} />
+                  <Route path="/contracts/review" element={<ContractReviewPage />} />
                   <Route path="/knowledge/statutes" element={<KnowledgePage />} />
+                  <Route path="/knowledge/documents" element={<KnowledgeDetailPage />} />
                   <Route
                     path="/admin/agents"
                     element={

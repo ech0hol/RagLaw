@@ -24,7 +24,7 @@ export function ReferenceList({ references }: ReferenceListProps) {
           <header className="rl-reference-card__header">
             <span className="rl-reference-card__index">[{ref.index}]</span>
             {ref.documentId ? (
-              <a className="rl-reference-card__path" href={`/knowledge/statutes?doc=${ref.documentId}`}>
+              <a className="rl-reference-card__path" href={`/knowledge/documents?doc=${ref.documentId}`}>
                 {ref.path}
               </a>
             ) : (

@@ -2,16 +2,15 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { useParams, useSearchParams } from 'react-router-dom';
 import { BookOpen, FileText, Gavel, Scale } from 'lucide-react';
 import {
-  ConversationList,
+  ConversationHistoryDropdown,
   ConversationPanel,
-  MainHeader,
   QuickActionCard,
   type ChatMessage,
   type ChatReference,
   type ConversationItem,
 } from '@raglaw/ui';
 import { api, getToken } from '../lib/api';
-import { useShellConfig } from '../layout/ShellConfigContext';
+import { useStickyScroll } from '../hooks/useStickyScroll';
 
 const AGENT_LABELS: Record<string, string> = {
   GENERAL: '通用法律助手',
@@ -40,35 +39,40 @@ function parseReferences(citationsJson?: string | null): ChatReference[] | undef
   }
 }
 
-type ChatPageProps = {
-  fixedAgentCode?: string;
-};
+type ChatPageProps = { fixedAgentCode?: string };
 
 export function ChatPage({ fixedAgentCode }: ChatPageProps) {
   const { agentCode: routeAgentCode } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId = searchParams.get('c');
-  const { setConfig } = useShellConfig();
 
-  const defaultAgent = fixedAgentCode ?? routeAgentCode ?? 'GENERAL';
-  const [agentCode, setAgentCode] = useState(defaultAgent);
+  const expertAgent = fixedAgentCode ?? routeAgentCode;
+  const useExplicitAgent = Boolean(expertAgent && expertAgent !== 'GENERAL');
+
+  const pageTitle = expertAgent ? AGENT_LABELS[expertAgent] ?? expertAgent : '智能对话';
+
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [convLoading, setConvLoading] = useState(true);
   const [searchFilter, setSearchFilter] = useState('');
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [recommendQuestions, setRecommendQuestions] = useState<string[]>([]);
   const messageListRef = useRef<HTMLDivElement>(null);
+  const skipLoadRef = useRef(false);
 
-  useEffect(() => {
-    setAgentCode(defaultAgent);
-  }, [defaultAgent]);
+  const { onScroll: onMessageListScroll, pinToBottom } = useStickyScroll(messageListRef, [
+    messages,
+    streaming,
+    statusMessage,
+  ]);
 
-  const pageTitle = fixedAgentCode || routeAgentCode
-    ? AGENT_LABELS[defaultAgent] ?? defaultAgent
-    : '智能对话';
+  const canRegenerate = useMemo(
+    () => messages.some((m) => m.role === 'user') && messages.some((m) => m.role === 'assistant'),
+    [messages],
+  );
 
   const refreshConversations = useCallback(async () => {
     const res = await api<ConversationDto[]>('/api/v1/conversations');
@@ -99,59 +103,68 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
   }, []);
 
   useEffect(() => {
-    if (conversationId) void loadMessages(conversationId);
-    else setMessages([]);
+    if (!conversationId) {
+      setMessages([]);
+      setHistoryOpen(false);
+      return;
+    }
+    if (skipLoadRef.current) {
+      skipLoadRef.current = false;
+      return;
+    }
+    setHistoryOpen(false);
+    void loadMessages(conversationId);
   }, [conversationId, loadMessages]);
 
-  const selectConversation = useCallback((id: string) => setSearchParams({ c: id }), [setSearchParams]);
+  const selectConversation = useCallback((id: string) => {
+    skipLoadRef.current = false;
+    pinToBottom();
+    setHistoryOpen(false);
+    setSearchParams({ c: id });
+  }, [setSearchParams, pinToBottom]);
+
   const newChat = useCallback(() => {
+    skipLoadRef.current = false;
+    pinToBottom();
+    setHistoryOpen(false);
     setSearchParams({});
     setMessages([]);
     setInput('');
     setRecommendQuestions([]);
-  }, [setSearchParams]);
+  }, [setSearchParams, pinToBottom]);
 
-  useEffect(() => {
-    setConfig({
-      showSearch: true,
-      searchValue: searchFilter,
-      onSearchChange: setSearchFilter,
-      sidebarExtra: (
-        <ConversationList
-          conversations={filteredConversations}
-          selectedId={conversationId}
-          onSelect={selectConversation}
-          onNewChat={newChat}
-          loading={convLoading}
-        />
-      ),
-    });
-    return () => setConfig({});
-  }, [filteredConversations, conversationId, convLoading, searchFilter, selectConversation, newChat, setConfig]);
-
-  useEffect(() => {
-    messageListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages, streaming, statusMessage]);
+  function agentPayload(): Record<string, string> {
+    if (useExplicitAgent && expertAgent) {
+      return { agentCode: expertAgent };
+    }
+    return {};
+  }
 
   async function ensureConversation(): Promise<string> {
     if (conversationId) return conversationId;
     const res = await api<ConversationDto>('/api/v1/conversations', {
       method: 'POST',
-      body: JSON.stringify({ agentCode }),
+      body: JSON.stringify(agentPayload()),
     });
     if (!res.success) throw new Error(res.error?.message ?? '创建会话失败');
+    skipLoadRef.current = true;
     setSearchParams({ c: res.data.id });
     void refreshConversations();
     return res.data.id;
   }
 
-  async function streamAgui(text: string, regenerate = false) {
+  async function streamAgui(options: { regenerate?: boolean; message?: string }) {
     const convId = await ensureConversation();
     const token = getToken();
     const res = await fetch('/api/v1/agui/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ conversationId: convId, message: text, agentCode, regenerate }),
+      body: JSON.stringify({
+        conversationId: convId,
+        message: options.regenerate ? undefined : options.message,
+        regenerate: options.regenerate ?? false,
+        ...agentPayload(),
+      }),
     });
     if (!res.ok) throw new Error(`对话请求失败 (${res.status})`);
 
@@ -212,15 +225,17 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
     }
     setStatusMessage('');
     void refreshConversations();
+    void loadMessages(convId);
   }
 
   async function sendMessage(text: string) {
     if (!text.trim() || streaming) return;
+    pinToBottom();
     setStreaming(true);
-    setMessages((prev) => [...prev, { role: 'user', content: text }]);
+    setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: 'user', content: text }]);
     setInput('');
     try {
-      await streamAgui(text);
+      await streamAgui({ message: text });
     } catch (err) {
       setMessages((prev) => [...prev, { role: 'assistant', content: err instanceof Error ? err.message : '发送失败' }]);
     } finally {
@@ -228,28 +243,41 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
     }
   }
 
+  async function regenerateLast() {
+    if (streaming || !canRegenerate) return;
+    pinToBottom();
+    setStreaming(true);
+    try {
+      await streamAgui({ regenerate: true });
+    } catch (err) {
+      setMessages((prev) => [...prev, { role: 'assistant', content: err instanceof Error ? err.message : '重新生成失败' }]);
+    } finally {
+      setStreaming(false);
+    }
+  }
+
+  function copyContent(content: string) {
+    void navigator.clipboard.writeText(content);
+  }
+
   return (
     <div className="rl-chat-page">
-      <MainHeader
-        title={pageTitle}
-        actions={
-          !fixedAgentCode && !routeAgentCode ? (
-            <label className="rl-chat-toolbar__label">
-              助手
-              <select
-                className="rl-chat-toolbar__select"
-                value={agentCode}
-                onChange={(e) => setAgentCode(e.target.value)}
-                disabled={streaming}
-              >
-                {Object.entries(AGENT_LABELS).map(([code, label]) => (
-                  <option key={code} value={code}>{label}</option>
-                ))}
-              </select>
-            </label>
-          ) : undefined
-        }
-      />
+      <div className="rl-chat-topbar">
+        <ConversationHistoryDropdown
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
+          conversations={filteredConversations}
+          selectedId={conversationId}
+          onSelect={selectConversation}
+          onNewChat={newChat}
+          loading={convLoading}
+          searchValue={searchFilter}
+          onSearchChange={setSearchFilter}
+        />
+        {expertAgent && expertAgent !== 'GENERAL' && (
+          <span className="rl-chat-topbar__title">{pageTitle}</span>
+        )}
+      </div>
       <ConversationPanel
         messages={messages}
         input={input}
@@ -259,14 +287,25 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
         statusMessage={statusMessage}
         recommendQuestions={recommendQuestions}
         onRecommendClick={(q) => void sendMessage(q)}
+        onCopy={copyContent}
+        onRegenerate={() => void regenerateLast()}
+        canRegenerate={canRegenerate}
         messageListRef={messageListRef}
+        onMessageListScroll={onMessageListScroll}
+        disclaimer="AI 辅助参考，不构成法律意见。"
         welcome={
           <>
             <h1>欢迎使用 RagLaw</h1>
             <p>输入问题，或选择快捷卡片开始对话</p>
             <div className="rl-quick-cards">
               {QUICK_PROMPTS.map((prompt, index) => (
-                <QuickActionCard key={prompt.text} color={prompt.color} icon={prompt.icon} delayIndex={index} onClick={() => void sendMessage(prompt.text)}>
+                <QuickActionCard
+                  key={prompt.text}
+                  color={prompt.color}
+                  icon={prompt.icon}
+                  delayIndex={index}
+                  onClick={() => void sendMessage(prompt.text)}
+                >
                   {prompt.text}
                 </QuickActionCard>
               ))}

@@ -66,3 +66,8 @@ raglaw:
     mock: ${RAGLAW_LLM_MOCK:false}
     dashscope-api-key: ${DASHSCOPE_API_KEY:}
     default-model: qwen-plus
+  langfuse:
+    enabled: ${LANGFUSE_ENABLED:false}
+    host: ${LANGFUSE_HOST:http://localhost:3001}
+    public-key: ${LANGFUSE_PUBLIC_KEY:}
+    secret-key: ${LANGFUSE_SECRET_KEY:}

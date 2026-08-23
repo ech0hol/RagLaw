@@ -34,11 +34,27 @@ public class HybridRetriever {
     }
 
     public List<RetrievalHit> search(String query, List<String> scopePaths, int limit) {
-        return search(query, scopePaths, limit, null);
+        return search(query, scopePaths, limit, null, null);
     }
 
     public List<RetrievalHit> search(String query, List<String> scopePaths, int limit, String agentCode) {
+        return search(query, scopePaths, limit, agentCode, null);
+    }
+
+    public List<RetrievalHit> search(
+            String query,
+            List<String> scopePaths,
+            int limit,
+            String agentCode,
+            String documentId
+    ) {
         List<String> scopes = scopePaths == null ? List.of() : scopePaths;
+        if (documentId != null && !documentId.isBlank()) {
+            List<RetrievalHit> documentHits = toHits(
+                    documentChunkRepository.searchFullTextForDocument(query, documentId, limit));
+            return retrievalReranker.rerank(documentHits, agentCode).stream().limit(limit).toList();
+        }
+
         List<RetrievalHit> fulltextHits = toHits(
                 documentChunkRepository.searchFullText(query, scopes, scopes.size(), limit));
 

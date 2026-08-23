@@ -28,6 +28,7 @@ public class TraceRecorder {
     private final A2aCallLogRepository a2aCallLogRepository;
     private final RagTraceChunkRepository chunkRepository;
     private final ObjectMapper objectMapper;
+    private final LangfuseBridge langfuseBridge;
 
     public TraceRecorder(
             RagTraceRepository traceRepository,
@@ -35,7 +36,8 @@ public class TraceRecorder {
             LlmUsageLogRepository usageLogRepository,
             A2aCallLogRepository a2aCallLogRepository,
             RagTraceChunkRepository chunkRepository,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            LangfuseBridge langfuseBridge
     ) {
         this.traceRepository = traceRepository;
         this.stageRepository = stageRepository;
@@ -43,6 +45,7 @@ public class TraceRecorder {
         this.a2aCallLogRepository = a2aCallLogRepository;
         this.chunkRepository = chunkRepository;
         this.objectMapper = objectMapper;
+        this.langfuseBridge = langfuseBridge;
     }
 
     @Transactional
@@ -61,6 +64,11 @@ public class TraceRecorder {
                 queryText,
                 agentCode
         ));
+        langfuseBridge.startTrace(context.traceId(), userId, queryText, agentCode)
+                .ifPresent(langfuseTraceId -> traceRepository.findById(context.traceId()).ifPresent(trace -> {
+                    trace.setLangfuseTraceId(langfuseTraceId);
+                    traceRepository.save(trace);
+                }));
         return context;
     }
 
@@ -133,6 +141,8 @@ public class TraceRecorder {
         traceRepository.findById(traceId).ifPresent(trace -> {
             trace.setLatencyMs(latencyMs);
             traceRepository.save(trace);
+            String langfuseTraceId = trace.getLangfuseTraceId() == null ? traceId : trace.getLangfuseTraceId();
+            langfuseBridge.completeTrace(langfuseTraceId, latencyMs);
         });
     }
 

@@ -16,4 +16,15 @@ public class MockRagSearchTool implements RagSearchTool {
     public List<RagSearchHit> search(String query, List<String> knowledgeScopes, int limit, String agentCode) {
         return List.of();
     }
+
+    @Override
+    public List<RagSearchHit> searchScopedToDocument(
+            String query,
+            List<String> knowledgeScopes,
+            int limit,
+            String agentCode,
+            String documentId
+    ) {
+        return List.of();
+    }
 }

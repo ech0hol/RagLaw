@@ -48,4 +48,12 @@ public class RagTraceStageEntity {
     public String getStage() {
         return stage;
     }
+
+    public String getDetailJson() {
+        return detailJson;
+    }
+
+    public Long getDurationMs() {
+        return durationMs;
+    }
 }

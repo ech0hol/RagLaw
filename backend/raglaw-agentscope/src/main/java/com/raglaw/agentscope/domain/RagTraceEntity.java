@@ -91,6 +91,14 @@ public class RagTraceEntity {
         this.latencyMs = latencyMs;
     }
 
+    public String getLangfuseTraceId() {
+        return langfuseTraceId;
+    }
+
+    public void setLangfuseTraceId(String langfuseTraceId) {
+        this.langfuseTraceId = langfuseTraceId;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }

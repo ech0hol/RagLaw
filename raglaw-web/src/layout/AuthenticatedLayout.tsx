@@ -1,11 +1,11 @@
 import { useState, type ReactNode } from 'react';
 import { AppShell } from '@raglaw/ui';
 import { useAuth } from '../lib/auth';
-import { ShellConfigProvider, useShellConfig } from './ShellConfigContext';
+import { useTheme } from '../lib/theme';
 
-function ShellWithConfig({ children }: { children: ReactNode }) {
+export function AuthenticatedLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { config } = useShellConfig();
+  const { theme, toggleTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -17,20 +17,10 @@ function ShellWithConfig({ children }: { children: ReactNode }) {
       }}
       collapsed={collapsed}
       onCollapsedChange={setCollapsed}
-      sidebarExtra={config.sidebarExtra}
-      searchValue={config.searchValue}
-      onSearchChange={config.onSearchChange}
-      showSearch={config.showSearch}
+      theme={theme}
+      onThemeToggle={toggleTheme}
     >
       {children}
     </AppShell>
-  );
-}
-
-export function AuthenticatedLayout({ children }: { children: ReactNode }) {
-  return (
-    <ShellConfigProvider>
-      <ShellWithConfig>{children}</ShellWithConfig>
-    </ShellConfigProvider>
   );
 }

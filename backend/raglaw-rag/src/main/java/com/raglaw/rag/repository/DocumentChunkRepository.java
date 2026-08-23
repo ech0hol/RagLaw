@@ -33,4 +33,21 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunkEnti
             @Param("scopeCount") int scopeCount,
             @Param("limit") int limit
     );
+
+    @Query(value = """
+            SELECT c.id, c.document_id, c.content, c.l1_path, c.l2_path, c.l3_path,
+                   MATCH(c.content) AGAINST(:query IN NATURAL LANGUAGE MODE) AS score
+            FROM raglaw_document_chunk c
+            INNER JOIN raglaw_document d ON d.id = c.document_id
+            WHERE d.status = 'INDEXED'
+              AND c.document_id = :documentId
+              AND MATCH(c.content) AGAINST(:query IN NATURAL LANGUAGE MODE)
+            ORDER BY score DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<Object[]> searchFullTextForDocument(
+            @Param("query") String query,
+            @Param("documentId") String documentId,
+            @Param("limit") int limit
+    );
 }

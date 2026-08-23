@@ -8,6 +8,8 @@ public record TraceSummaryDto(
         String agentCode,
         String queryText,
         Long latencyMs,
+        String langfuseTraceId,
+        String langfuseUrl,
         Instant createdAt
 ) {
 }

@@ -8,8 +8,15 @@ test('login and chat smoke', async ({ page }) => {
   await page.getByLabel('密码').fill(adminPassword);
   await page.getByRole('button', { name: '登录' }).click();
   await expect(page.getByRole('heading', { name: '欢迎使用 RagLaw' })).toBeVisible();
+  await expect(page.getByTestId('history-toggle')).toBeVisible();
+  await expect(page.locator('.rl-history-panel')).toHaveCount(0);
+  await page.getByTestId('history-toggle').click();
+  await expect(page.locator('.rl-history-panel')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.rl-history-panel')).toHaveCount(0);
   await page.getByPlaceholder('描述您的法律问题…').fill('劳动合同试用期最长多久？');
   await page.getByLabel('发送').click();
+  await expect(page.locator('.rl-bubble--user')).toBeVisible();
   await expect(page.locator('.rl-bubble--assistant')).toBeVisible({ timeout: 30_000 });
 });
 

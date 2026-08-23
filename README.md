@@ -87,6 +87,8 @@ $env:RAGLAW_ADMIN_PASSWORD="raglaw-eval"
 
 报告输出到 `docs/evaluation/rag-pipeline-eval-*.json`。黄金查询基准见 `docs/evaluation/recall-benchmark.json`。
 
+API 文档见 [`docs/API.md`](docs/API.md)，备份说明见 [`docs/backup.md`](docs/backup.md)。
+
 ## E2E 测试
 
 ```bash
@@ -100,8 +102,6 @@ cd raglaw-web && pnpm exec playwright install chromium
 E2E_WITH_CORPUS=1 E2E_ADMIN_PASSWORD=raglaw-eval pnpm e2e
 ```
 
-CI 在 push/PR 时自动跑 `mvn test`、`pnpm lint/build` 及 Playwright（含语料种子）。
-
 ## 功能概览
 
 | 模块 | 路由/入口 | 状态 |
@@ -109,14 +109,29 @@ CI 在 push/PR 时自动跑 `mvn test`、`pnpm lint/build` 及 Playwright（含�
 | 智能对话 + A2A | `/` | GENERAL 自动委派法规/案例/合同专家 |
 | 专家直达 | `/chat/:agentCode` | 如 `/chat/STATUTE_CIVIL` |
 | 法规/案例检索 | `/knowledge/statutes` | 全文检索 API + UI |
-| 合同审查 MVP | `/contracts` | 上传后进入 CONTRACT_GENERAL 对话 |
-| 可观测 L1 | `/admin/observability` | trace 列表 |
+| 合同审查 MVP | `/contracts` → `/contracts/review` | 上传、风险规则分析、专项对话 |
+| 可观测 L1 | `/admin/observability` | trace 列表 + 阶段/片段详情 |
+| 可观测 L2 | Langfuse（可选） | 设置 `LANGFUSE_ENABLED=true` + keys，见 `.env.example` |
+| Agent 配置 | `/admin/agents` | 编辑 knowledgeScopes / a2aPeers + reload |
 
 ## 技术栈
 
 - Java 17, Spring Boot 3, AgentScope Java 2, DashScope
-- React 19, Vite, React Router, AG-UI SSE
+- React 19, Vite, React Router, AG-UI SSE（**未集成 CopilotKit**，以原生 SSE 替代，见下方说明）
 - MySQL 8, pgvector, MinIO, RabbitMQ, Redis, Langfuse (optional)
+
+## CopilotKit 说明（Phase 1.5 / B2）
+
+当前对话链路基于 **原生 AG-UI SSE**（`POST /api/v1/agui/run`），未引入 CopilotKit Provider。原因：现有 SSE 已覆盖流式对话、引用、A2A 状态与重新生成；CopilotKit 适配成本较高。后续若需要 clientTool（如合同修订采纳 UI 深化）再评估接入。
+
+## Langfuse 可观测（Phase 5.4）
+
+```bash
+cd docker
+docker compose --profile observability up -d
+```
+
+在 `.env` 中配置 `LANGFUSE_ENABLED=true`、`LANGFUSE_PUBLIC_KEY`、`LANGFUSE_SECRET_KEY`，管理端 trace 详情可跳转 Langfuse UI。
 
 ## 旧代码
 

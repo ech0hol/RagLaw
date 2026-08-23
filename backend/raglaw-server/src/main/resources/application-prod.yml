@@ -1,0 +1,8 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+raglaw:
+  seed:
+    admin-password: ${RAGLAW_SEED_ADMIN_PASSWORD:}

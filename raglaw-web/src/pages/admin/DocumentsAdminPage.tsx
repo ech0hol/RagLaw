@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Button, Card, MainHeader } from '@raglaw/ui';
+import { Button, Card, MainHeader, Select } from '@raglaw/ui';
 import { api, uploadDocument } from '../../lib/api';
 
 type CategoryNode = {
@@ -86,21 +86,15 @@ export function DocumentsAdminPage() {
       </p>
       <Card>
         <form className="rl-admin-form" onSubmit={(e) => void onSubmit(e)}>
-          <label className="rl-field">
-            <span className="rl-field__label">L3 类目</span>
-            <select
-              className="rl-input"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              required
-            >
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name} ({cat.path})
-                </option>
-              ))}
-            </select>
-          </label>
+          <Select
+            label="L3 类目"
+            value={categoryId}
+            onChange={setCategoryId}
+            options={categories.map((cat) => ({
+              value: cat.id,
+              label: `${cat.name} (${cat.path})`,
+            }))}
+          />
           <label className="rl-field">
             <span className="rl-field__label">Markdown 文件</span>
             <input

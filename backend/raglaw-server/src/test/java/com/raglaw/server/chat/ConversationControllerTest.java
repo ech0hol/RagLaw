@@ -42,7 +42,7 @@ class ConversationControllerTest {
         MvcResult create = mockMvc.perform(post("/api/v1/conversations")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new CreateConversationRequest("GENERAL"))))
+                        .content(objectMapper.writeValueAsString(new CreateConversationRequest("GENERAL", null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.title").value("新对话"))

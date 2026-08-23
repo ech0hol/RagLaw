@@ -2,6 +2,7 @@ package com.raglaw.rag.service;
 
 import com.raglaw.rag.domain.DocumentEntity;
 import com.raglaw.rag.dto.KnowledgeHitDto;
+import com.raglaw.rag.dto.KnowledgeSearchPageDto;
 import com.raglaw.rag.dto.RetrievalHit;
 import com.raglaw.rag.repository.DocumentRepository;
 import com.raglaw.rag.retrieval.HybridRetriever;
@@ -24,20 +25,41 @@ public class KnowledgeSearchService {
     }
 
     public List<KnowledgeHitDto> search(String query, String docType, int limit) {
+        return searchPage(query, docType, null, 0, limit).items();
+    }
+
+    public KnowledgeSearchPageDto searchPage(
+            String query,
+            String docType,
+            String l2Path,
+            int page,
+            int pageSize
+    ) {
         if (query == null || query.isBlank()) {
-            return List.of();
+            return new KnowledgeSearchPageDto(List.of(), page, pageSize, 0);
         }
-        List<RetrievalHit> hits = hybridRetriever.search(query, List.of(), Math.max(limit, 1) * 2, null);
+        int fetchLimit = Math.max(pageSize, 1) * (page + 1) * 2;
+        List<RetrievalHit> hits = hybridRetriever.search(query, List.of(), fetchLimit, null);
+        List<KnowledgeHitDto> all = mapHits(hits, docType, l2Path);
+
+        int from = Math.max(page, 0) * pageSize;
+        int to = Math.min(from + pageSize, all.size());
+        List<KnowledgeHitDto> pageItems = from >= all.size() ? List.of() : all.subList(from, to);
+        return new KnowledgeSearchPageDto(pageItems, page, pageSize, all.size());
+    }
+
+    private List<KnowledgeHitDto> mapHits(List<RetrievalHit> hits, String docType, String l2Path) {
         List<RetrievalHit> filtered = new ArrayList<>();
         for (RetrievalHit hit : hits) {
-            if (docType == null || docType.isBlank()) {
-                filtered.add(hit);
-            } else if (hit.l1Path() != null && hit.l1Path().contains("/" + docType)) {
-                filtered.add(hit);
+            if (docType != null && !docType.isBlank()
+                    && (hit.l1Path() == null || !hit.l1Path().contains("/" + docType))) {
+                continue;
             }
-            if (filtered.size() >= limit) {
-                break;
+            if (l2Path != null && !l2Path.isBlank()
+                    && (hit.l2Path() == null || !hit.l2Path().startsWith(l2Path))) {
+                continue;
             }
+            filtered.add(hit);
         }
 
         List<String> documentIds = filtered.stream().map(RetrievalHit::documentId).distinct().toList();

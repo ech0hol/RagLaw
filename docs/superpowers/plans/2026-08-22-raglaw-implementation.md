@@ -1,5 +1,7 @@
 # RagLaw 完整实现任务清单
 
+> **续建计划（评测驱动）：** 见 Cursor plan `raglaw_continuation_plan`；2026-08-23 评测基线见 [`docs/evaluation/rag-pipeline-eval-2026-08-23.json`](../../evaluation/rag-pipeline-eval-2026-08-23.json)。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` or `superpowers:executing-plans` task-by-task. Steps use `- [ ]` checkboxes.
 
 **Goal:** 从零搭建 RagLaw monorepo：多 Agent 法律咨询平台（AgentScope + CopilotKit/AG-UI + RAG + 合同审查 + L1/L2 可观测）。

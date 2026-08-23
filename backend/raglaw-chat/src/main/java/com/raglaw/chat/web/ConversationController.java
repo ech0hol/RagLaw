@@ -46,7 +46,8 @@ public class ConversationController {
             return ApiResponse.fail(ErrorCodes.UNAUTHORIZED, "未登录");
         }
         String agentCode = request == null ? null : request.agentCode();
-        return ApiResponse.ok(conversationService.create(userId, agentCode));
+        String contextDocumentId = request == null ? null : request.contextDocumentId();
+        return ApiResponse.ok(conversationService.create(userId, agentCode, contextDocumentId));
     }
 
     @GetMapping("/{id}")
