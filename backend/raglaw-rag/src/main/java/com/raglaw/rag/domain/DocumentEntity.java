@@ -45,6 +45,12 @@ public class DocumentEntity {
     @Column(name = "metadata_json", columnDefinition = "JSON")
     private String metadataJson;
 
+    @Column(name = "full_text", columnDefinition = "MEDIUMTEXT")
+    private String fullText;
+
+    @Column(name = "index_version", nullable = false)
+    private long indexVersion;
+
     @Column(name = "reject_reason", length = ColumnLengths.REJECT_REASON)
     private String rejectReason;
 
@@ -106,6 +112,24 @@ public class DocumentEntity {
         this.updatedAt = Instant.now();
     }
 
+    public String getFullText() {
+        return fullText;
+    }
+
+    public void setFullText(String fullText) {
+        this.fullText = fullText;
+        this.updatedAt = Instant.now();
+    }
+
+    public long getIndexVersion() {
+        return indexVersion;
+    }
+
+    public void bumpIndexVersion() {
+        this.indexVersion += 1;
+        this.updatedAt = Instant.now();
+    }
+
     public String getRejectReason() {
         return rejectReason;
     }
@@ -130,6 +154,21 @@ public class DocumentEntity {
 
     public void setTitle(String title) {
         this.title = title;
+        this.updatedAt = Instant.now();
+    }
+
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
+        this.updatedAt = Instant.now();
+    }
+
+    public void setDocType(String docType) {
+        this.docType = docType;
+        this.updatedAt = Instant.now();
+    }
+
+    public void setMinioKey(String minioKey) {
+        this.minioKey = minioKey;
         this.updatedAt = Instant.now();
     }
 

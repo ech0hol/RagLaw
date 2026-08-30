@@ -1,0 +1,26 @@
+﻿{
+    "success":  true,
+    "data":  {
+                 "rag":  {
+                             "elasticsearchEnabled":  false,
+                             "embeddingConfigured":  false,
+                             "embeddingReady":  false,
+                             "embeddingMock":  false,
+                             "hybridRetrievalReady":  false,
+                             "indexedDocumentsMissingEsSync":  null,
+                             "elasticsearchIndexSyncReady":  false,
+                             "minioEnabled":  false,
+                             "rabbitEnabled":  false
+                         },
+                 "modules":  [
+                                 "raglaw-chat",
+                                 "raglaw-agentscope",
+                                 "raglaw-agent-admin",
+                                 "raglaw-rag"
+                             ],
+                 "llmMock":  false,
+                 "status":  "UP",
+                 "service":  "raglaw-server"
+             },
+    "error":  null
+}

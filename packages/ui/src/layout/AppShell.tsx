@@ -6,7 +6,6 @@ import {
   BookOpen,
   CheckCircle,
   FileText,
-  FolderTree,
   MessageSquare,
   Moon,
   PanelLeft,
@@ -14,6 +13,7 @@ import {
   Sun,
   Users,
 } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 import { NavItem, NavSection } from '../components/NavItem';
 import { MAIN_OVERLAY_ROOT_ID } from './constants';
 
@@ -72,7 +72,6 @@ export function AppShell({
             <>
               <NavSection>管理</NavSection>
               <NavItem to="/admin/agents" icon={<Bot size={18} />}>Agent 配置</NavItem>
-              <NavItem to="/admin/categories" icon={<FolderTree size={18} />}>类目管理</NavItem>
               <NavItem to="/admin/documents" icon={<FileText size={18} />}>文档管理</NavItem>
               <NavItem to="/admin/approvals" icon={<CheckCircle size={18} />}>审批管理</NavItem>
               <NavItem to="/admin/users" icon={<Users size={18} />}>用户管理</NavItem>
@@ -96,7 +95,14 @@ export function AppShell({
               </button>
             </div>
           )}
-          <div className="rl-sidebar-footer__profile">
+          <NavLink
+            to="/profile"
+            className={({ isActive }) =>
+              ['rl-sidebar-footer__profile', isActive && 'rl-sidebar-footer__profile--active']
+                .filter(Boolean)
+                .join(' ')
+            }
+          >
             <div className="rl-avatar" aria-hidden="true">{avatarLetter(user.displayName)}</div>
             {!collapsed && (
               <div className="rl-sidebar-footer__info">
@@ -104,7 +110,7 @@ export function AppShell({
                 {user.email && <span className="rl-sidebar-footer__email">{user.email}</span>}
               </div>
             )}
-          </div>
+          </NavLink>
         </div>
       </aside>
       <main className="rl-main">

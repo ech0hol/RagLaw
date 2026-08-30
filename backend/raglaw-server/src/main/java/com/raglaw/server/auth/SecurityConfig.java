@@ -1,13 +1,12 @@
 package com.raglaw.server.auth;
 
+import com.raglaw.server.config.CorsProperties;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authorization.AuthorizationDecision;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -32,29 +31,18 @@ public class SecurityConfig {
             HttpSecurity http,
             JwtAuthFilter jwtAuthFilter,
             LoginRateLimitFilter loginRateLimitFilter,
-            AguiRateLimitFilter aguiRateLimitFilter
+            AguiRateLimitFilter aguiRateLimitFilter,
+            CorsProperties corsProperties
     ) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource(corsProperties)))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/api/v1/health", "/actuator/**").permitAll()
-                        .requestMatchers("/api/v1/admin/**").access((authentication, context) -> {
-                            AuthUser user = UserContext.get();
-                            return new AuthorizationDecision(user != null && "ADMIN".equals(user.role()));
-                        })
-                        .anyRequest().access((authentication, context) -> {
-                            var principal = authentication.get();
-                            if (principal != null
-                                    && principal.isAuthenticated()
-                                    && !(principal instanceof AnonymousAuthenticationToken)) {
-                                return new AuthorizationDecision(true);
-                            }
-                            AuthUser user = UserContext.get();
-                            return new AuthorizationDecision(user != null);
-                        }))
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -75,9 +63,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+    CorsConfigurationSource corsConfigurationSource(CorsProperties corsProperties) {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(corsProperties.getAllowedOrigins());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

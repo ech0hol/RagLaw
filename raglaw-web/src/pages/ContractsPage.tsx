@@ -2,27 +2,26 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import {
-  ConfirmDialog,
   SlidePanel,
   Spinner,
   UploadWorkbench,
 } from '@raglaw/ui';
 import {
-  api,
   deleteContract,
   downloadContractExport,
+  ensureSession,
   fetchContracts,
-  uploadDocument,
+  uploadContractsBatch,
   type ContractSummary,
 } from '../lib/api';
+import { confirmIrreversibleDelete } from '../lib/confirmDelete';
 
 const CONTRACT_CATEGORY_ID = 'cat_l3_contract_civil_general';
 
-type ConversationDto = { id: string };
-type ContractReview = {
-  documentId: string;
-  suggestedAgentCode: string;
-};
+function formatApiError(error: { code: string; message: string } | undefined, fallback: string) {
+  if (!error) return fallback;
+  return `${error.code}: ${error.message}`;
+}
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -38,14 +37,13 @@ function formatDate(value: string) {
 
 export function ContractsPage() {
   const navigate = useNavigate();
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [contracts, setContracts] = useState<ContractSummary[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const refreshContracts = useCallback(async () => {
     setHistoryLoading(true);
@@ -63,47 +61,47 @@ export function ContractsPage() {
   }, [historyOpen, refreshContracts]);
 
   async function startReview() {
-    if (!file) return;
+    if (files.length === 0) return;
     setUploading(true);
     setError(null);
-    const upload = await uploadDocument(CONTRACT_CATEGORY_ID, file);
-    if (!upload.success) {
-      setError(upload.error?.message ?? '上传失败');
+    setMessage(null);
+    try {
+      if (!await ensureSession()) {
+        setError('会话已过期，请从个人主页退出后重新登录');
+        return;
+      }
+      const upload = await uploadContractsBatch(files, CONTRACT_CATEGORY_ID);
+      if (!upload.success) {
+        setError(`上传合同失败：${formatApiError(upload.error, '上传失败')}`);
+        return;
+      }
+      const uploaded = upload.data.items;
+      const firstId = uploaded[0]?.id;
+      setFiles([]);
+      if (!firstId) {
+        setError('上传成功但未返回文档 ID');
+        return;
+      }
+      if (uploaded.length > 1) {
+        void refreshContracts();
+      }
+      navigate(`/contracts/review?doc=${firstId}&auto=1`);
+    } catch (err) {
+      const errMessage = err instanceof Error ? err.message : '操作失败，请重试';
+      setError(errMessage);
+    } finally {
       setUploading(false);
-      return;
     }
-    const review = await api<ContractReview>(`/api/v1/contracts/${upload.data.id}/ingest-review`, {
-      method: 'POST',
-    });
-    if (!review.success) {
-      setError(review.error?.message ?? '审查失败');
-      setUploading(false);
-      return;
-    }
-    const conversation = await api<ConversationDto>('/api/v1/conversations', {
-      method: 'POST',
-      body: JSON.stringify({
-        agentCode: review.data.suggestedAgentCode,
-        contextDocumentId: upload.data.id,
-      }),
-    });
-    if (!conversation.success) {
-      setError(conversation.error?.message ?? '创建会话失败');
-      setUploading(false);
-      return;
-    }
-    void refreshContracts();
-    navigate(`/contracts/review?doc=${upload.data.id}&c=${conversation.data.id}`);
   }
 
-  async function confirmDeleteContract() {
-    if (!deleteTargetId) return;
-    const id = deleteTargetId;
-    setDeleteLoading(true);
-    const res = await deleteContract(id);
-    setDeleteLoading(false);
-    if (!res.success) return;
-    setDeleteTargetId(null);
+  async function removeContract(item: ContractSummary) {
+    if (!confirmIrreversibleDelete(item.title)) return;
+    setError(null);
+    const res = await deleteContract(item.documentId);
+    if (!res.success) {
+      setError(`删除失败：${formatApiError(res.error, '删除失败')}`);
+      return;
+    }
     void refreshContracts();
   }
 
@@ -123,14 +121,17 @@ export function ContractsPage() {
       <div className="rl-page-center">
         <UploadWorkbench
           title="合同审查"
-          subtitle="上传合同文档，自动提取文本、识别风险并进入专项对话"
-          accept=".pdf,.doc,.docx,.md,.txt"
-          formatHint="支持 doc、docx、pdf、md、txt，文件最大不超过 50M"
-          submitLabel="开始审查"
+          subtitle="上传后自动进入审查页，OCR 与 AI 分析将并行进行"
+          accept=".pdf,.doc,.docx,.md,.txt,.jpg,.jpeg,.png"
+          formatHint="支持 doc、docx、pdf、md、txt、jpg、png，可多选，单文件最大 50M"
+          submitLabel={uploading ? '上传中…' : '上传合同'}
           loading={uploading}
-          file={file}
-          onFileChange={setFile}
+          loadingLabel="上传中…"
+          multiple
+          files={files}
+          onFilesChange={setFiles}
           onSubmit={() => void startReview()}
+          message={message}
           error={error}
         />
       </div>
@@ -152,12 +153,15 @@ export function ContractsPage() {
                 <p className="rl-contract-history-item__title">{item.title}</p>
                 <p className="rl-contract-history-item__meta">
                   {formatDate(item.createdAt)} · 风险 {item.riskCount} 项 · {item.status}
+                  {item.status === 'PENDING' ? ' · 审查未完成，点击查看继续' : ''}
                 </p>
                 <div className="rl-contract-history-item__actions">
                   <button
                     type="button"
                     className="rl-btn rl-btn--primary"
-                    onClick={() => navigate(`/contracts/review?doc=${item.documentId}`)}
+                    onClick={() => navigate(
+                      `/contracts/review?doc=${item.documentId}${item.status === 'PENDING' ? '&auto=1' : ''}`,
+                    )}
                   >
                     查看详情
                   </button>
@@ -178,7 +182,10 @@ export function ContractsPage() {
                   <button
                     type="button"
                     className="rl-btn rl-btn--danger"
-                    onClick={() => setDeleteTargetId(item.documentId)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void removeContract(item);
+                    }}
                   >
                     删除
                   </button>
@@ -188,17 +195,6 @@ export function ContractsPage() {
           </div>
         )}
       </SlidePanel>
-
-      <ConfirmDialog
-        open={deleteTargetId !== null}
-        title="删除合同"
-        description="将同步删除合同文件、审查记录与索引数据，且无法恢复。是否继续？"
-        confirmLabel="删除"
-        variant="danger"
-        loading={deleteLoading}
-        onConfirm={() => void confirmDeleteContract()}
-        onCancel={() => !deleteLoading && setDeleteTargetId(null)}
-      />
     </div>
   );
 }

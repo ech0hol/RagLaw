@@ -47,6 +47,14 @@ public class EmbeddingService {
     }
 
     public Optional<float[]> embed(String text) {
+        return embed(text, "query");
+    }
+
+    public Optional<float[]> embedDocument(String text) {
+        return embed(text, "document");
+    }
+
+    private Optional<float[]> embed(String text, String textType) {
         if (!isEnabled()) {
             return Optional.empty();
         }
@@ -58,7 +66,11 @@ public class EmbeddingService {
                     .uri("/api/v1/services/embeddings/text-embedding/text-embedding")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + ragProperties.getEmbedding().getApiKey())
-                    .body(new EmbeddingRequest(ragProperties.getEmbedding().getModel(), text))
+                    .body(new EmbeddingRequest(
+                            ragProperties.getEmbedding().getModel(),
+                            new EmbeddingInput(List.of(text)),
+                            new EmbeddingParameters(ragProperties.getEmbedding().getDimensions(), textType)
+                    ))
                     .retrieve()
                     .body(EmbeddingResponse.class);
             if (response == null || response.output() == null || response.output().embeddings().isEmpty()) {
@@ -105,7 +117,13 @@ public class EmbeddingService {
         return vector;
     }
 
-    private record EmbeddingRequest(String model, String input) {
+    private record EmbeddingRequest(String model, EmbeddingInput input, EmbeddingParameters parameters) {
+    }
+
+    private record EmbeddingInput(List<String> texts) {
+    }
+
+    private record EmbeddingParameters(int dimension, String text_type) {
     }
 
     private record EmbeddingResponse(Output output) {

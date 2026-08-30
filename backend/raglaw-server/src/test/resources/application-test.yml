@@ -22,3 +22,9 @@ raglaw:
     admin-password: admin-test-password
   llm:
     mock: true
+  agentscope:
+    rag:
+      mock: true
+  rate-limit:
+    login-per-minute: 1000
+    agui-per-minute: 1000

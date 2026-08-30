@@ -7,6 +7,11 @@ public record ContractReviewDto(
         String suggestedAgentCode,
         String extractMethod,
         boolean ocrUsed,
+        String analysisModel,
+        int ragHitCount,
+        String reviewStatus,
+        String reviewError,
+        String ingestStage,
         List<ContractRiskDto> risks
 ) {
 }

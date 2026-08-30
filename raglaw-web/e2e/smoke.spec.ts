@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? 'raglaw-eval';
+const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? 'admin12345';
 
 test('login and chat smoke', async ({ page }) => {
   await page.goto('/login');
@@ -32,7 +32,7 @@ test('reference cards when corpus is seeded', async ({ page, request }) => {
 
   const convRes = await request.post('/api/v1/conversations', {
     headers: { Authorization: `Bearer ${token}` },
-    data: { agentCode: 'STATUTE_CIVIL' },
+    data: { agentCode: 'STATUTE' },
   });
   const convBody = await convRes.json() as { success: boolean; data?: { id: string } };
   expect(convBody.success).toBe(true);
@@ -47,6 +47,7 @@ test('reference cards when corpus is seeded', async ({ page, request }) => {
   await page.getByPlaceholder('描述您的法律问题…').fill('公司拖欠工资如何维权？');
   await page.getByLabel('发送').click();
 
-  await expect(page.locator('.rl-bubble--assistant')).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByTestId('reference-card').first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('.rl-assistant-body')).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('button', { name: /已阅读相关资料/ }).click();
+  await expect(page.getByTestId('reference-material-item').first()).toBeVisible({ timeout: 30_000 });
 });

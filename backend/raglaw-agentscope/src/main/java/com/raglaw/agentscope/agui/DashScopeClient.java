@@ -3,6 +3,7 @@ package com.raglaw.agentscope.agui;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -62,13 +63,25 @@ public class DashScopeClient {
                 .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
                 .build();
 
-        HttpResponse<java.io.InputStream> response = httpClient.send(
-                request,
-                HttpResponse.BodyHandlers.ofInputStream()
-        );
+        HttpResponse<java.io.InputStream> response;
+        try {
+            response = httpClient.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofInputStream()
+            );
+        } catch (IOException e) {
+            log.warn(
+                    "DashScope connection failed model={} messageLength={}: {}",
+                    dashModel,
+                    userMessage != null ? userMessage.length() : 0,
+                    e.getMessage()
+            );
+            throw e;
+        }
 
         if (response.statusCode() != 200) {
             String errorBody = new String(response.body().readAllBytes(), StandardCharsets.UTF_8);
+            log.error("DashScope error status={} model={} body={}", response.statusCode(), dashModel, errorBody);
             throw new IllegalStateException("DashScope error " + response.statusCode() + ": " + errorBody);
         }
 
@@ -112,6 +125,32 @@ public class DashScopeClient {
         }
 
         return new LlmStreamResult(fullText.toString(), promptTokens, completionTokens);
+    }
+
+    public String completeChat(String apiKey, String model, String systemPrompt, String userMessage) throws Exception {
+        String dashModel = model.startsWith("dashscope:") ? model.substring("dashscope:".length()) : model;
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", dashModel);
+        body.put("stream", false);
+        body.put("messages", List.of(
+                Map.of("role", "system", "content", systemPrompt != null ? systemPrompt : ""),
+                Map.of("role", "user", "content", userMessage)
+        ));
+
+        HttpRequest request = HttpRequest.newBuilder(CHAT_URI)
+                .timeout(Duration.ofSeconds(30))
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new IllegalStateException("DashScope error " + response.statusCode() + ": " + response.body());
+        }
+        JsonNode root = objectMapper.readTree(response.body());
+        return root.path("choices").path(0).path("message").path("content").asText("");
     }
 
     public record LlmStreamResult(String text, Integer promptTokens, Integer completionTokens) {

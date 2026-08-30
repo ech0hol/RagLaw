@@ -4,6 +4,7 @@ public record AguiRunRequest(
         String conversationId,
         String message,
         String agentCode,
-        Boolean regenerate
+        Boolean regenerate,
+        String regenerateFromMessageId
 ) {
 }

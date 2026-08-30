@@ -12,6 +12,8 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunkEnti
 
     List<DocumentChunkEntity> findByDocumentIdOrderByChunkIndexAsc(String documentId);
 
+    List<DocumentChunkEntity> findByParentIdOrderByChunkIndexAsc(String parentId);
+
     @Modifying
     @Transactional
     void deleteByDocumentId(String documentId);
@@ -24,10 +26,23 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunkEnti
             WHERE d.status = 'INDEXED'
               AND MATCH(c.content) AGAINST(:query IN NATURAL LANGUAGE MODE)
               AND (
-                c.parent_id IS NOT NULL
-                OR NOT EXISTS (
-                  SELECT 1 FROM raglaw_document_chunk child
-                  WHERE child.document_id = c.document_id AND child.parent_id IS NOT NULL
+                c.chunk_level = 'MICRO'
+                OR (
+                  c.chunk_level = 'CHILD'
+                  AND NOT EXISTS (
+                    SELECT 1 FROM raglaw_document_chunk micro
+                    WHERE micro.document_id = c.document_id AND micro.chunk_level = 'MICRO'
+                  )
+                )
+                OR (
+                  c.chunk_level IS NULL
+                  AND (
+                    c.parent_id IS NOT NULL
+                    OR NOT EXISTS (
+                      SELECT 1 FROM raglaw_document_chunk child
+                      WHERE child.document_id = c.document_id AND child.parent_id IS NOT NULL
+                    )
+                  )
                 )
               )
               AND (:scopeCount = 0 OR c.l3_path IN (:scopes) OR c.l2_path IN (:scopes))
@@ -50,10 +65,23 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunkEnti
               AND c.document_id = :documentId
               AND MATCH(c.content) AGAINST(:query IN NATURAL LANGUAGE MODE)
               AND (
-                c.parent_id IS NOT NULL
-                OR NOT EXISTS (
-                  SELECT 1 FROM raglaw_document_chunk child
-                  WHERE child.document_id = c.document_id AND child.parent_id IS NOT NULL
+                c.chunk_level = 'MICRO'
+                OR (
+                  c.chunk_level = 'CHILD'
+                  AND NOT EXISTS (
+                    SELECT 1 FROM raglaw_document_chunk micro
+                    WHERE micro.document_id = c.document_id AND micro.chunk_level = 'MICRO'
+                  )
+                )
+                OR (
+                  c.chunk_level IS NULL
+                  AND (
+                    c.parent_id IS NOT NULL
+                    OR NOT EXISTS (
+                      SELECT 1 FROM raglaw_document_chunk child
+                      WHERE child.document_id = c.document_id AND child.parent_id IS NOT NULL
+                    )
+                  )
                 )
               )
             ORDER BY score DESC

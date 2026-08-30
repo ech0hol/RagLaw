@@ -8,11 +8,16 @@ type UploadWorkbenchProps = {
   formatHint: string;
   submitLabel: string;
   loading?: boolean;
+  loadingLabel?: string;
   disabled?: boolean;
-  file: File | null;
-  onFileChange: (file: File | null) => void;
+  multiple?: boolean;
+  file?: File | null;
+  files?: File[];
+  onFileChange?: (file: File | null) => void;
+  onFilesChange?: (files: File[]) => void;
   onSubmit: () => void;
   footerSlot?: ReactNode;
+  message?: string | null;
   error?: string | null;
 };
 
@@ -23,23 +28,34 @@ export function UploadWorkbench({
   formatHint,
   submitLabel,
   loading = false,
+  loadingLabel = '处理中…',
   disabled = false,
-  file,
+  multiple = false,
+  file = null,
+  files = [],
   onFileChange,
+  onFilesChange,
   onSubmit,
   footerSlot,
+  message,
   error,
 }: UploadWorkbenchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const selectedFiles = multiple ? files : (file ? [file] : []);
 
   function pickFile() {
     inputRef.current?.click();
   }
 
   function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const picked = e.target.files?.[0] ?? null;
-    onFileChange(picked);
+    const picked = Array.from(e.target.files ?? []);
+    if (multiple) {
+      onFilesChange?.(mergeFiles(files, picked));
+      e.target.value = '';
+      return;
+    }
+    onFileChange?.(picked[0] ?? null);
   }
 
   function onDragOver(e: DragEvent) {
@@ -55,11 +71,18 @@ export function UploadWorkbench({
   function onDrop(e: DragEvent) {
     e.preventDefault();
     setDragOver(false);
-    const dropped = e.dataTransfer.files?.[0];
-    if (dropped) onFileChange(dropped);
+    const dropped = Array.from(e.dataTransfer.files ?? []);
+    if (dropped.length === 0) {
+      return;
+    }
+    if (multiple) {
+      onFilesChange?.(mergeFiles(files, dropped));
+      return;
+    }
+    onFileChange?.(dropped[0] ?? null);
   }
 
-  const canSubmit = Boolean(file) && !loading && !disabled;
+  const canSubmit = selectedFiles.length > 0 && !loading && !disabled;
 
   return (
     <div className="rl-upload-workbench">
@@ -70,7 +93,7 @@ export function UploadWorkbench({
         className={[
           'rl-upload-workbench__zone',
           dragOver && 'rl-upload-workbench__zone--drag',
-          file && 'rl-upload-workbench__zone--has-file',
+          selectedFiles.length > 0 && 'rl-upload-workbench__zone--has-file',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -92,13 +115,27 @@ export function UploadWorkbench({
           type="file"
           className="rl-upload-workbench__input"
           accept={accept}
+          multiple={multiple}
           onChange={onInputChange}
         />
-        {file ? (
+        {selectedFiles.length > 0 ? (
           <div className="rl-upload-workbench__file">
             <FileText size={22} className="rl-upload-workbench__file-icon" aria-hidden="true" />
-            <span className="rl-upload-workbench__file-name">{file.name}</span>
-            <span className="rl-upload-workbench__file-hint">点击或拖拽可更换文件</span>
+            {multiple ? (
+              <>
+                <span className="rl-upload-workbench__file-name">已选择 {selectedFiles.length} 个文件</span>
+                <ul className="rl-upload-workbench__file-list">
+                  {selectedFiles.map((item) => (
+                    <li key={`${item.name}-${item.size}`}>{item.name}</li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <>
+                <span className="rl-upload-workbench__file-name">{selectedFiles[0].name}</span>
+                <span className="rl-upload-workbench__file-hint">点击或拖拽可更换文件</span>
+              </>
+            )}
           </div>
         ) : (
           <>
@@ -109,6 +146,7 @@ export function UploadWorkbench({
         {footerSlot && <div className="rl-upload-workbench__footer-slot">{footerSlot}</div>}
       </div>
 
+      {message && <p className="rl-form-hint">{message}</p>}
       {error && <p className="rl-form-error">{error}</p>}
 
       <button
@@ -119,8 +157,19 @@ export function UploadWorkbench({
         disabled={!canSubmit}
         onClick={onSubmit}
       >
-        {loading ? '处理中…' : submitLabel}
+        {loading ? loadingLabel : submitLabel}
       </button>
     </div>
   );
+}
+
+function mergeFiles(existing: File[], incoming: File[]): File[] {
+  const merged = [...existing];
+  for (const file of incoming) {
+    const duplicate = merged.some((item) => item.name === file.name && item.size === file.size);
+    if (!duplicate) {
+      merged.push(file);
+    }
+  }
+  return merged;
 }

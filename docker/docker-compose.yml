@@ -23,20 +23,19 @@ services:
       timeout: 5s
       retries: 10
 
-  postgres:
-    image: pgvector/pgvector:pg16
-    container_name: raglaw-postgres
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: raglaw-elasticsearch
     ports:
-      - "5432:5432"
+      - "9200:9200"
     environment:
-      POSTGRES_DB: raglaw_vector
-      POSTGRES_USER: raglaw
-      POSTGRES_PASSWORD: raglaw
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
     volumes:
-      - raglaw-pg-data:/var/lib/postgresql/data
-      - ../docs/sql/postgres:/docker-entrypoint-initdb.d:ro
+      - raglaw-elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U raglaw -d raglaw_vector"]
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -76,19 +75,6 @@ services:
       timeout: 5s
       retries: 10
 
-  redis:
-    image: redis:7-alpine
-    container_name: raglaw-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - raglaw-redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   langfuse-db:
     profiles: [observability]
     image: postgres:16-alpine
@@ -123,8 +109,7 @@ services:
 
 volumes:
   raglaw-mysql-data:
-  raglaw-pg-data:
+  raglaw-elasticsearch-data:
   raglaw-minio-data:
   raglaw-rabbitmq-data:
-  raglaw-redis-data:
   raglaw-langfuse-db-data:

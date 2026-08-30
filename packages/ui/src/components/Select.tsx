@@ -104,7 +104,11 @@ export function Select({
         <ChevronDown className="rl-select-trigger__icon" size={16} aria-hidden="true" />
       </button>
       {open && (
-        <ul className="rl-select-menu rl-select-menu--enter" role="listbox">
+        <ul
+          className="rl-select-menu rl-select-menu--enter"
+          role="listbox"
+          onMouseDown={(e) => e.preventDefault()}
+        >
           {options.map((option) => (
             <li key={option.value}>
               <button
@@ -118,7 +122,8 @@ export function Select({
                 ]
                   .filter(Boolean)
                   .join(' ')}
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   onChange(option.value);
                   setOpen(false);
                 }}

@@ -1,10 +1,14 @@
 package com.raglaw.rag.contract;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raglaw.common.api.ErrorCodes;
 import com.raglaw.common.exception.BusinessException;
+import com.raglaw.rag.domain.ChunkLevel;
 import com.raglaw.rag.domain.ContractRiskEntity;
 import com.raglaw.rag.domain.DocumentChunkEntity;
 import com.raglaw.rag.domain.DocumentEntity;
+import com.raglaw.rag.dto.ContractChunkDto;
 import com.raglaw.rag.dto.ContractTextDto;
 import com.raglaw.rag.repository.ContractRiskRepository;
 import com.raglaw.rag.repository.DocumentChunkRepository;
@@ -19,30 +23,72 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ContractTextService {
 
+    private final ContractAccessService contractAccessService;
     private final DocumentRepository documentRepository;
     private final DocumentChunkRepository chunkRepository;
     private final ContractRiskRepository riskRepository;
     private final IngestService ingestService;
+    private final ObjectMapper objectMapper;
 
     public ContractTextService(
+            ContractAccessService contractAccessService,
             DocumentRepository documentRepository,
             DocumentChunkRepository chunkRepository,
             ContractRiskRepository riskRepository,
-            IngestService ingestService
+            IngestService ingestService,
+            ObjectMapper objectMapper
     ) {
+        this.contractAccessService = contractAccessService;
         this.documentRepository = documentRepository;
         this.chunkRepository = chunkRepository;
         this.riskRepository = riskRepository;
         this.ingestService = ingestService;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional(readOnly = true)
     public ContractTextDto getText(String documentId) {
         DocumentEntity document = ensureContract(documentId);
         String filename = ingestService.resolveOriginalFilename(document);
-        boolean pdf = filename.toLowerCase().endsWith(".pdf");
+        String lowerFilename = filename.toLowerCase();
+        boolean pdf = lowerFilename.endsWith(".pdf");
+        boolean image = isImageFilename(lowerFilename);
         String content = buildFullText(documentId);
-        return new ContractTextDto(documentId, filename, content, pdf);
+        List<ContractChunkDto> chunks = listDisplayChunks(documentId);
+        ExtractMeta meta = parseExtractMeta(document.getMetadataJson());
+        return new ContractTextDto(
+                documentId,
+                filename,
+                content,
+                pdf,
+                meta.extractMethod,
+                meta.ocrUsed,
+                image,
+                chunks
+        );
+    }
+
+    private List<ContractChunkDto> listDisplayChunks(String documentId) {
+        return chunkRepository.findByDocumentIdOrderByChunkIndexAsc(documentId).stream()
+                .filter(this::isDisplayChunk)
+                .map(chunk -> new ContractChunkDto(
+                        chunk.getId(),
+                        chunk.getChunkIndex(),
+                        chunk.getContent(),
+                        chunk.getChunkLevel() != null ? chunk.getChunkLevel().name() : null
+                ))
+                .toList();
+    }
+
+    private boolean isDisplayChunk(DocumentChunkEntity chunk) {
+        if (chunk.getChunkLevel() == ChunkLevel.PARENT) {
+            return false;
+        }
+        String text = chunk.getContent() == null ? "" : chunk.getContent().trim();
+        if (text.isEmpty()) {
+            return false;
+        }
+        return !text.matches("^段落组\\s*\\d+$");
     }
 
     @Transactional(readOnly = true)
@@ -79,12 +125,30 @@ public class ContractTextService {
         return content;
     }
 
+    private static boolean isImageFilename(String lowerFilename) {
+        return lowerFilename.endsWith(".jpg")
+                || lowerFilename.endsWith(".jpeg")
+                || lowerFilename.endsWith(".png");
+    }
+
     private DocumentEntity ensureContract(String documentId) {
-        DocumentEntity document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new BusinessException(ErrorCodes.NOT_FOUND, "文档不存在"));
-        if (!"CONTRACT".equals(document.getDocType())) {
-            throw new BusinessException(ErrorCodes.VALIDATION, "仅支持合同文档");
+        return contractAccessService.requireOwnedContract(documentId);
+    }
+
+    private ExtractMeta parseExtractMeta(String metadataJson) {
+        if (metadataJson == null || metadataJson.isBlank()) {
+            return new ExtractMeta(null, false);
         }
-        return document;
+        try {
+            JsonNode root = objectMapper.readTree(metadataJson);
+            String method = root.has("extractMethod") ? root.get("extractMethod").asText() : null;
+            boolean ocrUsed = root.path("ocrUsed").asBoolean(false);
+            return new ExtractMeta(method, ocrUsed);
+        } catch (Exception ex) {
+            return new ExtractMeta(null, false);
+        }
+    }
+
+    private record ExtractMeta(String extractMethod, boolean ocrUsed) {
     }
 }

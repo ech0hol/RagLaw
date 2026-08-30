@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "evaluatedAt": null,
+  "evaluator": null,
+  "environment": {
+    "baseUrl": "http://localhost:8080",
+    "webUrl": "http://localhost:5173",
+    "llmMock": null,
+    "hybridRetrievalReady": null,
+    "elasticsearchIndexSyncReady": null,
+    "notes": ""
+  },
+  "verdict": "PENDING",
+  "verdictReason": "",
+  "acceptedExceptions": [
+    "CopilotKit 未接入，使用原生 AG-UI SSE",
+    "向量库为 Elasticsearch 而非 pgvector；Redis 未使用",
+    "种子 Agent 为 GENERAL/STATUTE/CASE/CONTRACT，不是 8+4+4 独立专家",
+    "Tavily MCP 与 Langfuse L2 为可选",
+    "无独立类目管理路由"
+  ],
+  "gates": {
+    "A": {
+      "status": "PENDING",
+      "items": [
+        { "id": "A1", "name": "mvn test", "status": "PENDING", "evidence": "" },
+        { "id": "A2", "name": "RagHybridRecallIT", "status": "PENDING", "evidence": "" },
+        { "id": "A3", "name": "frontend vitest", "status": "PENDING", "evidence": "" },
+        { "id": "A4", "name": "pnpm lint:web && build:web", "status": "PENDING", "evidence": "" },
+        { "id": "A5", "name": "Playwright smoke", "status": "PENDING", "evidence": "" }
+      ]
+    },
+    "B": {
+      "status": "PENDING",
+      "items": [
+        { "id": "B1-health", "name": "GET /health status UP", "status": "PENDING", "evidence": "" },
+        { "id": "B1-hybrid", "name": "hybridRetrievalReady + elasticsearchIndexSyncReady or FULLTEXT noted", "status": "PENDING", "evidence": "" },
+        { "id": "B2", "name": "acceptance-qa.ps1 FAIL=0", "status": "PENDING", "evidence": "docs/evaluation/acceptance-report-latest.json" },
+        { "id": "B3-recall", "name": "recall-benchmark pass rate >= 90%", "status": "PENDING", "evidence": "docs/evaluation/rag-pipeline-eval-*.json" },
+        { "id": "B3-agui-refs", "name": "AG-UI reference events >= 1/2", "status": "PENDING", "evidence": "" }
+      ]
+    },
+    "C": {
+      "status": "PENDING",
+      "items": [
+        { "id": "C0", "name": "Playwright E2E_WITH_CORPUS + E2E_CONTRACT_REVIEW", "status": "PENDING", "evidence": "" },
+        { "id": "C1", "name": "Chat SSE citations copy regenerate history recommend", "status": "PENDING", "evidence": "" },
+        { "id": "C2", "name": "A2A / trace stages", "status": "PENDING", "evidence": "" },
+        { "id": "C3", "name": "/chat/STATUTE vs /chat/STATUTE_CIVIL", "status": "PENDING", "evidence": "" },
+        { "id": "C4", "name": "Knowledge search + graph", "status": "PENDING", "evidence": "" },
+        { "id": "C5", "name": "Ingest + case approval", "status": "PENDING", "evidence": "" },
+        { "id": "C6", "name": "Contract review export", "status": "PENDING", "evidence": "" },
+        { "id": "C7", "name": "Admin agents users observability", "status": "PENDING", "evidence": "" },
+        { "id": "C8", "name": "Langfuse L2 (optional)", "status": "NA", "evidence": "" },
+        { "id": "C9", "name": "Disclaimer theme lawyer admin redirect", "status": "PENDING", "evidence": "" }
+      ]
+    },
+    "S": {
+      "status": "PENDING",
+      "items": [
+        { "id": "S1", "name": "Contract IDOR 403", "status": "PENDING", "evidence": "" },
+        { "id": "S2", "name": "Lawyer admin API 403", "status": "PENDING", "evidence": "" },
+        { "id": "S3", "name": "Unauthenticated 401", "status": "PENDING", "evidence": "" },
+        { "id": "S4", "name": "Production checklist (deployment.md)", "status": "NA", "evidence": "local demo" },
+        { "id": "S5", "name": "Backup checklist (backup.md)", "status": "NA", "evidence": "local demo" }
+      ]
+    }
+  },
+  "spec17": [
+    { "id": 1, "status": "PARTIAL", "notes": "L3 seeded; no dedicated category admin page" },
+    { "id": 2, "status": "PARTIAL", "notes": "Case approval exists; lawyer cannot call admin upload API" },
+    { "id": 3, "status": "PASS", "notes": "GENERAL + SSE + citations + recommend; experts are STATUTE/CASE/CONTRACT" },
+    { "id": 4, "status": "PASS", "notes": "" },
+    { "id": 5, "status": "PARTIAL", "notes": "Workbench + export implemented; scan OCR optional" },
+    { "id": 6, "status": "PASS", "notes": "KnowledgeGraphView" },
+    { "id": 7, "status": "PARTIAL", "notes": "L1 required; L2 optional" },
+    { "id": 8, "status": "NA", "notes": "Langfuse optional" },
+    { "id": 9, "status": "PARTIAL", "notes": "disabled agents leave the registry; AG-UI falls back to GENERAL" },
+    { "id": 10, "status": "PASS", "notes": "knowledgeScopes injected into RagTool" }
+  ]
+}

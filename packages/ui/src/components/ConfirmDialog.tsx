@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useDialogOverlayDismiss } from '../lib/useDialogOverlayDismiss';
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -24,19 +24,16 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  useEffect(() => {
-    if (!open) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !loading) onCancel();
-    }
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open, loading, onCancel]);
+  const { onBackdropMouseDown, onBackdropClick } = useDialogOverlayDismiss(open, onCancel, { blocked: loading });
 
   if (!open) return null;
 
   return createPortal(
-    <div className="rl-dialog-overlay" onClick={() => !loading && onCancel()}>
+    <div
+      className="rl-dialog-overlay"
+      onMouseDown={onBackdropMouseDown}
+      onClick={onBackdropClick}
+    >
       <div
         className="rl-dialog rl-dialog--enter"
         role="alertdialog"

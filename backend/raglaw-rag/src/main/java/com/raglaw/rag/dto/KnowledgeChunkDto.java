@@ -6,6 +6,7 @@ public record KnowledgeChunkDto(
         String content,
         String l1Path,
         String l2Path,
-        String l3Path
+        String l3Path,
+        String chunkLevel
 ) {
 }

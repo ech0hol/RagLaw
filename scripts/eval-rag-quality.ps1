@@ -1,13 +1,14 @@
 # RagLaw RAG pipeline evaluation script
-# Usage: .\scripts\eval-rag-quality.ps1 -AdminPassword raglaw-eval
+# Usage: .\scripts\eval-rag-quality.ps1 -AdminPassword admin12345
 
 param(
     [string]$BaseUrl = "http://localhost:8080",
-    [string]$AdminPassword = $env:RAGLAW_ADMIN_PASSWORD,
+    [string]$AdminPassword = $(if ($env:RAGLAW_ADMIN_PASSWORD) { $env:RAGLAW_ADMIN_PASSWORD } elseif ($env:RAGLAW_SEED_ADMIN_PASSWORD) { $env:RAGLAW_SEED_ADMIN_PASSWORD } else { "admin12345" }),
     [string]$AdminEmail = "admin@raglaw.local",
     [ValidateSet("fulltext", "hybrid", "both")]
     [string]$RetrievalMode = "fulltext",
-    [switch]$UseRealEmbedding
+    [switch]$UseRealEmbedding,
+    [switch]$AllowIncompleteCorpus
 )
 
 $ErrorActionPreference = "Stop"
@@ -40,7 +41,7 @@ function Invoke-Api {
 
 function Login-Admin {
     if (-not $AdminPassword) {
-        throw "Set -AdminPassword or RAGLAW_ADMIN_PASSWORD"
+        $AdminPassword = if ($env:RAGLAW_SEED_ADMIN_PASSWORD) { $env:RAGLAW_SEED_ADMIN_PASSWORD } else { "admin12345" }
     }
     $resp = Invoke-Api -Method POST -Path "/api/v1/auth/login" -Body @{
         email = $AdminEmail
@@ -66,14 +67,15 @@ function Upload-And-Ingest {
     }
     $docId = $upload.data.id
     $ingest = Invoke-Api -Method POST -Path "/api/v1/admin/documents/$docId/ingest" -Token $Token
-    if ($Approve) {
+    $status = [string]$ingest.data.status
+    if ($Approve -and $status -eq "AWAITING_APPROVAL") {
         Invoke-Api -Method POST -Path "/api/v1/admin/approvals/$docId/approve" -Token $Token | Out-Null
-        $ingest.data.status = "INDEXED"
+        $status = "INDEXED"
     }
     return [PSCustomObject]@{
         Id = $docId
         Title = $upload.data.title
-        Status = $ingest.data.status
+        Status = $status
         CategoryId = $CategoryId
     }
 }
@@ -82,7 +84,7 @@ function Invoke-AguiQuery {
     param(
         [string]$Token,
         [string]$Message,
-        [string]$AgentCode = "STATUTE_CIVIL"
+        [string]$AgentCode = "STATUTE"
     )
     $headers = @{
         Authorization = "Bearer $Token"
@@ -92,7 +94,9 @@ function Invoke-AguiQuery {
         message = $Message
         agentCode = $AgentCode
     } | ConvertTo-Json
-    $resp = Invoke-WebRequest -Method POST -Uri "$BaseUrl/api/v1/agui/run" -Headers $headers -ContentType "application/json" -Body $body -UseBasicParsing
+    $utf8 = New-Object System.Text.UTF8Encoding $false
+    $bodyBytes = $utf8.GetBytes($body)
+    $resp = Invoke-WebRequest -Method POST -Uri "$BaseUrl/api/v1/agui/run" -Headers $headers -ContentType "application/json; charset=utf-8" -Body $bodyBytes -UseBasicParsing
     $text = $resp.Content
     $refCount = ([regex]::Matches($text, "event:reference")).Count
     $doneMatch = [regex]::Match($text, "event:done\s+data:(\{.*\})")
@@ -114,13 +118,16 @@ function Invoke-Mysql {
     return $out
 }
 
-function Invoke-PgCount {
-  param([string]$Sql)
-  $prev = $ErrorActionPreference
-  $ErrorActionPreference = "Continue"
-  $out = docker exec raglaw-postgres psql -U raglaw -d raglaw_vector -t -A -c $Sql 2>&1 | Where-Object { $_ -is [string] -and $_ -notmatch 'NOTICE' }
-  $ErrorActionPreference = $prev
-  return ($out | Select-Object -Last 1).ToString().Trim()
+function Invoke-EsCount {
+    param([string]$IndexName = "raglaw_chunks")
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $out = curl.exe -s "http://localhost:9200/$IndexName/_count" 2>&1
+    $ErrorActionPreference = $prev
+    if ($out -match '"count"\s*:\s*(\d+)') {
+        return $Matches[1]
+    }
+    return "n/a"
 }
 
 function Test-MysqlRetrieval {
@@ -136,7 +143,7 @@ try {
     Write-Host "Backend: $($health.data.status)"
     if ($health.data.rag) {
         $rag = $health.data.rag
-        Write-Host "  postgres: $($rag.postgresEnabled), embedding configured: $($rag.embeddingConfigured), hybrid ready: $($rag.hybridRetrievalReady)"
+        Write-Host "  elasticsearch: $($rag.elasticsearchEnabled), embedding configured: $($rag.embeddingConfigured), hybrid ready: $($rag.hybridRetrievalReady)"
     }
 } catch {
     throw "Backend not running. Start with: cd backend; mvn -pl raglaw-server spring-boot:run"
@@ -154,8 +161,8 @@ if ($UseRealEmbedding) {
     $embeddingMock = $false
 }
 if ($RetrievalMode -eq "hybrid" -and -not $hybridReady) {
-    Write-Host "Hybrid mode requested but POSTGRES_ENABLED + EMBEDDING_ENABLED are not both active." -ForegroundColor Yellow
-    Write-Host "Set POSTGRES_ENABLED=true, EMBEDDING_ENABLED=true; with RAGLAW_LLM_MOCK=true mock vectors work without DASHSCOPE_API_KEY." -ForegroundColor Yellow
+    Write-Host "Hybrid mode requested but ELASTICSEARCH_ENABLED + EMBEDDING_ENABLED are not both active." -ForegroundColor Yellow
+    Write-Host "Set ELASTICSEARCH_ENABLED=true, EMBEDDING_ENABLED=true; with RAGLAW_LLM_MOCK=true mock vectors work without DASHSCOPE_API_KEY." -ForegroundColor Yellow
     Write-Host "Re-ingest fixtures after enabling, then re-run." -ForegroundColor Yellow
 }
 
@@ -167,49 +174,83 @@ Write-Section "Apply L3 category seed"
 $prevEap = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
 Get-Content "$RepoRoot\docs\sql\mysql\004_seed_l3_categories.sql" -Raw | docker exec -i raglaw-mysql mysql -uraglaw -praglaw raglaw *> $null
+Get-Content "$RepoRoot\docs\sql\mysql\005_seed_social_l3_category.sql" -Raw | docker exec -i raglaw-mysql mysql -uraglaw -praglaw raglaw *> $null
 $ErrorActionPreference = $prevEap
 Write-Host "L3 categories synced"
 
 Write-Section "Upload and ingest fixtures"
+
 $fixtures = @(
     @{ Path = "$RepoRoot\docs\fixtures\statutes\labor-contract-law-excerpt.md"; Category = "cat_l3_statute_civil_labor"; Approve = $false },
     @{ Path = "$RepoRoot\docs\fixtures\statutes\civil-code-contract-excerpt.md"; Category = "cat_l3_statute_civil_contract"; Approve = $false },
-    @{ Path = "$RepoRoot\docs\fixtures\cases\labor-overtime-case.md"; Category = "cat_l3_case_civil_labor"; Approve = $true }
+    @{ Path = "$RepoRoot\docs\fixtures\cases\labor-overtime-case.md"; Category = "cat_l3_case_civil_labor"; Approve = $true },
+    @{ Path = "$RepoRoot\docs\fixtures\statutes\social-insurance-excerpt.md"; Category = "cat_l3_statute_social_general"; Approve = $false },
+    @{ Path = "$RepoRoot\docs\fixtures\statutes\medical-insurance-remote-settlement.md"; Category = "cat_l3_statute_social_general"; Approve = $false }
 )
 $docs = @()
 foreach ($fx in $fixtures) {
-    $doc = Upload-And-Ingest -Token $token -FilePath $fx.Path -CategoryId $fx.Category -Approve:($fx.Approve)
-    $docs += $doc
-    Write-Host "  $($doc.Title) -> $($doc.Status)"
+    try {
+        $doc = Upload-And-Ingest -Token $token -FilePath $fx.Path -CategoryId $fx.Category -Approve:($fx.Approve)
+        $docs += $doc
+        Write-Host "  $($doc.Title) -> $($doc.Status)"
+    } catch {
+        Write-Host "  SKIP $($fx.Path): $($_.Exception.Message)" -ForegroundColor Yellow
+    }
 }
 
-Write-Section "MySQL fulltext baseline"
-$queries = @(
-    "company wage arrears labor rights",
-    "liquidated damages too high",
-    "overtime pay dispute"
-)
-# Chinese queries for real eval
+Write-Section "recall-benchmark.json (knowledge search API)"
+$benchmarkPath = "$RepoRoot\docs\evaluation\recall-benchmark.json"
+$benchmarkJson = [System.IO.File]::ReadAllText($benchmarkPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+$benchmarkQueries = @()
+foreach ($item in $benchmarkJson.queries) {
+    $encoded = [uri]::EscapeDataString($item.text)
+    $search = Invoke-Api -Method GET -Path "/api/v1/knowledge/search?q=$encoded&pageSize=10" -Token $token
+    $hits = @($search.data.items)
+    $hitCount = $hits.Count
+    $top1Path = if ($hitCount -gt 0) { [string]$hits[0].path } else { "" }
+    $distinctDocs = @($hits | ForEach-Object { $_.documentId } | Select-Object -Unique).Count
+    $minHits = [int]$item.minHitCount
+    $prefixOk = $true
+    if ($item.PSObject.Properties.Name -contains "top1PathPrefix" -and $item.top1PathPrefix) {
+        $prefixOk = $top1Path.StartsWith([string]$item.top1PathPrefix)
+    }
+    $distinctOk = $true
+    if ($item.PSObject.Properties.Name -contains "minDistinctDocuments" -and $item.minDistinctDocuments) {
+        $distinctOk = $distinctDocs -ge [int]$item.minDistinctDocuments
+    }
+    $pass = ($hitCount -ge $minHits) -and $prefixOk -and $distinctOk
+    $status = if ($pass) { "PASS" } else { "FAIL" }
+    Write-Host "  [$status] $($item.text) hits=$hitCount top1=$top1Path docs=$distinctDocs"
+    $benchmarkQueries += [PSCustomObject]@{
+        text = $item.text
+        minHitCount = $minHits
+        top1PathPrefix = $item.top1PathPrefix
+        hitCount = $hitCount
+        top1Path = $top1Path
+        distinctDocuments = $distinctDocs
+        pass = $pass
+    }
+}
+$benchmarkPassed = @($benchmarkQueries | Where-Object { $_.pass }).Count
+$benchmarkTotal = $benchmarkQueries.Count
+$benchmarkRate = if ($benchmarkTotal -gt 0) { [math]::Round($benchmarkPassed / $benchmarkTotal, 4) } else { 0 }
+$benchmarkGatePass = $benchmarkRate -ge 0.9
+Write-Host "Benchmark pass rate: $benchmarkPassed/$benchmarkTotal ($benchmarkRate) gate>=0.9: $benchmarkGatePass"
+
+Write-Section "MySQL fulltext diagnostic (sample)"
 $queriesZh = @(
-    [char]0x516C + [char]0x53F8 + [char]0x62D6 + [char]0x6B20 + [char]0x5DE5 + [char]0x8D44,
+    [char]0x62D6 + [char]0x6B20 + [char]0x5DE5 + [char]0x8D44,
     [char]0x8FDD + [char]0x7EA6 + [char]0x91D1 + [char]0x8FC7 + [char]0x9AD8,
     [char]0x52A0 + [char]0x73ED + [char]0x8D39
 )
 $retrievalReport = @()
 foreach ($q in $queriesZh) {
-    Write-Host ""
-    Write-Host "Query: $q" -ForegroundColor Yellow
     $rows = Test-MysqlRetrieval -Query $q
     $count = if ($rows) { ($rows | Measure-Object).Count } else { 0 }
-    if ($count -gt 0) {
-        $rows | ForEach-Object { Write-Host "  $_" }
-    } else {
-        Write-Host "  (no hits)" -ForegroundColor DarkYellow
-    }
     $retrievalReport += [PSCustomObject]@{ Query = $q; HitCount = $count }
 }
 
-Write-Section "AG-UI E2E (STATUTE_CIVIL)"
+Write-Section "AG-UI E2E (STATUTE)"
 $q1 = [char]0x516C + [char]0x53F8 + [char]0x62D6 + [char]0x6B20 + [char]0x5DE5 + [char]0x8D44 + [char]0x52B3 + [char]0x52A8 + [char]0x8005 + [char]0x5982 + [char]0x4F55 + [char]0x7EF4 + [char]0x6743 + "?"
 $q2 = [char]0x5408 + [char]0x540C + [char]0x7EA6 + [char]0x5B9A + [char]0x7684 + [char]0x8FDD + [char]0x7EA6 + [char]0x91D1 + [char]0x8FC7 + [char]0x9AD8 + [char]0x600E + [char]0x4E48 + [char]0x529E + "?"
 $kwLaborPay = -join @([char]0x52B3,[char]0x52A8,[char]0x62A5,[char]0x916C)
@@ -223,7 +264,7 @@ $answerReport = @()
 foreach ($item in $aguiQueries) {
     Write-Host ""
     Write-Host "Question: $($item.Q)" -ForegroundColor Yellow
-    $result = Invoke-AguiQuery -Token $token -Message $item.Q -AgentCode "STATUTE_CIVIL"
+    $result = Invoke-AguiQuery -Token $token -Message $item.Q -AgentCode "STATUTE"
     Write-Host "  refs: $($result.ReferenceCount), latency: $($result.LatencyMs)ms"
     $matched = @($item.Keywords | Where-Object { $result.Answer -match [regex]::Escape($_) })
     Write-Host "  keyword hits: $($matched.Count)/$($item.Keywords.Count)"
@@ -233,7 +274,7 @@ foreach ($item in $aguiQueries) {
         LatencyMs = $result.LatencyMs
         KeywordHits = $matched.Count
         ExpectedKeywords = $item.Keywords.Count
-        AnswerPreview = if ($result.Answer.Length -gt 200) { $result.Answer.Substring(0, 200) + "..." } else { $result.Answer }
+        AnswerPreview = if ($result.Answer -and $result.Answer.Length -gt 200) { $result.Answer.Substring(0, 200) + "..." } else { $result.Answer }
     }
 }
 
@@ -242,13 +283,15 @@ $chunkCount = (Invoke-Mysql -Sql "SELECT COUNT(*) FROM raglaw_document_chunk;") 
 $indexedCount = (Invoke-Mysql -Sql "SELECT COUNT(*) FROM raglaw_document WHERE status='INDEXED';") | Select-Object -Last 1
 $vectorCount = $null
 try {
-    $vectorCount = Invoke-PgCount -Sql "SELECT COUNT(*) FROM raglaw_embedding;"
+    $vectorCount = Invoke-EsCount
 } catch {
     $vectorCount = "n/a"
 }
-Write-Host "Indexed docs: $indexedCount, chunks: $chunkCount, pgvector rows: $vectorCount"
-Write-Host "Retrieval hit rate: $(($retrievalReport | Where-Object { $_.HitCount -gt 0 }).Count)/$($retrievalReport.Count)"
-Write-Host "Answer with refs: $(($answerReport | Where-Object { $_.References -gt 0 }).Count)/$($answerReport.Count)"
+$aguiRefPass = @($answerReport | Where-Object { $_.References -gt 0 }).Count
+Write-Host "Indexed docs: $indexedCount, chunks: $chunkCount, ES chunk docs: $vectorCount"
+Write-Host "Benchmark: $benchmarkPassed/$benchmarkTotal (gate $($benchmarkGatePass))"
+Write-Host "MySQL sample hit rate: $(($retrievalReport | Where-Object { $_.HitCount -gt 0 }).Count)/$($retrievalReport.Count)"
+Write-Host "Answer with refs: $aguiRefPass/$($answerReport.Count)"
 Write-Host "Eval mode: $RetrievalMode (hybrid ready: $hybridReady)"
 
 $suffix = if ($RetrievalMode -eq "hybrid" -and $hybridReady) { "-hybrid" } elseif ($RetrievalMode -eq "both") { "-compare" } else { "" }
@@ -261,8 +304,16 @@ New-Item -ItemType Directory -Force -Path (Split-Path $reportPath) | Out-Null
     embeddingMock = $embeddingMock
     useRealEmbedding = [bool]$UseRealEmbedding
     documents = $docs
+    benchmark = @{
+        source = "docs/evaluation/recall-benchmark.json"
+        passed = $benchmarkPassed
+        total = $benchmarkTotal
+        passRate = $benchmarkRate
+        gatePass = $benchmarkGatePass
+        queries = $benchmarkQueries
+    }
     retrieval = @{
-        engine = if ($hybridReady -and $RetrievalMode -ne "fulltext") { "MySQL FULLTEXT + pgvector RRF" } else { "MySQL FULLTEXT (ngram)" }
+        engine = if ($hybridReady -and $RetrievalMode -ne "fulltext") { "Elasticsearch BM25 + vector RRF" } else { "MySQL FULLTEXT (ngram)" }
         queries = $retrievalReport
     }
     answers = $answerReport
@@ -270,6 +321,16 @@ New-Item -ItemType Directory -Force -Path (Split-Path $reportPath) | Out-Null
         indexedDocuments = [int]$indexedCount
         chunkCount = [int]$chunkCount
         vectorCount = $vectorCount
+        aguiReferencePass = $aguiRefPass
+        aguiReferenceTotal = $answerReport.Count
     }
-} | ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 $reportPath
+} | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 $reportPath
 Write-Host "Report saved: $reportPath" -ForegroundColor Green
+
+if (-not $benchmarkGatePass) {
+    Write-Host "GATE B3 FAIL: recall pass rate $benchmarkRate < 0.9" -ForegroundColor Red
+    if (-not $AllowIncompleteCorpus) {
+        exit 1
+    }
+    Write-Host "AllowIncompleteCorpus set; not failing process." -ForegroundColor Yellow
+}

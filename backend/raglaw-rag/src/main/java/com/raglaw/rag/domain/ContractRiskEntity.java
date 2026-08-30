@@ -34,6 +34,9 @@ public class ContractRiskEntity {
     @Column(columnDefinition = "TEXT")
     private String suggestion;
 
+    @Column(name = "legal_references_json", columnDefinition = "TEXT")
+    private String legalReferencesJson;
+
     @Column(name = "page_number")
     private Integer pageNumber;
 
@@ -119,6 +122,14 @@ public class ContractRiskEntity {
 
     public String getSuggestion() {
         return suggestion;
+    }
+
+    public String getLegalReferencesJson() {
+        return legalReferencesJson;
+    }
+
+    public void setLegalReferencesJson(String legalReferencesJson) {
+        this.legalReferencesJson = legalReferencesJson;
     }
 
     public Integer getPageNumber() {

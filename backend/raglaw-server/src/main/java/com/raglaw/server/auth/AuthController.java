@@ -102,7 +102,7 @@ public class AuthController {
     private static void setRefreshCookie(HttpServletResponse response, String refresh) {
         ResponseCookie cookie = ResponseCookie.from(REFRESH_COOKIE, refresh)
                 .httpOnly(true)
-                .path("/api/v1/auth")
+                .path("/api")
                 .maxAge(7 * 24 * 60 * 60L)
                 .sameSite("Lax")
                 .build();
@@ -110,10 +110,18 @@ public class AuthController {
     }
 
     private static void clearRefreshCookie(HttpServletResponse response) {
-        Cookie cookie = new Cookie(REFRESH_COOKIE, "");
-        cookie.setHttpOnly(true);
-        cookie.setPath("/api/v1/auth");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from(REFRESH_COOKIE, "")
+                .httpOnly(true)
+                .path("/api")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+        // Clear legacy cookie path from older clients
+        Cookie legacy = new Cookie(REFRESH_COOKIE, "");
+        legacy.setHttpOnly(true);
+        legacy.setPath("/api/v1/auth");
+        legacy.setMaxAge(0);
+        response.addCookie(legacy);
     }
 }

@@ -9,16 +9,14 @@ class ContractClassifierTest {
     private final ContractClassifier classifier = new ContractClassifier();
 
     @Test
-    void classifiesCivilContractByKeywords() {
-        var result = classifier.classify("本借款合同约定违约金及担保责任。");
-        assertThat(result.domain()).isEqualTo("CIVIL");
-        assertThat(result.suggestedAgentCode()).isEqualTo("CONTRACT_CIVIL");
+    void classify_alwaysReturnsContractAgent() {
+        ContractClassifier.ClassificationResult result = classifier.classify("刑事合同 租赁 借款");
+        assertThat(result.suggestedAgentCode()).isEqualTo("CONTRACT");
     }
 
     @Test
-    void fallsBackToGeneral() {
-        var result = classifier.classify("双方就合作事宜达成一致。");
-        assertThat(result.domain()).isEqualTo("GENERAL");
-        assertThat(result.suggestedAgentCode()).isEqualTo("CONTRACT_GENERAL");
+    void classify_emptyText_returnsContract() {
+        ContractClassifier.ClassificationResult result = classifier.classify("");
+        assertThat(result.suggestedAgentCode()).isEqualTo("CONTRACT");
     }
 }

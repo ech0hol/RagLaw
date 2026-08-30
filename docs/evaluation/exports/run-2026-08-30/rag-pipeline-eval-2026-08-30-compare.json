@@ -1,0 +1,235 @@
+﻿{
+    "retrieval":  {
+                      "engine":  "MySQL FULLTEXT (ngram)",
+                      "queries":  [
+                                      {
+                                          "Query":  "拖欠工资 违约金过高 加班费",
+                                          "HitCount":  5
+                                      }
+                                  ]
+                  },
+    "answers":  [
+                    {
+                        "Query":  "公司拖欠工资劳动者如何维权?",
+                        "References":  2,
+                        "LatencyMs":  52568,
+                        "KeywordHits":  0,
+                        "ExpectedKeywords":  2,
+                        "AnswerPreview":  "劳动者遭遇公司拖欠工资，可依法通过协商、投诉、调解、仲裁或诉讼等途径维权，核心依据为《劳动合同法》《劳动争议调解仲裁法》及《保障农民工工资支付条例》等规定。\n\n1. **协商与内部沟通**\n   - 劳动者可先与用人单位协商，要求及时足额支付工资；协商过程建议留存录音、聊天记录、邮件等证据。  \n   - 若用人单位存在经营困难，可就工资支付时间、方式等达成书面协议，但不得违反法律强制性规定。\n\n..."
+                    },
+                    {
+                        "Query":  "合同约定的违约金过高怎么办?",
+                        "References":  3,
+                        "LatencyMs":  22272,
+                        "KeywordHits":  1,
+                        "ExpectedKeywords":  1,
+                        "AnswerPreview":  "当合同约定的违约金过高时，当事人可依法请求人民法院或仲裁机构予以适当减少。\n\n1. **法律依据明确授权调整**  \n   **《中华人民共和国民法典》第585条第2款**[1] 规定：“约定的违约金低于造成的损失的，人民法院或者仲裁机构可以根据当事人的请求予以增加；约定的违约金过分高于造成的损失的，人民法院或者仲裁机构可以根据当事人的请求予以适当减少。”该条款赋予司法机关对显失公平的违约金条款进..."
+                    }
+                ],
+    "useRealEmbedding":  false,
+    "documents":  [
+                      {
+                          "Id":  "2f69a687-b626-4412-9903-b6a69fa43d94",
+                          "Title":  "labor-contract-law-excerpt",
+                          "Status":  "INDEXED",
+                          "CategoryId":  "cat_l3_statute_civil_labor"
+                      },
+                      {
+                          "Id":  "b5b56ea1-e902-4f0e-8123-c7cbbc8b85ba",
+                          "Title":  "civil-code-contract-excerpt",
+                          "Status":  "INDEXED",
+                          "CategoryId":  "cat_l3_statute_civil_contract"
+                      },
+                      {
+                          "Id":  "9e40e596-ffa7-441c-ad6a-7f8244add5a8",
+                          "Title":  "labor-overtime-case",
+                          "Status":  "INDEXED",
+                          "CategoryId":  "cat_l3_case_civil_labor"
+                      },
+                      {
+                          "Id":  "634048ef-60ea-46e3-8186-cbda4ab48569",
+                          "Title":  "social-insurance-excerpt",
+                          "Status":  "INDEXED",
+                          "CategoryId":  "cat_l3_statute_social_general"
+                      },
+                      {
+                          "Id":  "73e9b802-fcba-4e66-b714-4b84cbf825d6",
+                          "Title":  "medical-insurance-remote-settlement",
+                          "Status":  "INDEXED",
+                          "CategoryId":  "cat_l3_statute_social_general"
+                      }
+                  ],
+    "retrievalMode":  "both",
+    "embeddingMock":  false,
+    "benchmark":  {
+                      "passed":  12,
+                      "gatePass":  false,
+                      "source":  "docs/evaluation/recall-benchmark.json",
+                      "total":  17,
+                      "queries":  [
+                                      {
+                                          "text":  "拖欠工资",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/CIVIL/LABOR",
+                                          "distinctDocuments":  1,
+                                          "pass":  true
+                                      },
+                                      {
+                                          "text":  "违约金过高",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE/CIVIL",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/CIVIL/CONTRACT",
+                                          "distinctDocuments":  1,
+                                          "pass":  true
+                                      },
+                                      {
+                                          "text":  "加班费",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  3,
+                                          "top1Path":  "/CASE/CIVIL/LABOR",
+                                          "distinctDocuments":  3,
+                                          "pass":  false
+                                      },
+                                      {
+                                          "text":  "劳动合同解除",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/CIVIL/LABOR",
+                                          "distinctDocuments":  1,
+                                          "pass":  true
+                                      },
+                                      {
+                                          "text":  "经济补偿",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/CIVIL/LABOR",
+                                          "distinctDocuments":  1,
+                                          "pass":  true
+                                      },
+                                      {
+                                          "text":  "借贷利息",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE/CIVIL",
+                                          "hitCount":  2,
+                                          "top1Path":  "/STATUTE/CIVIL/CONTRACT",
+                                          "distinctDocuments":  2,
+                                          "pass":  true
+                                      },
+                                      {
+                                          "text":  "租赁合同违约",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/CIVIL/CONTRACT",
+                                          "distinctDocuments":  1,
+                                          "pass":  true
+                                      },
+                                      {
+                                          "text":  "定金",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE/CIVIL",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/CIVIL/CONTRACT",
+                                          "distinctDocuments":  1,
+                                          "pass":  true
+                                      },
+                                      {
+                                          "text":  "劳动争议案例",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/CASE",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/CIVIL/LABOR",
+                                          "distinctDocuments":  1,
+                                          "pass":  false
+                                      },
+                                      {
+                                          "text":  "违约责任",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE/CIVIL",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/CIVIL/CONTRACT",
+                                          "distinctDocuments":  1,
+                                          "pass":  true
+                                      },
+                                      {
+                                          "text":  "买化学品是否违法",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  0,
+                                          "top1Path":  "",
+                                          "distinctDocuments":  0,
+                                          "pass":  false
+                                      },
+                                      {
+                                          "text":  "危险化学品购买",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  0,
+                                          "top1Path":  "",
+                                          "distinctDocuments":  0,
+                                          "pass":  false
+                                      },
+                                      {
+                                          "text":  "行政处罚",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  0,
+                                          "top1Path":  "",
+                                          "distinctDocuments":  0,
+                                          "pass":  false
+                                      },
+                                      {
+                                          "text":  "刑法中刑罚种类有哪些",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/CRIMINAL/GENERAL",
+                                          "distinctDocuments":  1,
+                                          "pass":  true
+                                      },
+                                      {
+                                          "text":  "附加刑的种类",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/CRIMINAL/GENERAL",
+                                          "distinctDocuments":  1,
+                                          "pass":  true
+                                      },
+                                      {
+                                          "text":  "社会保险参保",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/SOCIAL/GENERAL",
+                                          "distinctDocuments":  1,
+                                          "pass":  true
+                                      },
+                                      {
+                                          "text":  "城乡居民医保异地报销",
+                                          "minHitCount":  1,
+                                          "top1PathPrefix":  "/STATUTE",
+                                          "hitCount":  1,
+                                          "top1Path":  "/STATUTE/SOCIAL/GENERAL",
+                                          "distinctDocuments":  1,
+                                          "pass":  true
+                                      }
+                                  ],
+                      "passRate":  0.7059
+                  },
+    "hybridReady":  false,
+    "evaluatedAt":  "2026-08-30T16:42:53.7469979+08:00",
+    "stats":  {
+                  "chunkCount":  2113,
+                  "indexedDocuments":  10,
+                  "vectorCount":  "0",
+                  "aguiReferencePass":  2,
+                  "aguiReferenceTotal":  2
+              }
+}

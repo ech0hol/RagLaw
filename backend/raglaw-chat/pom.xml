@@ -13,6 +13,10 @@
     <dependencies>
         <dependency>
             <groupId>com.raglaw</groupId>
+            <artifactId>raglaw-rag</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.raglaw</groupId>
             <artifactId>raglaw-common</artifactId>
         </dependency>
         <dependency>

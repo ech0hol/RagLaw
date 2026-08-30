@@ -52,4 +52,24 @@ public class A2aCallLogEntity {
         this.outputSummary = outputSummary;
         this.latencyMs = latencyMs;
     }
+
+    public String getFromAgent() {
+        return fromAgent;
+    }
+
+    public String getToAgent() {
+        return toAgent;
+    }
+
+    public String getInputSummary() {
+        return inputSummary;
+    }
+
+    public String getOutputSummary() {
+        return outputSummary;
+    }
+
+    public Long getLatencyMs() {
+        return latencyMs;
+    }
 }

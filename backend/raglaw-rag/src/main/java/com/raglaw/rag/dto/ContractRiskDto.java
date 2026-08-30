@@ -19,6 +19,7 @@ public record ContractRiskDto(
         List<HighlightRect> highlightRects,
         boolean accepted,
         String revisedExcerpt,
+        List<LegalReferenceDto> legalReferences,
         Instant createdAt
 ) {
 
@@ -38,6 +39,7 @@ public record ContractRiskDto(
                 parseHighlightRects(entity.getHighlightRectsJson()),
                 entity.isAccepted(),
                 entity.getRevisedExcerpt(),
+                parseLegalReferences(entity.getLegalReferencesJson()),
                 entity.getCreatedAt()
         );
     }
@@ -48,6 +50,18 @@ public record ContractRiskDto(
         }
         try {
             return MAPPER.readValue(json, new TypeReference<List<HighlightRect>>() {
+            });
+        } catch (Exception ex) {
+            return List.of();
+        }
+    }
+
+    private static List<LegalReferenceDto> parseLegalReferences(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return MAPPER.readValue(json, new TypeReference<List<LegalReferenceDto>>() {
             });
         } catch (Exception ex) {
             return List.of();

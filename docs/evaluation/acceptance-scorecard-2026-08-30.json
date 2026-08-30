@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "evaluatedAt": "2026-08-30T13:15:00+08:00",
+  "evaluator": "Cursor Agent (subagent-driven acceptance run)",
+  "environment": {
+    "baseUrl": "http://localhost:8080",
+    "webUrl": "http://localhost:5173",
+    "llmMock": false,
+    "hybridRetrievalReady": false,
+    "elasticsearchIndexSyncReady": false,
+    "notes": "elasticsearchEnabled=false; MySQL FULLTEXT only; statute=8 case=2 in corpus"
+  },
+  "verdict": "FAIL",
+  "verdictReason": "Gate A 未全绿（RagHybridRecallIT 0 命中、Playwright E2E 登录/聊天超时）；Gate B acceptance-qa FAIL=1（export_docx 401）且黄金查询 12/17（70.59%）低于 90% 阈值；Gate C0 Playwright 10/11 失败。核心 API 对话/鉴权/trace 大部分通过，但合同导出与召回基准未达标。",
+  "acceptedExceptions": [
+    "CopilotKit 未接入，使用原生 AG-UI SSE",
+    "向量库为 Elasticsearch 而非 pgvector；Redis 未使用",
+    "种子 Agent 为 GENERAL/STATUTE/CASE/CONTRACT，不是 8+4+4 独立专家",
+    "Tavily MCP 与 Langfuse L2 为可选",
+    "无独立类目管理路由",
+    "B1-hybrid: fulltext-only 不挡 as-built"
+  ],
+  "gates": {
+    "A": {
+      "status": "FAIL",
+      "items": [
+        { "id": "A1", "name": "mvn test", "status": "PASS", "evidence": "244 tests, exit 0" },
+        { "id": "A2", "name": "RagHybridRecallIT", "status": "FAIL", "evidence": "ingestedLaborFixtureSupportsRecallBenchmark: hits=0 expected>=1 (Docker+ES Testcontainers)" },
+        { "id": "A3", "name": "frontend vitest raglaw-web", "status": "PASS", "evidence": "32 passed (5 files)" },
+        { "id": "A3-ui", "name": "@raglaw/ui vitest", "status": "PASS", "evidence": "75 passed (10 files)" },
+        { "id": "A4", "name": "pnpm lint:web && build:web", "status": "PASS", "evidence": "tsc --noEmit + Vite build exit 0" },
+        { "id": "A5", "name": "Playwright smoke", "status": "FAIL", "evidence": "2 passed, 2 failed, 7 skipped; smoke login timeout (.rl-bubble--assistant not visible)" }
+      ]
+    },
+    "B": {
+      "status": "FAIL",
+      "items": [
+        { "id": "B1-health", "name": "GET /health status UP", "status": "PASS", "evidence": "status=UP llmMock=false" },
+        { "id": "B1-hybrid", "name": "hybridRetrievalReady or FULLTEXT noted", "status": "WARN", "evidence": "hybridRetrievalReady=false elasticsearchIndexSyncReady=false; fulltext-only accepted" },
+        { "id": "B2", "name": "acceptance-qa.ps1 FAIL=0", "status": "FAIL", "evidence": "33 PASS / 1 FAIL / 6 WARN; FAIL: contract/export_docx http=401" },
+        { "id": "B3-recall", "name": "recall-benchmark pass rate >= 90%", "status": "FAIL", "evidence": "12/17 (70.59%); failed: 加班费(top1 CASE not STATUTE), 借贷利息, 买化学品是否违法, 危险化学品购买, 行政处罚" },
+        { "id": "B3-agui-refs", "name": "AG-UI reference events >= 1/2", "status": "PASS", "evidence": "eval answers: 2/2 with references" }
+      ]
+    },
+    "C": {
+      "status": "FAIL",
+      "items": [
+        { "id": "C0", "name": "Playwright E2E_WITH_CORPUS + E2E_CONTRACT_REVIEW", "status": "FAIL", "evidence": "0 passed, 10 failed, 1 skipped; login UI timeout (API login works with raglaw-eval)" },
+        { "id": "C1", "name": "Chat SSE citations copy regenerate history recommend", "status": "PARTIAL", "evidence": "API: 3-turn SSE PASS, citations 2/3, no duplicate blocks; UI copy/regenerate not verified" },
+        { "id": "C2", "name": "A2A / trace stages", "status": "PASS", "evidence": "trace_stages: knowledge_funnel,dual_channel_retrieval,rag_search,llm,knowledge_presearch; llm output len=715" },
+        { "id": "C3", "name": "/chat/STATUTE vs /chat/STATUTE_CIVIL", "status": "PASS", "evidence": "STATUTE enabled; STATUTE_CIVIL not seed agent (documented exception)" },
+        { "id": "C4", "name": "Knowledge search + graph", "status": "PARTIAL", "evidence": "search_拖欠工资 hits=2; graph_related=0 WARN" },
+        { "id": "C5", "name": "Ingest + case approval", "status": "PARTIAL", "evidence": "case already INDEXED; ingest skipped" },
+        { "id": "C6", "name": "Contract review export", "status": "FAIL", "evidence": "export_docx 401; review_rag_hits=0 WARN; upload PASS" },
+        { "id": "C7", "name": "Admin agents users observability", "status": "PASS", "evidence": "agent_reload, user_list, trace_list total=71" },
+        { "id": "C8", "name": "Langfuse L2 (optional)", "status": "NA", "evidence": "not configured" },
+        { "id": "C9", "name": "Disclaimer theme lawyer admin redirect", "status": "PARTIAL", "evidence": "API: lawyer 403, unauth 401 PASS; theme/disclaimer UI not verified" }
+      ]
+    },
+    "S": {
+      "status": "PASS",
+      "items": [
+        { "id": "S1", "name": "Contract IDOR 403", "status": "PASS", "evidence": "acceptance-qa contract_idor 403; ContractIdorSecurityIT in A1" },
+        { "id": "S2", "name": "Lawyer admin API 403", "status": "PASS", "evidence": "lawyer_admin_block 403" },
+        { "id": "S3", "name": "Unauthenticated 401", "status": "PASS", "evidence": "unauth_block 401" },
+        { "id": "S4", "name": "Production checklist (deployment.md)", "status": "NA", "evidence": "local demo" },
+        { "id": "S5", "name": "Backup checklist (backup.md)", "status": "NA", "evidence": "local demo" }
+      ]
+    }
+  },
+  "spec17": [
+    { "id": 1, "status": "PARTIAL", "notes": "L3 seeded; no dedicated category admin page" },
+    { "id": 2, "status": "PARTIAL", "notes": "Case approval exists; lawyer cannot call admin upload API" },
+    { "id": 3, "status": "PASS", "notes": "3-turn SSE + citations + quality gates; trace stages OK" },
+    { "id": 4, "status": "PARTIAL", "notes": "persist PASS via API; UI refresh/regenerate blocked by E2E fail" },
+    { "id": 5, "status": "FAIL", "notes": "export_docx 401; ragHitCount=0 on review" },
+    { "id": 6, "status": "PARTIAL", "notes": "graph_related=0 in current corpus" },
+    { "id": 7, "status": "PASS", "notes": "L1 trace list/detail/stages/llm output verified" },
+    { "id": 8, "status": "NA", "notes": "Langfuse optional" },
+    { "id": 9, "status": "PARTIAL", "notes": "disable_CASE_run falls back to GENERAL" },
+    { "id": 10, "status": "PASS", "notes": "knowledge search scoped; agent reload OK" }
+  ],
+  "blockers": [
+    {
+      "id": "B-01",
+      "severity": "P0",
+      "area": "contract",
+      "issue": "GET export docx returns 401 while other contract endpoints return 200 with same token",
+      "evidence": "acceptance-report-latest.json contract/export_docx"
+    },
+    {
+      "id": "B-02",
+      "severity": "P1",
+      "area": "retrieval",
+      "issue": "recall-benchmark 12/17 (70.59%) below 90% gate",
+      "evidence": "rag-pipeline-eval-2026-08-30-compare.json"
+    },
+    {
+      "id": "B-03",
+      "severity": "P1",
+      "area": "e2e",
+      "issue": "Playwright login/chat timeout despite API auth success",
+      "evidence": "smoke.spec.ts .rl-bubble--assistant not visible 30s"
+    },
+    {
+      "id": "B-04",
+      "severity": "P2",
+      "area": "it",
+      "issue": "RagHybridRecallIT labor fixture 0 hits in Testcontainers ES run",
+      "evidence": "RagHybridRecallIT.java:133"
+    }
+  ],
+  "summary": {
+    "gateA": "FAIL",
+    "gateB": "FAIL",
+    "gateC": "FAIL",
+    "gateS": "PASS",
+    "acceptanceQa": { "pass": 33, "fail": 1, "warn": 6 },
+    "recallBenchmark": { "passed": 12, "total": 17, "rate": "70.59%" },
+    "playwright": { "passed": 0, "failed": 10, "skipped": 1 }
+  }
+}

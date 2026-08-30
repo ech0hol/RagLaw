@@ -1,0 +1,34 @@
+﻿{
+  "schemaVersion": 1,
+  "evaluatedAt": "2026-08-30T13:55:00+08:00",
+  "evaluator": "Cursor Agent (strict acceptance run per acceptance-plan)",
+  "environment": {
+    "baseUrl": "http://localhost:8080",
+    "webUrl": "http://localhost:5173",
+    "llmMock": false,
+    "hybridRetrievalReady": false,
+    "elasticsearchIndexSyncReady": false,
+    "notes": "elasticsearchEnabled=false; MySQL FULLTEXT only; Docker MySQL/ES/MinIO/RabbitMQ up; statute=8 case=2; indexedDocuments=16 chunks=2003"
+  },
+  "verdict": "FAIL",
+  "verdictReason": "Gate A 未全绿（RagHybridRecallIT 0 命中、Playwright 6/11 失败）；Gate B3 黄金查询 14/17（82.35%）低于 90% 阈值；Gate C 核心 E2E 未全通过。Gate B2 acceptance-qa FAIL=0 且七大维度中回答/对话 API/权限/可观测性达标。",
+  "acceptedExceptions": [
+    "CopilotKit 未接入，使用原生 AG-UI SSE",
+    "向量库为 Elasticsearch 而非 pgvector；Redis 未使用",
+    "种子 Agent 为 GENERAL/STATUTE/CASE/CONTRACT",
+    "Tavily MCP 与 Langfuse L2 为可选",
+    "无独立类目管理路由",
+    "B1-hybrid: fulltext-only 记 WARN 不挡 as-built"
+  ],
+  "gates": {
+    "A": { "status": "FAIL" },
+    "B": { "status": "FAIL" },
+    "C": { "status": "FAIL" },
+    "S": { "status": "PASS" }
+  },
+  "evidenceFiles": [
+    "docs/evaluation/acceptance-report-latest.json",
+    "docs/evaluation/rag-pipeline-eval-2026-08-30-compare.json",
+    "docs/evaluation/acceptance-evaluation-report-2026-08-30.md"
+  ]
+}

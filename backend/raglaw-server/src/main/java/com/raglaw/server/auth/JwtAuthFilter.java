@@ -38,14 +38,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             } else {
                 String header = request.getHeader(HttpHeaders.AUTHORIZATION);
                 if (header != null && header.startsWith("Bearer ")) {
-                    Claims claims = jwtService.parse(header.substring(7));
-                    AuthUser user = new AuthUser(
-                            claims.getSubject(),
-                            claims.get("email", String.class),
-                            claims.get("name", String.class),
-                            claims.get("role", String.class)
-                    );
-                    authenticate(request, user);
+                    try {
+                        Claims claims = jwtService.parse(header.substring(7));
+                        AuthUser user = new AuthUser(
+                                claims.getSubject(),
+                                claims.get("email", String.class),
+                                claims.get("name", String.class),
+                                claims.get("role", String.class)
+                        );
+                        authenticate(request, user);
+                    } catch (Exception ignored) {
+                        // Invalid or expired token: treat as unauthenticated
+                    }
                 }
             }
             filterChain.doFilter(request, response);

@@ -1,7 +1,16 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { Select, Spinner } from '@raglaw/ui';
+import { KnowledgeResultCard } from '../components/KnowledgeResultCard';
 import { api, fetchKnowledgeStats, type KnowledgeStats } from '../lib/api';
+import { formatLocalDate, formatRelevanceScore } from '../lib/formatDate';
+import {
+  buildKnowledgeDetailReturnParams,
+  buildKnowledgeSearchParams,
+  parseKnowledgeSearchParams,
+  type KnowledgeDocType,
+} from '../lib/knowledgeSearch';
 
 type KnowledgeHit = {
   chunkId: string;
@@ -10,6 +19,8 @@ type KnowledgeHit = {
   path: string;
   excerpt: string;
   score: number;
+  createdAt?: string | null;
+  effectiveDate?: string | null;
 };
 
 type SearchPage = {
@@ -36,24 +47,95 @@ const DOC_TABS = [
 ] as const;
 
 export function KnowledgePage() {
-  const [query, setQuery] = useState('');
-  const [docType, setDocType] = useState<string>('STATUTE');
-  const [l2Path, setL2Path] = useState('');
-  const [page, setPage] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearch = useMemo(() => parseKnowledgeSearchParams(searchParams), []);
+  const [query, setQuery] = useState(initialSearch.q);
+  const [docType, setDocType] = useState<KnowledgeDocType>(initialSearch.docType);
+  const [l2Path, setL2Path] = useState(initialSearch.l2Path);
+  const [page, setPage] = useState(initialSearch.page);
   const [result, setResult] = useState<SearchPage | null>(null);
   const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [stats, setStats] = useState<KnowledgeStats | null>(null);
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [searched, setSearched] = useState(Boolean(initialSearch.q.trim()));
+  const restoredFromUrl = useRef(false);
+
+  const syncSearchToUrl = useCallback((next: {
+    q: string;
+    docType: KnowledgeDocType;
+    l2Path: string;
+    page: number;
+  }) => {
+    setSearchParams(buildKnowledgeSearchParams(next), { replace: true });
+  }, [setSearchParams]);
+
+  const loadStats = useCallback(() => {
+    void fetchKnowledgeStats().then((res) => {
+      if (res.success) setStats(res.data);
+    });
+  }, []);
 
   useEffect(() => {
     void api<CategoryNode[]>('/api/v1/categories/tree').then((res) => {
       if (res.success) setCategories(res.data);
     });
-    void fetchKnowledgeStats().then((res) => {
-      if (res.success) setStats(res.data);
+    loadStats();
+  }, [loadStats]);
+
+  useEffect(() => {
+    loadStats();
+  }, [docType, loadStats]);
+
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        loadStats();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [loadStats]);
+
+  const runSearch = useCallback(async (
+    nextPage = 0,
+    overrides?: Partial<{ query: string; l2Path: string; docType: KnowledgeDocType }>,
+  ) => {
+    const activeQuery = (overrides?.query ?? query).trim();
+    if (!activeQuery) return;
+    const activeL2 = overrides?.l2Path ?? l2Path;
+    const activeDocType = overrides?.docType ?? docType;
+    setLoading(true);
+    setSearched(true);
+    setPage(nextPage);
+    syncSearchToUrl({
+      q: activeQuery,
+      docType: activeDocType,
+      l2Path: activeL2,
+      page: nextPage,
     });
-  }, []);
+    const params = new URLSearchParams({
+      q: activeQuery,
+      docType: activeDocType,
+      page: String(nextPage),
+      pageSize: String(PAGE_SIZE),
+    });
+    if (activeL2) params.set('l2Path', activeL2);
+    const res = await api<SearchPage>(`/api/v1/knowledge/search?${params.toString()}`);
+    setResult(res.success ? res.data : { items: [], page: nextPage, pageSize: PAGE_SIZE, total: 0 });
+    setLoading(false);
+  }, [query, l2Path, docType, syncSearchToUrl]);
+
+  useEffect(() => {
+    if (restoredFromUrl.current || !initialSearch.q.trim()) {
+      return;
+    }
+    restoredFromUrl.current = true;
+    void runSearch(initialSearch.page, {
+      query: initialSearch.q,
+      l2Path: initialSearch.l2Path,
+      docType: initialSearch.docType,
+    });
+  }, [initialSearch, runSearch]);
 
   const l2Options = useMemo(() => {
     const options: { value: string; label: string }[] = [];
@@ -72,27 +154,14 @@ export function KnowledgePage() {
     [l2Options],
   );
 
+  const searchReturnParams = useMemo(
+    () => buildKnowledgeDetailReturnParams({ q: query, docType, l2Path, page }),
+    [query, docType, l2Path, page],
+  );
+
   const placeholder = docType === 'CASE'
     ? '请输入案例关键词'
     : '请输入法规关键词';
-
-  async function runSearch(nextPage = 0, l2Override?: string) {
-    if (!query.trim()) return;
-    const activeL2 = l2Override ?? l2Path;
-    setLoading(true);
-    setSearched(true);
-    setPage(nextPage);
-    const params = new URLSearchParams({
-      q: query,
-      docType,
-      page: String(nextPage),
-      pageSize: String(PAGE_SIZE),
-    });
-    if (activeL2) params.set('l2Path', activeL2);
-    const res = await api<SearchPage>(`/api/v1/knowledge/search?${params.toString()}`);
-    setResult(res.success ? res.data : { items: [], page: nextPage, pageSize: PAGE_SIZE, total: 0 });
-    setLoading(false);
-  }
 
   async function onSearch(e: FormEvent, nextPage = 0) {
     e.preventDefault();
@@ -102,21 +171,35 @@ export function KnowledgePage() {
   function onL2FilterChange(path: string) {
     setL2Path(path);
     if (searched && query.trim()) {
-      void runSearch(0, path);
+      void runSearch(0, { l2Path: path });
     }
   }
 
+  const displayItems = useMemo(() => {
+    if (!result?.items) {
+      return [];
+    }
+    const seen = new Set<string>();
+    return result.items.filter((hit) => {
+      if (seen.has(hit.documentId)) {
+        return false;
+      }
+      seen.add(hit.documentId);
+      return true;
+    });
+  }, [result]);
+
   const pathCounts = useMemo(() => {
     const counts = new Map<string, number>();
-    if (!result?.items) return counts;
-    for (const hit of result.items) {
+    for (const hit of displayItems) {
       const l2 = hit.path.split('/').slice(0, 3).join('/') || hit.path;
       counts.set(l2, (counts.get(l2) ?? 0) + 1);
     }
     return counts;
-  }, [result]);
+  }, [displayItems]);
 
-  const totalPages = result ? Math.ceil(result.total / PAGE_SIZE) : 0;
+  const displayTotal = displayItems.length > 0 ? result?.total ?? 0 : 0;
+  const totalPages = result ? Math.ceil(displayTotal / PAGE_SIZE) : 0;
   const activeCount = docType === 'CASE' ? stats?.caseCount : stats?.statuteCount;
   const statsLabel = docType === 'CASE' ? '案例' : '法规';
 
@@ -138,6 +221,13 @@ export function KnowledgePage() {
                 setL2Path('');
                 setResult(null);
                 setSearched(false);
+                setPage(0);
+                setSearchParams(buildKnowledgeSearchParams({
+                  q: '',
+                  docType: tab.value,
+                  l2Path: '',
+                  page: 0,
+                }), { replace: true });
               }}
             >
               {tab.label}
@@ -148,7 +238,7 @@ export function KnowledgePage() {
           <div className="rl-knowledge-search-bar__scope">
             <Select
               value={l2Path}
-              onChange={setL2Path}
+              onChange={(path) => onL2FilterChange(path)}
               options={l2ScopeOptions}
               menuWidthFromOptions
               labelAlign="center"
@@ -184,6 +274,7 @@ export function KnowledgePage() {
         <div className="rl-knowledge-layout">
           <aside className="rl-knowledge-filters">
             <h2 className="rl-knowledge-filters__title">领域筛选</h2>
+            <p className="rl-text-muted rl-knowledge-filters__hint">括号内为匹配篇数</p>
             <div className="rl-knowledge-filter-list">
               <label className="rl-knowledge-filter-item">
                 <input
@@ -192,7 +283,7 @@ export function KnowledgePage() {
                   onChange={() => onL2FilterChange('')}
                 />
                 <span>全部领域</span>
-                <span className="rl-knowledge-filter-item__count">({result.total})</span>
+                <span className="rl-knowledge-filter-item__count">({displayTotal})</span>
               </label>
               {l2Options.map((opt) => (
                 <label key={opt.value} className="rl-knowledge-filter-item">
@@ -211,17 +302,24 @@ export function KnowledgePage() {
           </aside>
 
           <div className="rl-knowledge-result-list">
-            {result.items.map((hit) => (
-              <article key={hit.chunkId} className="rl-knowledge-result-card">
-                <h3 className="rl-knowledge-result-card__title">
-                  <a href={`/knowledge/documents?doc=${hit.documentId}`}>{hit.title}</a>
-                </h3>
-                <p className="rl-knowledge-result-card__meta">
-                  <span>{hit.path}</span>
-                  <span>相关度 {hit.score.toFixed(2)}</span>
-                </p>
-                <p className="rl-knowledge-snippet">{hit.excerpt}</p>
-              </article>
+            <p className="rl-text-muted rl-knowledge-result-list__summary">
+              共 {displayTotal} 篇匹配
+            </p>
+            {displayItems.map((hit) => (
+              <KnowledgeResultCard
+                key={hit.documentId}
+                documentId={hit.documentId}
+                title={hit.title}
+                excerpt={hit.excerpt}
+                meta={[
+                  hit.path,
+                  `相关度 ${formatRelevanceScore(hit.score)}`,
+                  `入库 ${formatLocalDate(hit.createdAt)}`,
+                  `生效 ${hit.effectiveDate ? formatLocalDate(hit.effectiveDate) : '未识别'}`,
+                ]}
+                linkFrom="search"
+                searchReturnParams={searchReturnParams}
+              />
             ))}
             {totalPages > 1 && (
               <div className="rl-pagination">
@@ -233,7 +331,7 @@ export function KnowledgePage() {
                 >
                   上一页
                 </button>
-                <span className="rl-text-muted">第 {page + 1} / {totalPages} 页（共 {result.total} 条）</span>
+                <span className="rl-text-muted">第 {page + 1} / {totalPages} 页（共 {displayTotal} 篇匹配）</span>
                 <button
                   type="button"
                   className="rl-btn"

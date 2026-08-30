@@ -2,8 +2,6 @@ package com.raglaw.rag.contract;
 
 import com.raglaw.common.api.ErrorCodes;
 import com.raglaw.common.exception.BusinessException;
-import com.raglaw.rag.domain.DocumentEntity;
-import com.raglaw.rag.repository.DocumentRepository;
 import com.raglaw.rag.service.IngestService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -21,23 +19,22 @@ import org.springframework.stereotype.Service;
 @Service
 public class ContractExportService {
 
-    private final DocumentRepository documentRepository;
+    private final ContractAccessService contractAccessService;
     private final ContractTextService contractTextService;
     private final IngestService ingestService;
 
     public ContractExportService(
-            DocumentRepository documentRepository,
+            ContractAccessService contractAccessService,
             ContractTextService contractTextService,
             IngestService ingestService
     ) {
-        this.documentRepository = documentRepository;
+        this.contractAccessService = contractAccessService;
         this.contractTextService = contractTextService;
         this.ingestService = ingestService;
     }
 
     public ExportFile export(String documentId, String format) {
-        DocumentEntity document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new BusinessException(ErrorCodes.NOT_FOUND, "文档不存在"));
+        var document = contractAccessService.requireOwnedContract(documentId);
         String revised = contractTextService.buildRevisedText(documentId);
         String baseName = ingestService.resolveOriginalFilename(document).replaceFirst("\\.[^.]+$", "");
         return switch (format.toLowerCase()) {

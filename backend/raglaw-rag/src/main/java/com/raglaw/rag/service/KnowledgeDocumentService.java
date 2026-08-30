@@ -45,7 +45,8 @@ public class KnowledgeDocumentService {
                 chunk.getContent(),
                 chunk.getL1Path(),
                 chunk.getL2Path(),
-                chunk.getL3Path()
+                chunk.getL3Path(),
+                chunk.getChunkLevel() != null ? chunk.getChunkLevel().name() : null
         );
     }
 }

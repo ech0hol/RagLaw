@@ -22,7 +22,7 @@ Get-Content backup\raglaw.sql | docker exec -i raglaw-mysql mysql -uraglaw -prag
 | 卷名 | 内容 |
 |------|------|
 | `raglaw_raglaw-mysql-data` | MySQL 业务数据 |
-| `raglaw_raglaw-postgres-data` | pgvector 向量 |
+| `raglaw_raglaw-elasticsearch-data` | Elasticsearch 索引（BM25 + 向量） |
 | `raglaw_raglaw-minio-data` | MinIO 对象（若启用） |
 | `raglaw_raglaw-langfuse-db-data` | Langfuse 元数据 |
 
@@ -36,7 +36,7 @@ docker volume rm raglaw_raglaw-mysql-data
 docker compose -f docker/docker-compose.yml up -d
 ```
 
-重置 MySQL 后，后端启动时 Flyway 会重新迁移 `V1`–`V8`。
+重置 MySQL 后，后端启动时 Flyway 会重新执行全部迁移脚本（当前至 V32）。
 
 ## 本地上传目录
 

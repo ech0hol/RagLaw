@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { clearToken, fetchMe, getToken, login as apiLogin, logout as apiLogout, refreshAccessToken, type User } from './api';
+import { clearToken, fetchMe, login as apiLogin, logout as apiLogout, refreshAccessToken, type User } from './api';
 
 type AuthState = {
   user: User | null;
@@ -16,14 +16,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function bootstrap() {
-      if (!getToken()) {
-        await refreshAccessToken();
-      }
+      await refreshAccessToken();
       const res = await fetchMe();
       if (res.success) {
         setUser(res.data);
       } else {
         clearToken();
+        setUser(null);
       }
       setLoading(false);
     }

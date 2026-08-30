@@ -3,10 +3,15 @@ package com.raglaw.rag.web;
 import com.raglaw.common.api.ApiResponse;
 import com.raglaw.rag.domain.DocStatus;
 import com.raglaw.rag.domain.DocumentEntity;
+import com.raglaw.common.web.HttpDownloadHeaders;
+import com.raglaw.rag.dto.DocumentExcerptDto;
+import com.raglaw.rag.dto.DocumentTextDto;
 import com.raglaw.rag.dto.KnowledgeDocumentDto;
 import com.raglaw.rag.dto.KnowledgeSearchPageDto;
 import com.raglaw.rag.dto.KnowledgeStatsDto;
 import com.raglaw.rag.repository.DocumentRepository;
+import com.raglaw.rag.service.DocumentExcerptService;
+import com.raglaw.rag.service.DocumentFullTextService;
 import com.raglaw.rag.service.IngestService;
 import com.raglaw.rag.service.KnowledgeDocumentService;
 import com.raglaw.rag.service.KnowledgeSearchService;
@@ -25,17 +30,23 @@ public class KnowledgeSearchController {
 
     private final KnowledgeSearchService knowledgeSearchService;
     private final KnowledgeDocumentService knowledgeDocumentService;
+    private final DocumentFullTextService documentFullTextService;
+    private final DocumentExcerptService documentExcerptService;
     private final IngestService ingestService;
     private final DocumentRepository documentRepository;
 
     public KnowledgeSearchController(
             KnowledgeSearchService knowledgeSearchService,
             KnowledgeDocumentService knowledgeDocumentService,
+            DocumentFullTextService documentFullTextService,
+            DocumentExcerptService documentExcerptService,
             IngestService ingestService,
             DocumentRepository documentRepository
     ) {
         this.knowledgeSearchService = knowledgeSearchService;
         this.knowledgeDocumentService = knowledgeDocumentService;
+        this.documentFullTextService = documentFullTextService;
+        this.documentExcerptService = documentExcerptService;
         this.ingestService = ingestService;
         this.documentRepository = documentRepository;
     }
@@ -64,6 +75,19 @@ public class KnowledgeSearchController {
         return ApiResponse.ok(knowledgeDocumentService.getDocument(documentId));
     }
 
+    @GetMapping("/documents/{documentId}/text")
+    public ApiResponse<DocumentTextDto> documentText(@PathVariable("documentId") String documentId) {
+        return ApiResponse.ok(documentFullTextService.getText(documentId));
+    }
+
+    @GetMapping("/documents/{documentId}/excerpt")
+    public ApiResponse<DocumentExcerptDto> documentExcerpt(
+            @PathVariable("documentId") String documentId,
+            @RequestParam("anchors") String anchors
+    ) {
+        return ApiResponse.ok(documentExcerptService.getExcerpt(documentId, anchors));
+    }
+
     @GetMapping("/documents/{documentId}/download")
     public void download(
             @PathVariable("documentId") String documentId,
@@ -86,8 +110,10 @@ public class KnowledgeSearchController {
         String filename = ingestService.resolveOriginalFilename(document);
         String contentType = resolveContentType(filename);
         response.setContentType(contentType);
-        String disposition = attachment ? "attachment" : "inline";
-        response.setHeader("Content-Disposition", disposition + "; filename=\"" + filename + "\"");
+        response.setHeader(
+                "Content-Disposition",
+                attachment ? HttpDownloadHeaders.attachmentFilename(filename) : HttpDownloadHeaders.inlineFilename(filename)
+        );
         try (InputStream inputStream = ingestService.download(documentId)) {
             StreamUtils.copy(inputStream, response.getOutputStream());
         }

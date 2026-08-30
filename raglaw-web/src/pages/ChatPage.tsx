@@ -1,23 +1,21 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { BookOpen, FileText, Gavel, Scale } from 'lucide-react';
 import {
-  ConfirmDialog,
   ConversationHistoryDropdown,
   ConversationPanel,
   QuickActionCard,
-  type ChatMessage,
-  type ChatReference,
   type ConversationItem,
 } from '@raglaw/ui';
-import { api, deleteConversation, getToken } from '../lib/api';
-import { useStickyScroll } from '../hooks/useStickyScroll';
+import { api, deleteConversation } from '../lib/api';
+import { confirmIrreversibleDelete } from '../lib/confirmDelete';
+import { fetchDocumentExcerpt, fetchDocumentTitle, useAguiChat } from '../hooks/useAguiChat';
 
 const AGENT_LABELS: Record<string, string> = {
   GENERAL: '通用法律助手',
-  STATUTE_CIVIL: '民法商法规范助手',
-  CASE_CIVIL: '民事案例助手',
-  CONTRACT_GENERAL: '合同审查助手',
+  STATUTE: '法规助手',
+  CASE: '案例助手',
+  CONTRACT: '合同助手',
 };
 
 const QUICK_PROMPTS = [
@@ -28,17 +26,6 @@ const QUICK_PROMPTS = [
 ];
 
 type ConversationDto = { id: string; title: string; updatedAt: string; agentCode?: string };
-type MessageDto = { id: string; role: string; content: string; citationsJson?: string | null };
-
-function parseReferences(citationsJson?: string | null): ChatReference[] | undefined {
-  if (!citationsJson) return undefined;
-  try {
-    const parsed = JSON.parse(citationsJson) as ChatReference[];
-    return Array.isArray(parsed) ? parsed : undefined;
-  } catch {
-    return undefined;
-  }
-}
 
 type ChatPageProps = { fixedAgentCode?: string };
 
@@ -46,38 +33,16 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
   const { agentCode: routeAgentCode } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId = searchParams.get('c');
+  const contextDoc = searchParams.get('contextDoc');
 
   const expertAgent = fixedAgentCode ?? routeAgentCode;
   const useExplicitAgent = Boolean(expertAgent && expertAgent !== 'GENERAL');
-
   const pageTitle = expertAgent ? AGENT_LABELS[expertAgent] ?? expertAgent : '智能对话';
 
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [convLoading, setConvLoading] = useState(true);
   const [searchFilter, setSearchFilter] = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [streaming, setStreaming] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
-  const [thinkingSteps, setThinkingSteps] = useState<string[]>([]);
-  const [recommendQuestions, setRecommendQuestions] = useState<string[]>([]);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const messageListRef = useRef<HTMLDivElement>(null);
-  const skipLoadRef = useRef(false);
-
-  const { onScroll: onMessageListScroll, pinToBottom } = useStickyScroll(messageListRef, [
-    messages,
-    streaming,
-    statusMessage,
-    thinkingSteps,
-  ]);
-
-  const canRegenerate = useMemo(
-    () => messages.some((m) => m.role === 'user') && messages.some((m) => m.role === 'assistant'),
-    [messages],
-  );
 
   const refreshConversations = useCallback(async () => {
     const res = await api<ConversationDto[]>('/api/v1/conversations');
@@ -95,206 +60,37 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
     return conversations.filter((c) => (c.title || '新对话').toLowerCase().includes(q));
   }, [conversations, searchFilter]);
 
-  const loadMessages = useCallback(async (id: string) => {
-    const res = await api<MessageDto[]>(`/api/v1/conversations/${id}/messages`);
-    if (res.success) {
-      setMessages(res.data.map((m) => ({
-        id: m.id,
-        role: m.role,
-        content: m.content,
-        references: parseReferences(m.citationsJson),
-      })));
-    }
-  }, []);
+  const handleConversationIdChange = useCallback((id: string) => {
+    setSearchParams(id ? { c: id } : {});
+  }, [setSearchParams]);
 
-  useEffect(() => {
-    if (!conversationId) {
-      setMessages([]);
-      setHistoryOpen(false);
-      return;
-    }
-    if (skipLoadRef.current) {
-      skipLoadRef.current = false;
-      return;
-    }
-    setHistoryOpen(false);
-    void loadMessages(conversationId);
-  }, [conversationId, loadMessages]);
+  const chat = useAguiChat({
+    agentCode: expertAgent,
+    contextDocumentId: contextDoc,
+    conversationId,
+    onConversationIdChange: handleConversationIdChange,
+    useExplicitAgent,
+  });
 
   const selectConversation = useCallback((id: string) => {
-    skipLoadRef.current = false;
-    pinToBottom();
+    chat.pinToBottom();
     setHistoryOpen(false);
     setSearchParams({ c: id });
-  }, [setSearchParams, pinToBottom]);
+  }, [chat, setSearchParams]);
 
   const newChat = useCallback(() => {
-    skipLoadRef.current = false;
-    pinToBottom();
-    setHistoryOpen(false);
-    setSearchParams({});
-    setMessages([]);
-    setInput('');
-    setRecommendQuestions([]);
-  }, [setSearchParams, pinToBottom]);
-
-  function agentPayload(): Record<string, string> {
-    if (useExplicitAgent && expertAgent) {
-      return { agentCode: expertAgent };
-    }
-    return {};
-  }
-
-  async function ensureConversation(): Promise<string> {
-    if (conversationId) return conversationId;
-    const res = await api<ConversationDto>('/api/v1/conversations', {
-      method: 'POST',
-      body: JSON.stringify(agentPayload()),
-    });
-    if (!res.success) throw new Error(res.error?.message ?? '创建会话失败');
-    skipLoadRef.current = true;
-    setSearchParams({ c: res.data.id });
-    void refreshConversations();
-    return res.data.id;
-  }
-
-  async function streamAgui(options: { regenerate?: boolean; message?: string }) {
-    const convId = await ensureConversation();
-    const token = getToken();
-    const res = await fetch('/api/v1/agui/run', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({
-        conversationId: convId,
-        message: options.regenerate ? undefined : options.message,
-        regenerate: options.regenerate ?? false,
-        ...agentPayload(),
-      }),
-    });
-    if (!res.ok) throw new Error(`对话请求失败 (${res.status})`);
-
-    const reader = res.body?.getReader();
-    if (!reader) throw new Error('无法读取流式响应');
-
-    const decoder = new TextDecoder();
-    let assistant = '';
-    const references: ChatReference[] = [];
-    setStatusMessage('');
-    setThinkingSteps([]);
-    setRecommendQuestions([]);
-    setMessages((prev) => [...prev, { role: 'assistant', content: '', references: [] }]);
-
-    let buffer = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const parts = buffer.split('\n\n');
-      buffer = parts.pop() ?? '';
-      for (const part of parts) {
-        const lines = part.split('\n');
-        let event = '';
-        let data = '';
-        for (const line of lines) {
-          if (line.startsWith('event:')) event = line.slice(6).trim();
-          else if (line.startsWith('data:')) data = line.slice(5).trim();
-        }
-        if (event === 'status' && data) {
-          const parsed = JSON.parse(data) as { message?: string };
-          const msg = parsed.message ?? '';
-          if (msg) {
-            setThinkingSteps((prev) => {
-              if (prev.length === 0 || prev[prev.length - 1] !== msg) {
-                return [...prev, msg];
-              }
-              return prev;
-            });
-            setStatusMessage(msg);
-          }
-        } else if (event === 'text' && data) {
-          const parsed = JSON.parse(data) as { delta?: string };
-          if (!assistant) {
-            setStatusMessage('');
-          }
-          assistant += parsed.delta ?? '';
-          setMessages((prev) => {
-            const next = [...prev];
-            const last = next[next.length - 1];
-            next[next.length - 1] = { ...last, content: assistant, references: [...references] };
-            return next;
-          });
-        } else if (event === 'reference' && data) {
-          const parsed = JSON.parse(data) as ChatReference;
-          references.push(parsed);
-          setMessages((prev) => {
-            const next = [...prev];
-            const last = next[next.length - 1];
-            next[next.length - 1] = { ...last, references: [...references] };
-            return next;
-          });
-        } else if (event === 'recommend' && data) {
-          const parsed = JSON.parse(data) as { questions?: string[] };
-          setRecommendQuestions(parsed.questions ?? []);
-        } else if (event === 'error' && data) {
-          const parsed = JSON.parse(data) as { message?: string };
-          throw new Error(parsed.message ?? '流式响应错误');
-        }
-      }
-    }
-    setStatusMessage('');
-    void refreshConversations();
-    void loadMessages(convId);
-  }
-
-  async function sendMessage(text: string) {
-    if (!text.trim() || streaming) return;
-    pinToBottom();
-    setStreaming(true);
-    setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: 'user', content: text }]);
-    setInput('');
-    try {
-      await streamAgui({ message: text });
-    } catch (err) {
-      setMessages((prev) => [...prev, { role: 'assistant', content: err instanceof Error ? err.message : '发送失败' }]);
-    } finally {
-      setStreaming(false);
-      setThinkingSteps([]);
-      setStatusMessage('');
-    }
-  }
-
-  async function regenerateLast() {
-    if (streaming || !canRegenerate) return;
-    pinToBottom();
-    setStreaming(true);
-    try {
-      await streamAgui({ regenerate: true });
-    } catch (err) {
-      setMessages((prev) => [...prev, { role: 'assistant', content: err instanceof Error ? err.message : '重新生成失败' }]);
-    } finally {
-      setStreaming(false);
-      setThinkingSteps([]);
-      setStatusMessage('');
-    }
-  }
+    chat.resetConversation();
+  }, [chat]);
 
   function copyContent(content: string) {
     void navigator.clipboard.writeText(content);
   }
 
-  function requestDeleteConversation(id: string) {
-    setDeleteTargetId(id);
+  async function removeConversation(id: string) {
+    if (!confirmIrreversibleDelete('该对话')) return;
     setHistoryOpen(false);
-  }
-
-  async function confirmDeleteConversation() {
-    if (!deleteTargetId) return;
-    const id = deleteTargetId;
-    setDeleteLoading(true);
     const res = await deleteConversation(id);
-    setDeleteLoading(false);
     if (!res.success) return;
-    setDeleteTargetId(null);
     if (conversationId === id) {
       newChat();
     }
@@ -311,7 +107,7 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
           selectedId={conversationId}
           onSelect={selectConversation}
           onNewChat={newChat}
-          onDelete={requestDeleteConversation}
+          onDelete={(id) => void removeConversation(id)}
           loading={convLoading}
           searchValue={searchFilter}
           onSearchChange={setSearchFilter}
@@ -321,20 +117,21 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
         )}
       </div>
       <ConversationPanel
-        messages={messages}
-        input={input}
-        streaming={streaming}
-        onInputChange={setInput}
-        onSubmit={(e: FormEvent) => { e.preventDefault(); void sendMessage(input); }}
-        statusMessage={statusMessage}
-        thinkingSteps={thinkingSteps}
-        recommendQuestions={recommendQuestions}
-        onRecommendClick={(q) => void sendMessage(q)}
+        messages={chat.messages}
+        input={chat.input}
+        streaming={chat.streaming}
+        onInputChange={chat.setInput}
+        onSubmit={chat.handleSubmit}
+        recommendQuestions={chat.recommendQuestions}
+        onRecommendClick={(q) => void chat.sendMessage(q)}
         onCopy={copyContent}
-        onRegenerate={() => void regenerateLast()}
-        canRegenerate={canRegenerate}
-        messageListRef={messageListRef}
-        onMessageListScroll={onMessageListScroll}
+        onRegenerate={(id) => void chat.regenerateAt(id)}
+        canRegenerate={chat.canRegenerate}
+        messageListRef={chat.messageListRef}
+        onMessageListScroll={chat.onMessageListScroll}
+        fetchDocumentTitle={fetchDocumentTitle}
+        fetchDocumentExcerpt={fetchDocumentExcerpt}
+        disclaimer="AI 回答仅供参考，不构成法律意见。"
         welcome={
           <>
             <h1>欢迎使用 RagLaw</h1>
@@ -346,7 +143,7 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
                   color={prompt.color}
                   icon={prompt.icon}
                   delayIndex={index}
-                  onClick={() => void sendMessage(prompt.text)}
+                  onClick={() => void chat.sendMessage(prompt.text)}
                 >
                   {prompt.text}
                 </QuickActionCard>
@@ -354,16 +151,6 @@ export function ChatPage({ fixedAgentCode }: ChatPageProps) {
             </div>
           </>
         }
-      />
-      <ConfirmDialog
-        open={deleteTargetId !== null}
-        title="删除对话"
-        description="删除后无法恢复，是否继续？"
-        confirmLabel="删除"
-        variant="danger"
-        loading={deleteLoading}
-        onConfirm={() => void confirmDeleteConversation()}
-        onCancel={() => !deleteLoading && setDeleteTargetId(null)}
       />
     </div>
   );

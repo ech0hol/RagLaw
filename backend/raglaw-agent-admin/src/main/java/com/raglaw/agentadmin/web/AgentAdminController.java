@@ -1,11 +1,14 @@
 package com.raglaw.agentadmin.web;
 
+import com.raglaw.agentadmin.dto.AgentConfigCreateRequest;
 import com.raglaw.agentadmin.dto.AgentConfigDto;
 import com.raglaw.agentadmin.dto.AgentConfigUpdateRequest;
+import com.raglaw.agentadmin.dto.AgentToolCatalogDto;
 import com.raglaw.agentadmin.service.AgentConfigService;
 import com.raglaw.common.api.ApiResponse;
 import java.util.List;
 import java.util.Map;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,9 +27,19 @@ public class AgentAdminController {
         this.agentConfigService = agentConfigService;
     }
 
+    @GetMapping("/catalog")
+    public ApiResponse<AgentToolCatalogDto> catalog() {
+        return ApiResponse.ok(agentConfigService.catalog());
+    }
+
     @GetMapping
     public ApiResponse<List<AgentConfigDto>> list() {
         return ApiResponse.ok(agentConfigService.list());
+    }
+
+    @PostMapping
+    public ApiResponse<AgentConfigDto> create(@RequestBody AgentConfigCreateRequest request) {
+        return ApiResponse.ok(agentConfigService.create(request));
     }
 
     @GetMapping("/{code}")
@@ -40,6 +53,12 @@ public class AgentAdminController {
             @RequestBody AgentConfigUpdateRequest request
     ) {
         return ApiResponse.ok(agentConfigService.update(code, request));
+    }
+
+    @DeleteMapping("/{code}")
+    public ApiResponse<Void> delete(@PathVariable("code") String code) {
+        agentConfigService.delete(code);
+        return ApiResponse.ok(null);
     }
 
     @PostMapping("/reload")

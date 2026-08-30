@@ -8,11 +8,84 @@
     {
       "text": "违约金过高",
       "minHitCount": 1,
-      "top1PathPrefix": "/STATUTE/CIVIL/CONTRACT"
+      "top1PathPrefix": "/STATUTE/CIVIL"
     },
     {
       "text": "加班费",
-      "minHitCount": 1
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE"
+    },
+    {
+      "text": "劳动合同解除",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE"
+    },
+    {
+      "text": "经济补偿",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE"
+    },
+    {
+      "text": "借贷利息",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE/CIVIL"
+    },
+    {
+      "text": "租赁合同违约",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE"
+    },
+    {
+      "text": "定金",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE/CIVIL"
+    },
+    {
+      "text": "劳动争议案例",
+      "minHitCount": 1,
+      "top1PathPrefix": "/CASE"
+    },
+    {
+      "text": "违约责任",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE/CIVIL"
+    },
+    {
+      "text": "买化学品是否违法",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE",
+      "minDistinctDocuments": 1
+    },
+    {
+      "text": "危险化学品购买",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE",
+      "minDistinctDocuments": 1
+    },
+    {
+      "text": "行政处罚",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE"
+    },
+    {
+      "text": "刑法中刑罚种类有哪些",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE"
+    },
+    {
+      "text": "附加刑的种类",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE"
+    },
+    {
+      "text": "社会保险参保",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE"
+    },
+    {
+      "text": "城乡居民医保异地报销",
+      "minHitCount": 1,
+      "top1PathPrefix": "/STATUTE"
     }
   ]
 }

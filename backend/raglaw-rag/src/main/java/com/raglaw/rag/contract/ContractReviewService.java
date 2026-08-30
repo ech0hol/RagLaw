@@ -6,6 +6,7 @@ import com.raglaw.common.exception.BusinessException;
 import com.raglaw.rag.domain.ContractRiskEntity;
 import com.raglaw.rag.domain.DocumentChunkEntity;
 import com.raglaw.rag.domain.DocumentEntity;
+import com.raglaw.rag.domain.IngestStage;
 import com.raglaw.rag.dto.ContractReviewDto;
 import com.raglaw.rag.dto.ContractRiskDto;
 import com.raglaw.rag.repository.ContractRiskRepository;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ContractReviewService {
 
+    private final ContractAccessService contractAccessService;
     private final DocumentRepository documentRepository;
     private final DocumentChunkRepository chunkRepository;
     private final ContractRiskRepository riskRepository;
@@ -28,6 +30,7 @@ public class ContractReviewService {
     private final ObjectMapper objectMapper;
 
     public ContractReviewService(
+            ContractAccessService contractAccessService,
             DocumentRepository documentRepository,
             DocumentChunkRepository chunkRepository,
             ContractRiskRepository riskRepository,
@@ -35,6 +38,7 @@ public class ContractReviewService {
             IngestService ingestService,
             ObjectMapper objectMapper
     ) {
+        this.contractAccessService = contractAccessService;
         this.documentRepository = documentRepository;
         this.chunkRepository = chunkRepository;
         this.riskRepository = riskRepository;
@@ -49,6 +53,15 @@ public class ContractReviewService {
         return riskRepository.findByDocumentIdOrderByCreatedAtAsc(documentId).stream()
                 .map(ContractRiskDto::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ContractReviewDto getReview(String documentId) {
+        DocumentEntity document = ensureContractDocument(documentId);
+        var risks = riskRepository.findByDocumentIdOrderByCreatedAtAsc(documentId).stream()
+                .map(ContractRiskDto::from)
+                .toList();
+        return toReviewDto(document, risks);
     }
 
     @Transactional
@@ -69,6 +82,14 @@ public class ContractReviewService {
                 .map(ContractRiskDto::from)
                 .toList();
         return toReviewDto(document, risks);
+    }
+
+    @Transactional
+    public ContractReviewDto parseOnly(String documentId) {
+        DocumentEntity document = ensureContractDocument(documentId);
+        ingestService.parse(document);
+        document = documentRepository.findById(documentId).orElseThrow();
+        return toReviewDto(document, List.of());
     }
 
     @Transactional
@@ -115,34 +136,58 @@ public class ContractReviewService {
     }
 
     private ContractReviewDto toReviewDto(DocumentEntity document, List<ContractRiskDto> risks) {
-        String suggestedAgentCode = "CONTRACT_GENERAL";
+        String suggestedAgentCode = "CONTRACT";
         String extractMethod = "text";
         boolean ocrUsed = false;
+        String analysisModel = null;
+        int ragHitCount = 0;
+        String reviewStatus = ContractReviewStatus.NOT_RUN;
+        String reviewError = null;
         if (document.getMetadataJson() != null) {
             try {
                 var node = objectMapper.readTree(document.getMetadataJson());
                 suggestedAgentCode = node.path("suggestedAgentCode").asText(suggestedAgentCode);
                 extractMethod = node.path("extractMethod").asText(extractMethod);
                 ocrUsed = node.path("ocrUsed").asBoolean(false);
+                String model = node.path("contractAnalysisModel").asText("");
+                analysisModel = model.isBlank() ? null : model;
+                ragHitCount = node.path("contractRagHitCount").asInt(0);
+                String status = node.path("contractReviewStatus").asText("");
+                reviewStatus = status.isBlank() ? ContractReviewStatus.NOT_RUN : status;
+                String error = node.path("contractReviewError").asText("");
+                reviewError = error.isBlank() ? null : error;
             } catch (Exception ignored) {
                 // keep defaults
             }
+        }
+        if (!ContractReviewStatus.PARTIAL.equals(reviewStatus)) {
+            if (!risks.isEmpty()
+                    && (ContractReviewStatus.NOT_RUN.equals(reviewStatus)
+                    || ContractReviewStatus.RUNNING.equals(reviewStatus))) {
+                reviewStatus = ContractReviewStatus.COMPLETED;
+            } else if (ContractReviewStatus.NOT_RUN.equals(reviewStatus) && analysisModel != null) {
+                reviewStatus = ContractReviewStatus.COMPLETED;
+            }
+        }
+        String ingestStage = document.getIngestStage();
+        if ((ingestStage == null || ingestStage.isBlank()) && !risks.isEmpty()) {
+            ingestStage = IngestStage.INDEXED;
         }
         return new ContractReviewDto(
                 document.getId(),
                 suggestedAgentCode,
                 extractMethod,
                 ocrUsed,
+                analysisModel,
+                ragHitCount,
+                reviewStatus,
+                reviewError,
+                ingestStage,
                 risks
         );
     }
 
     private DocumentEntity ensureContractDocument(String documentId) {
-        DocumentEntity document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new BusinessException(ErrorCodes.NOT_FOUND, "文档不存在"));
-        if (!"CONTRACT".equals(document.getDocType())) {
-            throw new BusinessException(ErrorCodes.VALIDATION, "仅支持合同文档审查");
-        }
-        return document;
+        return contractAccessService.requireOwnedContract(documentId);
     }
 }

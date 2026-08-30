@@ -75,4 +75,20 @@ public class UserEntity {
     public Instant getCreatedAt() {
         return createdAt;
     }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public void touchUpdatedAt() {
+        this.updatedAt = Instant.now();
+    }
 }

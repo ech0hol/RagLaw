@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 2,
+  "reportType": "thesis-evaluation",
+  "evaluatedAt": "2026-08-30T16:45:00+08:00",
+  "evaluator": "Cursor Agent (thesis evaluation plan execution)",
+  "environment": {
+    "baseUrl": "http://localhost:8080",
+    "webUrl": "http://localhost:5173",
+    "llmMock": false,
+    "hybridRetrievalReady": false,
+    "elasticsearchIndexSyncReady": false,
+    "elasticsearchEnabled": false,
+    "embeddingConfigured": false,
+    "adminPasswordNote": "Backend seeded with password 12345 (not raglaw-eval); E2E scripts default to raglaw-eval",
+    "corpus": {
+      "indexedDocuments": 12,
+      "statute": 9,
+      "case": 2,
+      "contract": 1,
+      "totalChunks": 2119
+    },
+    "evidenceDir": "docs/evaluation/exports/run-2026-08-30/"
+  },
+  "dimensionScores": {
+    "architecture": { "score": 4.0, "max": 5, "weight": 0.20 },
+    "maintainability": { "score": 3.5, "max": 5, "weight": 0.15 },
+    "functionality": { "score": 3.0, "max": 5, "weight": 0.20 },
+    "ragQuality": { "score": 3.0, "max": 5, "weight": 0.25 },
+    "contractDialogue": { "score": 3.5, "max": 5, "weight": 0.10 },
+    "observability": { "score": 4.0, "max": 5, "weight": 0.10 }
+  },
+  "weightedScore": 3.43,
+  "verdict": {
+    "strictAcceptance": "FAIL",
+    "thesisQualification": "CONDITIONAL_PASS",
+    "thesisQualificationLabel": "有条件合格",
+    "reason": "三大核心功能（法律 RAG 对话、多 Agent 编排、合同审查）均可演示且 API 主路径通过；具备可复现评测体系与真实 trace/切片数据。但严格验收未全绿：mvn test 2 错、RagHybridRecallIT 失败、recall 12/17(70.59%)<90%、E2E 登录失败（密码不一致）、ES 未启用导致 hybrid 不可用。"
+  },
+  "acceptedExceptions": [
+    "CopilotKit 未接入，使用原生 AG-UI SSE",
+    "向量库为 Elasticsearch 而非 pgvector；当前评测环境 ELASTICSEARCH_ENABLED=false",
+    "种子 Agent 为 GENERAL/STATUTE/CASE/CONTRACT",
+    "Tavily MCP 与 Langfuse L2 为可选",
+    "无独立类目管理路由",
+    "B1-hybrid: fulltext-only 不挡 as-built"
+  ],
+  "gates": {
+    "A": {
+      "status": "FAIL",
+      "items": [
+        { "id": "A1", "name": "mvn test", "status": "FAIL", "evidence": "raglaw-rag IngestPipelineTest: 2 UnnecessaryStubbing errors; exports/run-2026-08-30/mvn-test.log" },
+        { "id": "A2", "name": "RagHybridRecallIT", "status": "FAIL", "evidence": "拖欠工资 hits=0 expected>=1; exports/run-2026-08-30/rag-hybrid-recall-it.log" },
+        { "id": "A3-web", "name": "raglaw-web vitest", "status": "PASS", "evidence": "42 passed (6 files); exports/run-2026-08-30/vitest-web.log" },
+        { "id": "A3-ui", "name": "@raglaw/ui vitest", "status": "PASS", "evidence": "77 passed (11 files); exports/run-2026-08-30/vitest-ui.log" },
+        { "id": "A4", "name": "pnpm lint:web && build:web", "status": "PASS", "evidence": "tsc --noEmit + Vite build exit 0; exports/run-2026-08-30/build-web.log" },
+        { "id": "A5", "name": "Playwright E2E", "status": "FAIL", "evidence": "4 failed, 7 skipped; login heading not found (E2E password raglaw-eval vs seeded 12345); exports/run-2026-08-30/e2e.log" }
+      ]
+    },
+    "B": {
+      "status": "FAIL",
+      "items": [
+        { "id": "B1-health", "name": "GET /health status UP", "status": "PASS", "evidence": "status=UP llmMock=false; exports/run-2026-08-30/health.json" },
+        { "id": "B1-hybrid", "name": "hybridRetrievalReady", "status": "WARN", "evidence": "hybridRetrievalReady=false elasticsearchIndexSyncReady=false; fulltext-only" },
+        { "id": "B2", "name": "acceptance-qa.ps1", "status": "FAIL", "evidence": "34 PASS / 1 FAIL / 7 WARN; FAIL: lawyer_login 429; exports/run-2026-08-30/acceptance-qa.log" },
+        { "id": "B3-recall", "name": "recall-benchmark >= 90%", "status": "FAIL", "evidence": "12/17 (70.59%); rag-pipeline-eval-2026-08-30-compare.json" },
+        { "id": "B3-agui-refs", "name": "AG-UI reference events >= 1/2", "status": "PASS", "evidence": "2/2 with references; latency 22-52s" }
+      ]
+    },
+    "C": {
+      "status": "FAIL",
+      "items": [
+        { "id": "C0", "name": "Playwright E2E", "status": "FAIL", "evidence": "4 failed, 7 skipped; exports/run-2026-08-30/e2e.log" },
+        { "id": "C1", "name": "Chat SSE citations persist", "status": "PASS", "evidence": "3-turn SSE PASS, citations 2/3; acceptance-qa conversation cases" },
+        { "id": "C2", "name": "A2A / trace stages", "status": "PASS", "evidence": "stages=knowledge_funnel,dual_channel_retrieval,rag_search,llm,knowledge_presearch" },
+        { "id": "C3", "name": "/chat/STATUTE vs STATUTE_CIVIL", "status": "PASS", "evidence": "STATUTE enabled; STATUTE_CIVIL not seed agent" },
+        { "id": "C4", "name": "Knowledge search + graph", "status": "PARTIAL", "evidence": "search hits PASS; graph_related=0 WARN" },
+        { "id": "C5", "name": "Ingest + case approval", "status": "PASS", "evidence": "case approve INDEXED" },
+        { "id": "C6", "name": "Contract review export", "status": "PARTIAL", "evidence": "export_docx PASS 2432 bytes; review_rag_hits=0 WARN; ingest_review NOT_RUN" },
+        { "id": "C7", "name": "Admin observability", "status": "PASS", "evidence": "agent_reload, trace_list total=5+" },
+        { "id": "C8", "name": "Langfuse L2", "status": "NA", "evidence": "not configured" },
+        { "id": "C9", "name": "Auth security", "status": "PARTIAL", "evidence": "unauth 401 PASS; lawyer_login 429; contract_idor WARN (no lawyer token)" }
+      ]
+    }
+  },
+  "ragBenchmark": {
+    "source": "docs/evaluation/recall-benchmark.json",
+    "passed": 12,
+    "total": 17,
+    "passRate": 0.7059,
+    "failedQueries": [
+      { "text": "加班费", "reason": "top1=/CASE/CIVIL/LABOR expected /STATUTE" },
+      { "text": "劳动争议案例", "reason": "top1=/STATUTE/CIVIL/LABOR expected /CASE" },
+      { "text": "买化学品是否违法", "reason": "hits=0 corpus gap" },
+      { "text": "危险化学品购买", "reason": "hits=0 corpus gap" },
+      { "text": "行政处罚", "reason": "hits=0 corpus gap" }
+    ]
+  },
+  "chunkStats": {
+    "source": "docs/evaluation/exports/chunk-stats-2026-08-30.csv",
+    "levels": {
+      "PARENT": { "count": 52, "avgLen": 9, "maxLen": 19 },
+      "CHILD": { "count": 956, "avgLen": 125, "maxLen": 884 },
+      "MICRO": { "count": 1005, "avgLen": 119, "maxLen": 300 }
+    },
+    "abnormalMicroCount": 146,
+    "abnormalMicroNote": "CHAR_LENGTH<50 or >350; MICRO max=300 confirms chunker cap"
+  },
+  "contractStats": {
+    "contractsReviewed": 1,
+    "riskCount": 9,
+    "severity": { "HIGH": 1, "MEDIUM": 5, "LOW": 3 },
+    "ragHitCount": 0,
+    "source": "docs/evaluation/exports/contract-risk-2026-08-30.csv"
+  },
+  "conversationStats": {
+    "conversations": 2,
+    "messages": 14,
+    "agentDistribution": { "GENERAL": 2 },
+    "traceCount": 5,
+    "shadowRouteLogs": 7
+  },
+  "esAudit": {
+    "mysqlEmbeddableChunks": 44,
+    "esChunks": 0,
+    "documentsMissingEs": 5,
+    "source": "docs/evaluation/exports/run-2026-08-30/es-migration-audit.json"
+  },
+  "improvementPriorities": [
+    "设置 RAGLAW_SEED_ADMIN_PASSWORD=raglaw-eval 并统一 E2E/脚本密码",
+    "启用 ELASTICSEARCH_ENABLED=true + reindex 修复 hybrid 与 RagHybridRecallIT",
+    "补齐危化品/行政处罚语料以提升 recall 至 90%",
+    "修复 IngestPipelineTest UnnecessaryStubbing",
+    "合同审查链路提升 ragHitCount（RAG 上下文注入）"
+  ]
+}

@@ -26,7 +26,26 @@ public class LlmUsageLogEntity {
     @Column(name = "completion_tokens")
     private Integer completionTokens;
 
+    @Column(name = "output_text", columnDefinition = "TEXT")
+    private String outputText;
+
     protected LlmUsageLogEntity() {
+    }
+
+    public LlmUsageLogEntity(
+            String id,
+            String traceId,
+            String model,
+            Integer promptTokens,
+            Integer completionTokens,
+            String outputText
+    ) {
+        this.id = id;
+        this.traceId = traceId;
+        this.model = model;
+        this.promptTokens = promptTokens;
+        this.completionTokens = completionTokens;
+        this.outputText = outputText;
     }
 
     public LlmUsageLogEntity(
@@ -36,11 +55,7 @@ public class LlmUsageLogEntity {
             Integer promptTokens,
             Integer completionTokens
     ) {
-        this.id = id;
-        this.traceId = traceId;
-        this.model = model;
-        this.promptTokens = promptTokens;
-        this.completionTokens = completionTokens;
+        this(id, traceId, model, promptTokens, completionTokens, null);
     }
 
     public String getId() {
@@ -49,5 +64,25 @@ public class LlmUsageLogEntity {
 
     public String getTraceId() {
         return traceId;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public Integer getPromptTokens() {
+        return promptTokens;
+    }
+
+    public Integer getCompletionTokens() {
+        return completionTokens;
+    }
+
+    public String getOutputText() {
+        return outputText;
+    }
+
+    public void setOutputText(String outputText) {
+        this.outputText = outputText;
     }
 }

@@ -22,6 +22,7 @@ class HealthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("UP"))
-                .andExpect(jsonPath("$.data.rag.postgresEnabled").exists());
+                .andExpect(jsonPath("$.data.rag.elasticsearchEnabled").exists())
+                .andExpect(jsonPath("$.data.rag.elasticsearchIndexSyncReady").value(false));
     }
 }

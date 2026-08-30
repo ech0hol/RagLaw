@@ -4,7 +4,6 @@ import { useAuth } from './lib/auth';
 import { AuthenticatedLayout } from './layout/AuthenticatedLayout';
 import { AgentsAdminPage } from './pages/admin/AgentsAdminPage';
 import { ApprovalsAdminPage } from './pages/admin/ApprovalsAdminPage';
-import { CategoriesAdminPage } from './pages/admin/CategoriesAdminPage';
 import { DocumentsAdminPage } from './pages/admin/DocumentsAdminPage';
 import { ChatPage } from './pages/ChatPage';
 import { ContractsPage } from './pages/ContractsPage';
@@ -12,6 +11,7 @@ import { ContractReviewPage } from './pages/ContractReviewPage';
 import { KnowledgeDetailPage } from './pages/KnowledgeDetailPage';
 import { KnowledgePage } from './pages/KnowledgePage';
 import { LoginPage } from './pages/LoginPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { ObservabilityAdminPage } from './pages/admin/ObservabilityAdminPage';
 import { UsersAdminPage } from './pages/admin/UsersAdminPage';
 
@@ -57,19 +57,12 @@ export default function App() {
                   <Route path="/contracts/review" element={<ContractReviewPage />} />
                   <Route path="/knowledge/statutes" element={<KnowledgePage />} />
                   <Route path="/knowledge/documents" element={<KnowledgeDetailPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
                   <Route
                     path="/admin/agents"
                     element={
                       <AdminOnly>
                         <AgentsAdminPage />
-                      </AdminOnly>
-                    }
-                  />
-                  <Route
-                    path="/admin/categories"
-                    element={
-                      <AdminOnly>
-                        <CategoriesAdminPage />
                       </AdminOnly>
                     }
                   />

@@ -31,6 +31,11 @@ public class IngestService {
         ingestPipeline.sync(document);
     }
 
+    @Transactional
+    public void parse(DocumentEntity document) {
+        ingestPipeline.parse(document);
+    }
+
     public InputStream download(String documentId) {
         DocumentEntity document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new BusinessException(ErrorCodes.NOT_FOUND, "文档不存在"));

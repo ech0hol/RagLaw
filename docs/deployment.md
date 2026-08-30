@@ -9,10 +9,10 @@
 | `raglaw-server` | Spring Boot 单体（API + Agent + RAG） |
 | `raglaw-web` | 静态前端（Vite build → Nginx/CDN） |
 | MySQL 8 | 业务库、会话、trace |
-| PostgreSQL + pgvector | 向量索引（可选，混合检索） |
+| Elasticsearch 8 | BM25 + dense_vector 混合检索（可选） |
 | MinIO | 文档原件 |
 | RabbitMQ | 异步入库（推荐生产开启） |
-| Redis | Agent 运行时缓存 |
+| Redis | 预留（Docker 可选；**当前代码未接入**） |
 | Langfuse | 可观测 L2（可选 profile） |
 
 ## 1. 环境变量清单
@@ -22,10 +22,12 @@
 | 变量 | 生产要求 |
 |------|----------|
 | `RAGLAW_SEED_ADMIN_PASSWORD` | **必填**（`prod` profile 会校验） |
+| `JWT_SECRET` | **生产必填**，≥32 字节，非占位符 |
+| `CORS_ALLOWED_ORIGINS` | 前端域名，逗号分隔 |
 | `MYSQL_*` / `SPRING_DATASOURCE_*` | 指向生产 MySQL |
 | `DASHSCOPE_API_KEY` | 真实 LLM + embedding |
 | `RAGLAW_LLM_MOCK` | `false` |
-| `POSTGRES_ENABLED` / `EMBEDDING_ENABLED` | 混合检索时均为 `true` |
+| `ELASTICSEARCH_ENABLED` / `EMBEDDING_ENABLED` | 混合检索时均为 `true` |
 | `RABBITMQ_ENABLED` | 生产建议 `true` |
 | `MINIO_*` | 对象存储凭证 |
 | `LANGFUSE_ENABLED` + keys | 可选，配合 observability profile |
@@ -44,7 +46,15 @@ java -jar raglaw-server.jar --spring.profiles.active=prod
 
 - MySQL（高可用或托管 RDS）
 - MinIO（或 S3 兼容对象存储，需确认 `RagProperties` 端点配置）
-- 可选：Postgres、RabbitMQ、Redis、Langfuse
+- 可选：Elasticsearch、RabbitMQ、Langfuse（`observability` profile）
+
+历史开发环境可能残留 `raglaw-postgres`（旧 pgvector）或 `raglaw-redis` 容器，可手动清理：
+
+```powershell
+docker stop raglaw-postgres raglaw-redis 2>$null
+docker rm raglaw-postgres raglaw-redis 2>$null
+docker volume rm raglaw_raglaw-postgres-data raglaw_raglaw-redis-data 2>$null
+```
 
 ### Docker Compose（单机预发）
 
@@ -101,11 +111,12 @@ server {
 }
 ```
 
-## 5. 入库与向量
+## 5. 入库、Outbox 与向量
 
 1. 启动后登录 Admin，在「文档管理」上传语料（Rabbit 开启时自动异步入库）
-2. 启用 pgvector 后需**重新 ingest** 已有文档
-3. 失败文档可在 Admin 页查看 `ingestStage=FAILED` 并重试
+2. 启用 Elasticsearch 后需**重新 ingest** 已有文档；**UPSERT 直写 ES**，**DELETE 经 Outbox** 补偿（`OUTBOX_ENABLED=true`）
+3. 失败文档可在 Admin 页查看 `ingestStage=FAILED` 并重试；Outbox DELETE 条目会自动轮询重放
+4. Trace 清理：管理端 Observability 支持批量删除；建议定期清理或按保留策略归档
 
 ## 6. 可观测性
 
@@ -114,7 +125,7 @@ server {
 
 ## 7. 备份
 
-见 [`backup.md`](backup.md)：MySQL `mysqldump`、MinIO bucket、Postgres volume。
+见 [`backup.md`](backup.md)：MySQL `mysqldump`、Elasticsearch 索引卷、MinIO bucket。
 
 ## 8. 发布检查清单
 

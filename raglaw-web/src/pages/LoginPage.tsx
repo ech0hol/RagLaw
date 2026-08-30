@@ -3,11 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Card, Input } from '@raglaw/ui';
 import { useAuth } from '../lib/auth';
 
+const defaultEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL ?? 'admin@raglaw.local';
+const defaultPassword = import.meta.env.DEV
+  ? (import.meta.env.VITE_DEV_ADMIN_PASSWORD ?? '')
+  : '';
+
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@raglaw.local');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(defaultEmail);
+  const [password, setPassword] = useState(defaultPassword);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 

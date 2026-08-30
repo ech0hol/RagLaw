@@ -7,6 +7,7 @@ import com.raglaw.chat.domain.MessageRepository;
 import com.raglaw.chat.dto.ConversationDto;
 import com.raglaw.chat.dto.MessageDto;
 import com.raglaw.common.util.Ids;
+import com.raglaw.rag.contract.ContractAccessService;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -21,13 +22,16 @@ public class ConversationService {
 
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
+    private final ContractAccessService contractAccessService;
 
     public ConversationService(
             ConversationRepository conversationRepository,
-            MessageRepository messageRepository
+            MessageRepository messageRepository,
+            ContractAccessService contractAccessService
     ) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
+        this.contractAccessService = contractAccessService;
     }
 
     @Transactional(readOnly = true)
@@ -39,6 +43,7 @@ public class ConversationService {
 
     @Transactional
     public ConversationDto create(String userId, String agentCode, String contextDocumentId) {
+        contractAccessService.validateOwnedContractContext(blankToNull(contextDocumentId));
         Instant now = Instant.now();
         String resolvedAgentCode = agentCode == null || agentCode.isBlank() ? DEFAULT_AGENT_CODE : agentCode;
         ConversationEntity entity = new ConversationEntity(
@@ -106,6 +111,64 @@ public class ConversationService {
                 .flatMap(conversation -> messageRepository
                         .findTopByConversationIdAndRoleOrderByCreatedAtDesc(conversationId, "user")
                         .map(MessageEntity::getContent));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<String> findLastAssistantMessageId(String userId, String conversationId) {
+        return conversationRepository.findById(conversationId)
+                .filter(conversation -> conversation.getUserId().equals(userId))
+                .flatMap(conversation -> messageRepository
+                        .findTopByConversationIdAndRoleOrderByCreatedAtDesc(conversationId, "assistant")
+                        .map(MessageEntity::getId));
+    }
+
+    /**
+     * Deletes the target assistant message and all subsequent messages, then returns the paired user content.
+     */
+    @Transactional
+    public Optional<String> prepareRegenerateFromAssistant(
+            String userId,
+            String conversationId,
+            String assistantMessageId
+    ) {
+        if (assistantMessageId == null || assistantMessageId.isBlank()) {
+            return Optional.empty();
+        }
+        return conversationRepository.findById(conversationId)
+                .filter(conversation -> conversation.getUserId().equals(userId))
+                .flatMap(conversation -> messageRepository
+                        .findByIdAndConversationId(assistantMessageId, conversationId)
+                        .filter(message -> "assistant".equals(message.getRole()))
+                        .flatMap(assistant -> {
+                            String userContent = findPairedUserContent(conversationId, assistant).orElse(null);
+                            if (userContent == null) {
+                                return Optional.empty();
+                            }
+                            messageRepository.deleteByConversationIdAndCreatedAtGreaterThanEqual(
+                                    conversationId,
+                                    assistant.getCreatedAt()
+                            );
+                            conversation.setUpdatedAt(Instant.now());
+                            conversationRepository.save(conversation);
+                            return Optional.of(userContent);
+                        }));
+    }
+
+    private Optional<String> findPairedUserContent(String conversationId, MessageEntity assistant) {
+        List<MessageEntity> messages = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
+        for (int i = 0; i < messages.size(); i++) {
+            if (!messages.get(i).getId().equals(assistant.getId())) {
+                continue;
+            }
+            for (int j = i - 1; j >= 0; j--) {
+                MessageEntity candidate = messages.get(j);
+                if ("user".equals(candidate.getRole())) {
+                    return Optional.of(candidate.getContent());
+                }
+            }
+            return Optional.empty();
+        }
+        return Optional.empty();
     }
 
     @Transactional

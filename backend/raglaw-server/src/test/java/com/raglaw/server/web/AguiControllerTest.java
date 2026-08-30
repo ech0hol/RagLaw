@@ -13,11 +13,15 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 @RagLawIntegrationTest
+@SpringBootTest(properties = {
+        "raglaw.seed.admin-password=admin-test-password"
+})
 class AguiControllerTest {
 
     private static final String ADMIN_EMAIL = "admin@raglaw.local";
@@ -61,7 +65,7 @@ class AguiControllerTest {
     }
 
     @Test
-    void regenerateAppendsAssistantWithoutNewUserMessage() throws Exception {
+    void regenerateReplacesAssistantWithoutAppendingDuplicate() throws Exception {
         String token = loginToken();
 
         MvcResult createConv = mockMvc.perform(post("/api/v1/conversations")
@@ -112,7 +116,7 @@ class AguiControllerTest {
                 .filter(role -> "assistant".equals(role))
                 .toList()
                 .size();
-        assertThat(assistantCount).isEqualTo(2);
+        assertThat(assistantCount).isEqualTo(1);
     }
 
     private String loginToken() throws Exception {

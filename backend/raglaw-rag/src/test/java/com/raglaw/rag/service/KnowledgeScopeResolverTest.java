@@ -27,6 +27,34 @@ class KnowledgeScopeResolverTest {
     }
 
     @Test
+    void resolvesL2CategoryCodeToPaths() {
+        CategoryEntity l2 = new CategoryEntity(
+                "cat_l2_statute_civil", "cat_l1_statute", 2,
+                "STATUTE_CIVIL", "民法商法", "/STATUTE/CIVIL", "STATUTE", 2
+        );
+        CategoryEntity l3Labor = new CategoryEntity(
+                "cat_l3_statute_civil_labor", "cat_l2_statute_civil", 3,
+                "STATUTE_CIVIL_LABOR", "劳动合同法专题", "/STATUTE/CIVIL/LABOR", "STATUTE", 1
+        );
+        CategoryEntity l3Contract = new CategoryEntity(
+                "cat_l3_statute_civil_contract", "cat_l2_statute_civil", 3,
+                "STATUTE_CIVIL_CONTRACT", "合同法专题", "/STATUTE/CIVIL/CONTRACT", "STATUTE", 2
+        );
+
+        when(categoryRepository.findByCode("STATUTE_CIVIL")).thenReturn(Optional.of(l2));
+        when(categoryRepository.findByParentIdOrderBySortOrderAsc("cat_l2_statute_civil"))
+                .thenReturn(List.of(l3Labor, l3Contract));
+
+        List<String> paths = resolver.resolvePaths(List.of("STATUTE_CIVIL"));
+
+        assertThat(paths).containsExactly(
+                "/STATUTE/CIVIL",
+                "/STATUTE/CIVIL/LABOR",
+                "/STATUTE/CIVIL/CONTRACT"
+        );
+    }
+
+    @Test
     void resolvesCategoryCodeToL2AndL3Paths() {
         CategoryEntity l2 = new CategoryEntity(
                 "cat_l2_statute_civil", "cat_l1_statute", 2,

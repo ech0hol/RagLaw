@@ -13,4 +13,8 @@ public interface MessageRepository extends JpaRepository<MessageEntity, String> 
             String conversationId,
             String role
     );
+
+    java.util.Optional<MessageEntity> findByIdAndConversationId(String id, String conversationId);
+
+    void deleteByConversationIdAndCreatedAtGreaterThanEqual(String conversationId, java.time.Instant createdAt);
 }

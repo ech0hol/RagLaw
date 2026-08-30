@@ -55,6 +55,8 @@ SSE 事件：`meta` / `status` / `text` / `reference` / `recommend` / `done` / `
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
+| GET | `/api/v1/contracts` | 当前用户的合同列表 |
+| POST | `/api/v1/contracts/upload` | 上传合同（multipart: `file`, 可选 `categoryId`） |
 | GET | `/api/v1/contracts/{documentId}/text` | 合同全文 |
 | GET | `/api/v1/contracts/{documentId}/file` | 原件预览（PDF inline） |
 | GET | `/api/v1/contracts/{documentId}/risks` | 风险列表 |
@@ -63,7 +65,7 @@ SSE 事件：`meta` / `status` / `text` / `reference` / `recommend` / `done` / `
 | POST | `/api/v1/contracts/{documentId}/accept-revisions` | 采纳全部修订建议（返回修订文本） |
 | GET | `/api/v1/contracts/{documentId}/export?format=docx\|pdf` | 导出修订版 |
 
-上传仍走 Admin 文档接口：`POST /api/v1/admin/documents/upload` + ingest-review。
+上传合同走 `POST /api/v1/contracts/upload` + ingest-review。管理端知识库上传仍用 `POST /api/v1/admin/documents/upload`。
 
 ## 管理端（ADMIN）
 

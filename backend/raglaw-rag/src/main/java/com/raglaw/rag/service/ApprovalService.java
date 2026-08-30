@@ -6,6 +6,7 @@ import com.raglaw.rag.domain.DocStatus;
 import com.raglaw.rag.domain.DocumentEntity;
 import com.raglaw.rag.dto.DocumentDto;
 import com.raglaw.rag.repository.DocumentRepository;
+import com.raglaw.rag.search.ElasticsearchRetriever;
 import java.util.List;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
@@ -16,16 +17,16 @@ public class ApprovalService {
 
     private final DocumentRepository documentRepository;
     private final IngestPipeline ingestPipeline;
-    private final ObjectProvider<VectorStoreService> vectorStoreService;
+    private final ObjectProvider<ElasticsearchRetriever> elasticsearchRetriever;
 
     public ApprovalService(
             DocumentRepository documentRepository,
             IngestPipeline ingestPipeline,
-            ObjectProvider<VectorStoreService> vectorStoreService
+            ObjectProvider<ElasticsearchRetriever> elasticsearchRetriever
     ) {
         this.documentRepository = documentRepository;
         this.ingestPipeline = ingestPipeline;
-        this.vectorStoreService = vectorStoreService;
+        this.elasticsearchRetriever = elasticsearchRetriever;
     }
 
     @Transactional(readOnly = true)
@@ -55,9 +56,9 @@ public class ApprovalService {
         document.setRejectReason(reason);
         documentRepository.save(document);
 
-        VectorStoreService vectorStore = vectorStoreService.getIfAvailable();
-        if (vectorStore != null && vectorStore.isEnabled()) {
-            vectorStore.deleteByDocumentId(documentId);
+        ElasticsearchRetriever retriever = elasticsearchRetriever.getIfAvailable();
+        if (retriever != null && retriever.isEnabled()) {
+            retriever.deleteByDocumentId(documentId);
         }
         return DocumentDto.from(document);
     }

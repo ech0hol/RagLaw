@@ -1,8 +1,11 @@
 package com.raglaw.rag.domain;
 
 import com.raglaw.common.jpa.ColumnLengths;
+import com.raglaw.rag.domain.ChunkLevel;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -20,6 +23,10 @@ public class DocumentChunkEntity {
 
     @Column(name = "parent_id", length = ColumnLengths.UUID)
     private String parentId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "chunk_level", length = 16)
+    private ChunkLevel chunkLevel;
 
     @Column(name = "chunk_index", nullable = false)
     private int chunkIndex;
@@ -49,6 +56,7 @@ public class DocumentChunkEntity {
             String id,
             String documentId,
             String parentId,
+            ChunkLevel chunkLevel,
             int chunkIndex,
             String content,
             String l1Path,
@@ -59,6 +67,7 @@ public class DocumentChunkEntity {
         this.id = id;
         this.documentId = documentId;
         this.parentId = parentId;
+        this.chunkLevel = chunkLevel;
         this.chunkIndex = chunkIndex;
         this.content = content;
         this.l1Path = l1Path;
@@ -78,6 +87,10 @@ public class DocumentChunkEntity {
 
     public String getParentId() {
         return parentId;
+    }
+
+    public ChunkLevel getChunkLevel() {
+        return chunkLevel;
     }
 
     public int getChunkIndex() {

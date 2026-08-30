@@ -11,17 +11,21 @@ import org.springframework.stereotype.Service;
 public class RateLimitService {
 
     private static final Duration WINDOW = Duration.ofMinutes(1);
-    private static final int LOGIN_LIMIT = 5;
-    private static final int AGUI_LIMIT = 20;
+
+    private final RateLimitProperties rateLimitProperties;
 
     private final Map<String, Deque<Long>> buckets = new ConcurrentHashMap<>();
 
+    public RateLimitService(RateLimitProperties rateLimitProperties) {
+        this.rateLimitProperties = rateLimitProperties;
+    }
+
     public boolean tryLogin(String clientKey) {
-        return tryAcquire("login:" + clientKey, LOGIN_LIMIT);
+        return tryAcquire("login:" + clientKey, rateLimitProperties.getLoginPerMinute());
     }
 
     public boolean tryAguiRun(String clientKey) {
-        return tryAcquire("agui:" + clientKey, AGUI_LIMIT);
+        return tryAcquire("agui:" + clientKey, rateLimitProperties.getAguiPerMinute());
     }
 
     private boolean tryAcquire(String key, int limit) {

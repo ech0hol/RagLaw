@@ -1,0 +1,453 @@
+﻿{
+    "auditedAt":  "2026-08-30T16:40:31.9650585+08:00",
+    "config":  {
+                   "baseUrl":  "http://localhost:8080",
+                   "elasticsearchUri":  "http://localhost:9200",
+                   "esIndexName":  "raglaw_chunks",
+                   "mysql":  "localhost:3307/raglaw"
+               },
+    "health":  {
+                   "rag":  {
+                               "elasticsearchEnabled":  false,
+                               "embeddingConfigured":  false,
+                               "embeddingReady":  false,
+                               "embeddingMock":  false,
+                               "hybridRetrievalReady":  false,
+                               "indexedDocumentsMissingEsSync":  null,
+                               "elasticsearchIndexSyncReady":  false,
+                               "minioEnabled":  false,
+                               "rabbitEnabled":  false
+                           },
+                   "modules":  [
+                                   "raglaw-chat",
+                                   "raglaw-agentscope",
+                                   "raglaw-agent-admin",
+                                   "raglaw-rag"
+                               ],
+                   "llmMock":  false,
+                   "status":  "UP",
+                   "service":  "raglaw-server"
+               },
+    "mysql":  {
+                  "documentStatus":  [
+                                         {
+                                             "status":  "INDEXED",
+                                             "count":  5
+                                         },
+                                         {
+                                             "status":  "PENDING",
+                                             "count":  1
+                                         }
+                                     ],
+                  "chunkLevelsIndexed":  [
+                                             {
+                                                 "level":  "CHILD",
+                                                 "count":  927
+                                             },
+                                             {
+                                                 "level":  "MICRO",
+                                                 "count":  975
+                                             },
+                                             {
+                                                 "level":  "PARENT",
+                                                 "count":  51
+                                             }
+                                         ]
+              },
+    "elasticsearch":  {
+                          "indexExists":  true,
+                          "indexHealth":  {
+                                              "raglaw_chunks":  {
+                                                                    "aliases":  {
+
+                                                                                },
+                                                                    "mappings":  {
+                                                                                     "properties":  {
+                                                                                                        "chunk_id":  {
+                                                                                                                         "type":  "keyword"
+                                                                                                                     },
+                                                                                                        "content":  {
+                                                                                                                        "type":  "text"
+                                                                                                                    },
+                                                                                                        "doc_type":  {
+                                                                                                                         "type":  "keyword"
+                                                                                                                     },
+                                                                                                        "document_id":  {
+                                                                                                                            "type":  "keyword"
+                                                                                                                        },
+                                                                                                        "embedding":  {
+                                                                                                                          "type":  "dense_vector",
+                                                                                                                          "dims":  1024,
+                                                                                                                          "index":  true,
+                                                                                                                          "similarity":  "cosine",
+                                                                                                                          "index_options":  {
+                                                                                                                                                "type":  "int8_hnsw",
+                                                                                                                                                "m":  16,
+                                                                                                                                                "ef_construction":  100
+                                                                                                                                            }
+                                                                                                                      },
+                                                                                                        "index_version":  {
+                                                                                                                              "type":  "long"
+                                                                                                                          },
+                                                                                                        "l1_path":  {
+                                                                                                                        "type":  "keyword"
+                                                                                                                    },
+                                                                                                        "l2_path":  {
+                                                                                                                        "type":  "keyword"
+                                                                                                                    },
+                                                                                                        "l3_path":  {
+                                                                                                                        "type":  "keyword"
+                                                                                                                    }
+                                                                                                    }
+                                                                                 },
+                                                                    "settings":  {
+                                                                                     "index":  {
+                                                                                                   "routing":  {
+                                                                                                                   "allocation":  {
+                                                                                                                                      "include":  {
+                                                                                                                                                      "_tier_preference":  "data_content"
+                                                                                                                                                  }
+                                                                                                                                  }
+                                                                                                               },
+                                                                                                   "number_of_shards":  "1",
+                                                                                                   "provided_name":  "raglaw_chunks",
+                                                                                                   "creation_date":  "1788076914864",
+                                                                                                   "number_of_replicas":  "1",
+                                                                                                   "uuid":  "Bp4YCc_ZTo2Q2o573_qUcA",
+                                                                                                   "version":  {
+                                                                                                                   "created":  "8512000"
+                                                                                                               }
+                                                                                               }
+                                                                                 }
+                                                                }
+                                          },
+                          "totalChunks":  0,
+                          "chunksWithEmbedding":  0,
+                          "orphanDocumentIds":  [
+
+                                                ]
+                      },
+    "outbox":  {
+                   "statusCounts":  [
+
+                                    ],
+                   "pendingOrFailed":  [
+
+                                       ]
+               },
+    "documents":  [
+                      {
+                          "documentId":  "575bebd6-785b-4b29-b87a-4e0708c7f409",
+                          "title":  "涓崕浜烘皯鍏卞拰鍥藉垜娉昣20201226",
+                          "docType":  "STATUTE",
+                          "ingestStage":  "INDEXED",
+                          "mysqlIndexVersion":  0,
+                          "mysqlTotalChunks":  1068,
+                          "mysqlEmbeddableChunks":  25,
+                          "esChunkCount":  0,
+                          "esChunksWithEmbedding":  0,
+                          "esIndexVersion":  0,
+                          "esMissingEmbeddingCount":  0,
+                          "missingInEsCount":  25,
+                          "extraInEsCount":  0,
+                          "issues":  [
+                                         "NO_ES_CHUNKS",
+                                         "MISSING_IN_ES",
+                                         "COUNT_MISMATCH"
+                                     ],
+                          "missingInEsSample":  [
+                                                    "006402cb-da16-4ce8-a979-a46de1e4bed0",
+                                                    "14917d8a-cf1c-41a3-98df-1975d9dab82d",
+                                                    "15d64778-d4d2-478a-908a-f70c00a4e5f7",
+                                                    "220e6529-f0c7-4803-860a-6f51642ea76a",
+                                                    "2eade33b-d496-4ff2-bca2-8787d283b2c6"
+                                                ],
+                          "extraInEsSample":  [
+
+                                              ]
+                      },
+                      {
+                          "documentId":  "12a77925-9191-45fe-8c21-bd35dce4ab7e",
+                          "title":  "涓崕浜烘皯鍏卞拰鍥藉姵鍔ㄥ悎鍚屾硶_20121228",
+                          "docType":  "STATUTE",
+                          "ingestStage":  "INDEXED",
+                          "mysqlIndexVersion":  0,
+                          "mysqlTotalChunks":  209,
+                          "mysqlEmbeddableChunks":  6,
+                          "esChunkCount":  0,
+                          "esChunksWithEmbedding":  0,
+                          "esIndexVersion":  0,
+                          "esMissingEmbeddingCount":  0,
+                          "missingInEsCount":  6,
+                          "extraInEsCount":  0,
+                          "issues":  [
+                                         "NO_ES_CHUNKS",
+                                         "MISSING_IN_ES",
+                                         "COUNT_MISMATCH"
+                                     ],
+                          "missingInEsSample":  [
+                                                    "32d6fb30-a4e9-432a-a853-591d4be1fe5b",
+                                                    "9a6d795f-c4b7-48cb-a6ab-d7f844efc7ab",
+                                                    "9e4f2aa8-5cc9-4f10-8a22-b87da7030ebd",
+                                                    "c3b345d4-396b-4bf0-9d79-991300c528f3",
+                                                    "c653a065-24df-44c0-9014-3dc74799c805"
+                                                ],
+                          "extraInEsSample":  [
+
+                                              ]
+                      },
+                      {
+                          "documentId":  "8e6e9f23-92f2-4a6a-ba5c-aab4de1f3d12",
+                          "title":  "涓崕浜烘皯鍏卞拰鍥藉娉曪紙2018骞翠慨姝ｆ枃鏈級_20180311",
+                          "docType":  "STATUTE",
+                          "ingestStage":  "INDEXED",
+                          "mysqlIndexVersion":  0,
+                          "mysqlTotalChunks":  299,
+                          "mysqlEmbeddableChunks":  5,
+                          "esChunkCount":  0,
+                          "esChunksWithEmbedding":  0,
+                          "esIndexVersion":  0,
+                          "esMissingEmbeddingCount":  0,
+                          "missingInEsCount":  5,
+                          "extraInEsCount":  0,
+                          "issues":  [
+                                         "NO_ES_CHUNKS",
+                                         "MISSING_IN_ES",
+                                         "COUNT_MISMATCH"
+                                     ],
+                          "missingInEsSample":  [
+                                                    "12f1ccd7-932c-4b49-9717-f7884ef8ec4c",
+                                                    "72a03fef-1669-44c3-afef-e4f6fa3c374c",
+                                                    "a764a859-a178-45b8-ab51-fe6af6d78725",
+                                                    "c5790e9c-ae40-4603-ace7-36797a7cbfbd",
+                                                    "fb1d4c6c-5479-4ee0-bd20-d00d38f8a602"
+                                                ],
+                          "extraInEsSample":  [
+
+                                              ]
+                      },
+                      {
+                          "documentId":  "efadcdd1-35fe-4600-888b-7e9cc74ffec2",
+                          "title":  "涓崕浜烘皯鍏卞拰鍥界ぞ浼氫繚闄╂硶_20181229",
+                          "docType":  "STATUTE",
+                          "ingestStage":  "INDEXED",
+                          "mysqlIndexVersion":  0,
+                          "mysqlTotalChunks":  211,
+                          "mysqlEmbeddableChunks":  4,
+                          "esChunkCount":  0,
+                          "esChunksWithEmbedding":  0,
+                          "esIndexVersion":  0,
+                          "esMissingEmbeddingCount":  0,
+                          "missingInEsCount":  4,
+                          "extraInEsCount":  0,
+                          "issues":  [
+                                         "NO_ES_CHUNKS",
+                                         "MISSING_IN_ES",
+                                         "COUNT_MISMATCH"
+                                     ],
+                          "missingInEsSample":  [
+                                                    "83545d94-c75f-484c-a5fe-5ca06065d2ab",
+                                                    "d701763d-0146-4096-8b6b-499d9757a6fe",
+                                                    "d8eb6a24-4b4c-4f78-b1a4-afab67f85b11",
+                                                    "dbe032ad-c32f-4af2-8105-0a27e054505c"
+                                                ],
+                          "extraInEsSample":  [
+
+                                              ]
+                      },
+                      {
+                          "documentId":  "36721ea7-f214-44cd-bdaa-f58688b2eca3",
+                          "title":  "涓崕浜烘皯鍏卞拰鍥界ぞ浼氭晳鍔╂硶_20260430",
+                          "docType":  "STATUTE",
+                          "ingestStage":  "INDEXED",
+                          "mysqlIndexVersion":  0,
+                          "mysqlTotalChunks":  166,
+                          "mysqlEmbeddableChunks":  4,
+                          "esChunkCount":  0,
+                          "esChunksWithEmbedding":  0,
+                          "esIndexVersion":  0,
+                          "esMissingEmbeddingCount":  0,
+                          "missingInEsCount":  4,
+                          "extraInEsCount":  0,
+                          "issues":  [
+                                         "NO_ES_CHUNKS",
+                                         "MISSING_IN_ES",
+                                         "COUNT_MISMATCH"
+                                     ],
+                          "missingInEsSample":  [
+                                                    "0d3a0a5e-d300-4eed-9e0c-ae27d1a514d0",
+                                                    "832aae84-7e81-4072-9d91-985fddefa21a",
+                                                    "a74d34d4-ed98-4098-bced-9cc5bf930bfa",
+                                                    "abd9f8e3-17b9-4e7a-be2c-5a23a096b2c5"
+                                                ],
+                          "extraInEsSample":  [
+
+                                              ]
+                      }
+                  ],
+    "summary":  {
+                    "indexedDocuments":  5,
+                    "mysqlTotalChunks":  93,
+                    "mysqlEmbeddableChunks":  44,
+                    "esTotalChunks":  0,
+                    "esChunksWithEmbedding":  0,
+                    "documentsWithIssues":  5,
+                    "documentsMissingEsEntirely":  5,
+                    "documentsCountMismatch":  5,
+                    "documentsIndexVersionMismatch":  0,
+                    "documentsMissingEmbedding":  0,
+                    "esOrphanDocuments":  0,
+                    "esOrphanChunks":  0,
+                    "outboxPendingOrFailed":  0
+                },
+    "issues":  [
+                   {
+                       "documentId":  "575bebd6-785b-4b29-b87a-4e0708c7f409",
+                       "title":  "涓崕浜烘皯鍏卞拰鍥藉垜娉昣20201226",
+                       "docType":  "STATUTE",
+                       "ingestStage":  "INDEXED",
+                       "mysqlIndexVersion":  0,
+                       "mysqlTotalChunks":  1068,
+                       "mysqlEmbeddableChunks":  25,
+                       "esChunkCount":  0,
+                       "esChunksWithEmbedding":  0,
+                       "esIndexVersion":  0,
+                       "esMissingEmbeddingCount":  0,
+                       "missingInEsCount":  25,
+                       "extraInEsCount":  0,
+                       "issues":  [
+                                      "NO_ES_CHUNKS",
+                                      "MISSING_IN_ES",
+                                      "COUNT_MISMATCH"
+                                  ],
+                       "missingInEsSample":  [
+                                                 "006402cb-da16-4ce8-a979-a46de1e4bed0",
+                                                 "14917d8a-cf1c-41a3-98df-1975d9dab82d",
+                                                 "15d64778-d4d2-478a-908a-f70c00a4e5f7",
+                                                 "220e6529-f0c7-4803-860a-6f51642ea76a",
+                                                 "2eade33b-d496-4ff2-bca2-8787d283b2c6"
+                                             ],
+                       "extraInEsSample":  [
+
+                                           ]
+                   },
+                   {
+                       "documentId":  "12a77925-9191-45fe-8c21-bd35dce4ab7e",
+                       "title":  "涓崕浜烘皯鍏卞拰鍥藉姵鍔ㄥ悎鍚屾硶_20121228",
+                       "docType":  "STATUTE",
+                       "ingestStage":  "INDEXED",
+                       "mysqlIndexVersion":  0,
+                       "mysqlTotalChunks":  209,
+                       "mysqlEmbeddableChunks":  6,
+                       "esChunkCount":  0,
+                       "esChunksWithEmbedding":  0,
+                       "esIndexVersion":  0,
+                       "esMissingEmbeddingCount":  0,
+                       "missingInEsCount":  6,
+                       "extraInEsCount":  0,
+                       "issues":  [
+                                      "NO_ES_CHUNKS",
+                                      "MISSING_IN_ES",
+                                      "COUNT_MISMATCH"
+                                  ],
+                       "missingInEsSample":  [
+                                                 "32d6fb30-a4e9-432a-a853-591d4be1fe5b",
+                                                 "9a6d795f-c4b7-48cb-a6ab-d7f844efc7ab",
+                                                 "9e4f2aa8-5cc9-4f10-8a22-b87da7030ebd",
+                                                 "c3b345d4-396b-4bf0-9d79-991300c528f3",
+                                                 "c653a065-24df-44c0-9014-3dc74799c805"
+                                             ],
+                       "extraInEsSample":  [
+
+                                           ]
+                   },
+                   {
+                       "documentId":  "8e6e9f23-92f2-4a6a-ba5c-aab4de1f3d12",
+                       "title":  "涓崕浜烘皯鍏卞拰鍥藉娉曪紙2018骞翠慨姝ｆ枃鏈級_20180311",
+                       "docType":  "STATUTE",
+                       "ingestStage":  "INDEXED",
+                       "mysqlIndexVersion":  0,
+                       "mysqlTotalChunks":  299,
+                       "mysqlEmbeddableChunks":  5,
+                       "esChunkCount":  0,
+                       "esChunksWithEmbedding":  0,
+                       "esIndexVersion":  0,
+                       "esMissingEmbeddingCount":  0,
+                       "missingInEsCount":  5,
+                       "extraInEsCount":  0,
+                       "issues":  [
+                                      "NO_ES_CHUNKS",
+                                      "MISSING_IN_ES",
+                                      "COUNT_MISMATCH"
+                                  ],
+                       "missingInEsSample":  [
+                                                 "12f1ccd7-932c-4b49-9717-f7884ef8ec4c",
+                                                 "72a03fef-1669-44c3-afef-e4f6fa3c374c",
+                                                 "a764a859-a178-45b8-ab51-fe6af6d78725",
+                                                 "c5790e9c-ae40-4603-ace7-36797a7cbfbd",
+                                                 "fb1d4c6c-5479-4ee0-bd20-d00d38f8a602"
+                                             ],
+                       "extraInEsSample":  [
+
+                                           ]
+                   },
+                   {
+                       "documentId":  "efadcdd1-35fe-4600-888b-7e9cc74ffec2",
+                       "title":  "涓崕浜烘皯鍏卞拰鍥界ぞ浼氫繚闄╂硶_20181229",
+                       "docType":  "STATUTE",
+                       "ingestStage":  "INDEXED",
+                       "mysqlIndexVersion":  0,
+                       "mysqlTotalChunks":  211,
+                       "mysqlEmbeddableChunks":  4,
+                       "esChunkCount":  0,
+                       "esChunksWithEmbedding":  0,
+                       "esIndexVersion":  0,
+                       "esMissingEmbeddingCount":  0,
+                       "missingInEsCount":  4,
+                       "extraInEsCount":  0,
+                       "issues":  [
+                                      "NO_ES_CHUNKS",
+                                      "MISSING_IN_ES",
+                                      "COUNT_MISMATCH"
+                                  ],
+                       "missingInEsSample":  [
+                                                 "83545d94-c75f-484c-a5fe-5ca06065d2ab",
+                                                 "d701763d-0146-4096-8b6b-499d9757a6fe",
+                                                 "d8eb6a24-4b4c-4f78-b1a4-afab67f85b11",
+                                                 "dbe032ad-c32f-4af2-8105-0a27e054505c"
+                                             ],
+                       "extraInEsSample":  [
+
+                                           ]
+                   },
+                   {
+                       "documentId":  "36721ea7-f214-44cd-bdaa-f58688b2eca3",
+                       "title":  "涓崕浜烘皯鍏卞拰鍥界ぞ浼氭晳鍔╂硶_20260430",
+                       "docType":  "STATUTE",
+                       "ingestStage":  "INDEXED",
+                       "mysqlIndexVersion":  0,
+                       "mysqlTotalChunks":  166,
+                       "mysqlEmbeddableChunks":  4,
+                       "esChunkCount":  0,
+                       "esChunksWithEmbedding":  0,
+                       "esIndexVersion":  0,
+                       "esMissingEmbeddingCount":  0,
+                       "missingInEsCount":  4,
+                       "extraInEsCount":  0,
+                       "issues":  [
+                                      "NO_ES_CHUNKS",
+                                      "MISSING_IN_ES",
+                                      "COUNT_MISMATCH"
+                                  ],
+                       "missingInEsSample":  [
+                                                 "0d3a0a5e-d300-4eed-9e0c-ae27d1a514d0",
+                                                 "832aae84-7e81-4072-9d91-985fddefa21a",
+                                                 "a74d34d4-ed98-4098-bced-9cc5bf930bfa",
+                                                 "abd9f8e3-17b9-4e7a-be2c-5a23a096b2c5"
+                                             ],
+                       "extraInEsSample":  [
+
+                                           ]
+                   }
+               ]
+}

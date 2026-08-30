@@ -44,6 +44,23 @@ public class DashScopeOcrClient {
     }
 
     public Optional<String> extractTextFromPdf(byte[] pdfBytes) {
+        return extractVisionText(
+                pdfBytes,
+                "data:application/pdf;base64,",
+                "请提取该 PDF 合同中的全部文字，按原文顺序输出，不要总结。"
+        );
+    }
+
+    public Optional<String> extractTextFromImage(byte[] imageBytes, String mimeType) {
+        String normalizedMime = normalizeImageMimeType(mimeType);
+        return extractVisionText(
+                imageBytes,
+                "data:" + normalizedMime + ";base64,",
+                "请提取该图片合同中的全部文字，按原文顺序输出，不要总结。"
+        );
+    }
+
+    private Optional<String> extractVisionText(byte[] bytes, String dataUrlPrefix, String prompt) {
         if (mockEnabled) {
             return Optional.of("【OCR Mock】扫描件文本提取占位。请配置 DASHSCOPE_API_KEY 以启用真实 OCR。");
         }
@@ -51,15 +68,15 @@ public class DashScopeOcrClient {
             return Optional.empty();
         }
         try {
-            String base64 = Base64.getEncoder().encodeToString(pdfBytes);
+            String base64 = Base64.getEncoder().encodeToString(bytes);
             Map<String, Object> body = Map.of(
                     "model", "qwen-vl-plus",
                     "messages", List.of(Map.of(
                             "role", "user",
                             "content", List.of(
-                                    Map.of("type", "text", "text", "请提取该 PDF 合同中的全部文字，按原文顺序输出，不要总结。"),
+                                    Map.of("type", "text", "text", prompt),
                                     Map.of("type", "image_url", "image_url", Map.of(
-                                            "url", "data:application/pdf;base64," + base64
+                                            "url", dataUrlPrefix + base64
                                     ))
                             )
                     ))
@@ -82,5 +99,16 @@ public class DashScopeOcrClient {
             log.warn("DashScope OCR failed: {}", ex.getMessage());
             return Optional.empty();
         }
+    }
+
+    private static String normalizeImageMimeType(String mimeType) {
+        if (mimeType == null || mimeType.isBlank()) {
+            return "image/jpeg";
+        }
+        String lower = mimeType.toLowerCase();
+        if (lower.contains("png")) {
+            return "image/png";
+        }
+        return "image/jpeg";
     }
 }

@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "scripts": {
+    "dev:backend": "pwsh -File scripts/dev-backend.ps1",
     "dev:web": "pnpm --filter raglaw-web dev",
     "build:web": "pnpm --filter raglaw-web build",
     "lint:web": "pnpm --filter raglaw-web lint",

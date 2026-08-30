@@ -169,13 +169,16 @@ public class TraceRecorder {
             String outputPreview,
             long durationMs
     ) {
-        usageLogRepository.save(new LlmUsageLogEntity(
+        String storedOutput = truncate(outputPreview, 4000);
+        LlmUsageLogEntity usageLog = new LlmUsageLogEntity(
                 UUID.randomUUID().toString(),
                 traceId,
                 model,
                 promptTokens,
-                completionTokens
-        ));
+                completionTokens,
+                storedOutput
+        );
+        usageLogRepository.save(usageLog);
         String langfuseTraceId = traceRepository.findById(traceId)
                 .map(RagTraceEntity::getLangfuseTraceId)
                 .filter(id -> id != null && !id.isBlank())

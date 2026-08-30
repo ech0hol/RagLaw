@@ -11,6 +11,7 @@ public record AgentConfigSnapshot(
         List<String> skills,
         List<String> knowledgeScopes,
         List<String> a2aPeers,
-        List<String> tools
+        List<String> tools,
+        List<String> mcpServers
 ) {
 }
