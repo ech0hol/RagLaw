@@ -46,14 +46,18 @@ cp .env.example .env
 ### 3. 后端
 
 ```bash
-pnpm dev:backend
-# 或：pwsh scripts/dev-backend.ps1
-# bash：./scripts/dev-backend.sh
+cd backend
+mvn -pl raglaw-server spring-boot:run
 ```
 
-`dev-backend` 会自动从根目录 `.env` 加载环境变量并启动 `raglaw-server`（Spring Boot 本身不读取 `.env`）。
+Spring Boot 不会自动读取根目录 `.env`。若需加载 `.env` 中的配置（ES、Embedding 等），可用：
 
-加速重启（跳过编译）：`pwsh scripts/dev-backend.ps1 -SkipBuild`
+```bash
+pnpm dev:backend
+# 或：pwsh scripts/dev-backend.ps1
+```
+
+首次编译：`mvn -pl raglaw-server -am install -DskipTests`
 
 ### 4. 前端
 
@@ -86,43 +90,7 @@ pnpm dev:web
 | 用户管理 | `/admin/users` |
 | 文档管理 | `/admin/documents` |
 
-## 可选进阶
-
-**混合检索（存量文档补索引）**
-
-```powershell
-.\scripts\reindex-es-corpus.ps1
-```
-
-检查 `GET /api/v1/health` → `rag.hybridRetrievalReady: true`。
-
-**RAG 质量评测**
-
-```powershell
-.\scripts\eval-rag-quality.ps1 -RetrievalMode both
-```
-
-报告见 `docs/evaluation/`。
-
-**E2E 测试**
-
-```bash
-pnpm install
-cd raglaw-web && pnpm exec playwright install chromium
-E2E_WITH_CORPUS=1 pnpm e2e
-```
-
-**Langfuse 可观测**：`docker compose --profile observability up -d`，配置见 `.env.example`。
-
 ## 技术栈
 
 Java 17 · Spring Boot 3 · AgentScope Java · DashScope · React 19 · Vite · MySQL 8 · Elasticsearch 8 · MinIO · RabbitMQ
 
-对话链路基于原生 AG-UI SSE，未集成 CopilotKit。
-
-## 文档
-
-- [API 参考](docs/API.md)
-- [生产部署](docs/deployment.md)
-- [备份说明](docs/backup.md)
-- [评测与验收](docs/evaluation/)
