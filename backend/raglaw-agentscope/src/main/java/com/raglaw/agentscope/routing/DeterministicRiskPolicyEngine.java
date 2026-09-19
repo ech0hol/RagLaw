@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Comparator;
 
 public final class DeterministicRiskPolicyEngine implements RiskPolicyEngine {
     public static final String POLICY_VERSION = "risk-policy-v1";
@@ -17,15 +18,21 @@ public final class DeterministicRiskPolicyEngine implements RiskPolicyEngine {
         signals.addAll(precheck.hardSignals());
         signals.addAll(classification.riskSignals());
         List<String> reasons = new ArrayList<>(precheck.reasons());
-        for (RiskSignal signal : precheck.hardSignals()) {
+        for (RiskSignal signal : precheck.hardSignals().stream().sorted(Comparator.comparingInt(DeterministicRiskPolicyEngine::precedence)).toList()) {
             if (reasons.stream().noneMatch(reason -> reason.contains(signal.name()))) {
                 reasons.add("hard signal " + signal);
             }
         }
-        for (RiskSignal signal : classification.riskSignals()) {
+        for (RiskSignal signal : classification.riskSignals().stream().sorted(Comparator.comparingInt(DeterministicRiskPolicyEngine::precedence)).toList()) {
             if (!precheck.hardSignals().contains(signal)) {
-                reasons.add("classifier signal " + signal);
+                reasons.add("classifier signal: " + signal);
             }
+        }
+        if (classification.rationale() != null && !classification.rationale().isBlank()) {
+            reasons.add("classifier rationale: " + classification.rationale());
+        }
+        for (String material : classification.missingMaterials()) {
+            reasons.add("classifier missing material: " + material);
         }
         if (classification.taskType() == TaskType.CONTRACT_REVIEW && !request.hasContractDocument()) {
             signals.add(RiskSignal.MISSING_CORE_MATERIAL);
@@ -61,6 +68,14 @@ public final class DeterministicRiskPolicyEngine implements RiskPolicyEngine {
                 RiskSignal.MISSING_CORE_MATERIAL, RiskSignal.MULTI_ISSUE_ANALYSIS};
         for (RiskSignal signal : precedence) if (signals.contains(signal)) return signal;
         return null;
+    }
+
+    private static int precedence(RiskSignal signal) {
+        RiskSignal[] order = {RiskSignal.EXTERNAL_ACTION_REQUEST, RiskSignal.IMMINENT_DEADLINE,
+                RiskSignal.CRIMINAL_EXPOSURE, RiskSignal.RIGHTS_WAIVER, RiskSignal.HIGH_VALUE_DISPUTE,
+                RiskSignal.MISSING_CORE_MATERIAL, RiskSignal.MULTI_ISSUE_ANALYSIS, RiskSignal.CONFLICTING_FACTS};
+        for (int i = 0; i < order.length; i++) if (order[i] == signal) return i;
+        return order.length;
     }
 
     private static String stableRole(TaskType type) {

@@ -48,6 +48,30 @@ class RiskPolicyEngineTest {
         assertTrue(decision.policyReasons().stream().anyMatch(reason -> reason.contains("IMMINENT_DEADLINE")));
     }
 
+    @Test
+    void classifierReasonsUseStablePrecedenceAndPreserveProvenance() {
+        RoutingRequest request = new RoutingRequest("tenant-fictional", "user-fictional", "case-fictional", "conversation-fictional", "fictional query", true, false);
+        RulePrecheckResult precheck = new RulePrecheckResult(Set.of(), null, null);
+        TaskClassification classification = new TaskClassification(TaskType.DISPUTE_ANALYSIS,
+                Set.of(RiskSignal.MULTI_ISSUE_ANALYSIS, RiskSignal.CRIMINAL_EXPOSURE, RiskSignal.EXTERNAL_ACTION_REQUEST),
+                .8, java.util.List.of("fictional contract"), "three fictional issues", "test", "test");
+        RouteDecision decision = engine.decide(request, precheck, classification);
+
+        assertEquals(java.util.List.of("classifier signal: EXTERNAL_ACTION_REQUEST", "classifier signal: CRIMINAL_EXPOSURE",
+                "classifier signal: MULTI_ISSUE_ANALYSIS", "classifier rationale: three fictional issues",
+                "classifier missing material: fictional contract"), decision.policyReasons());
+        assertEquals(ExecutionMode.HUMAN_REVIEW, decision.executionMode());
+    }
+
+    @Test
+    void externalActionPrecedesDeadlineAndCriminalExposure() {
+        RouteDecision decision = decide(Set.of(RiskSignal.EXTERNAL_ACTION_REQUEST, RiskSignal.IMMINENT_DEADLINE,
+                RiskSignal.CRIMINAL_EXPOSURE), TaskType.GENERAL_CONSULTATION, .5, "fictional");
+        assertEquals(RiskLevel.HIGH, decision.riskLevel());
+        assertEquals(ExecutionMode.HUMAN_REVIEW, decision.executionMode());
+        assertTrue(decision.policyReasons().get(0).contains("EXTERNAL_ACTION_REQUEST"));
+    }
+
     private RouteDecision decide(Set<RiskSignal> signals, TaskType type, double confidence, String rationale) {
         RoutingRequest request = new RoutingRequest("tenant-fictional", "user-fictional", "case-fictional", "conversation-fictional", "fictional query", true, false);
         RulePrecheckResult precheck = new RulePrecheckResult(signals, null, null);

@@ -38,6 +38,11 @@ class RulePrecheckTest {
     }
 
     @Test
+    void doesNotTreatGenericCriminalOrAmountVocabularyAsRisk() {
+        assertTrue(precheck.evaluate(request("我想了解刑事法律和一百万元的法律概念")).hardSignals().isEmpty());
+    }
+
+    @Test
     void resultCollectionsAreImmutableAndNullCollectionsNormalizeToEmpty() {
         RulePrecheckResult result = new RulePrecheckResult(null, null, null);
 

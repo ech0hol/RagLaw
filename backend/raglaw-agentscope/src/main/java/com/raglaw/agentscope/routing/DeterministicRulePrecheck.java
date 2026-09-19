@@ -35,7 +35,7 @@ public final class DeterministicRulePrecheck implements RulePrecheck {
             signals.add(RiskSignal.EXTERNAL_ACTION_REQUEST);
             reasons.add("hard signal EXTERNAL_ACTION_REQUEST: request asks the system to act externally");
         }
-        if (normalized.matches(".*(?:刑事|犯罪|被捕|逮捕|拘留|刑事责任|criminal|arrest|prosecution|prosecuted).*") ) {
+        if (normalized.matches(".*(?:刑事责任|犯罪嫌疑|被捕|逮捕|拘留|criminal exposure|criminal liability|arrest|prosecution|prosecuted).*") ) {
             signals.add(RiskSignal.CRIMINAL_EXPOSURE);
             reasons.add("hard signal CRIMINAL_EXPOSURE: request references potential criminal exposure");
         }
@@ -43,7 +43,7 @@ public final class DeterministicRulePrecheck implements RulePrecheck {
             signals.add(RiskSignal.RIGHTS_WAIVER);
             reasons.add("hard signal RIGHTS_WAIVER: request references waiving a legal right");
         }
-        if (normalized.matches(".*(?:高额|重大金额|百万|千万|high[- ]value|million-dollar|large claim).*") ) {
+        if (normalized.matches(".*(?:高额|重大金额|百万|千万|high[- ]value|million-dollar|large claim).*(?:争议|纠纷|索赔|dispute|claim)|.*(?:争议|纠纷|索赔|dispute|claim).*(?:高额|重大金额|百万|千万|high[- ]value|million-dollar|large claim).*") ) {
             signals.add(RiskSignal.HIGH_VALUE_DISPUTE);
             reasons.add("hard signal HIGH_VALUE_DISPUTE: request references a high-value dispute");
         }
