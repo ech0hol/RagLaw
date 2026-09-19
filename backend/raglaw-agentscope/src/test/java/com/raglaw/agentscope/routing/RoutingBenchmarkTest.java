@@ -83,13 +83,13 @@ class RoutingBenchmarkTest {
 
     @Test
     void evaluatorDefinesNonLoweringHybridSafetyOverlay() throws Exception {
-        Path script = Path.of("scripts/eval-routing.ps1");
-        if (!Files.exists(script)) script = Path.of("../../scripts/eval-routing.ps1");
-        assertTrue(Files.exists(script), "offline evaluator script is missing");
-        String text = Files.readString(script);
-        assertTrue(text.contains("ApplySafetyOverlay"));
-        assertTrue(text.contains("RiskRank"));
-        assertTrue(text.contains("name -eq 'hybrid'"));
+        Path script = Path.of("../../scripts/eval-routing.ps1");
+        if (!Files.exists(script)) script = Path.of("../scripts/eval-routing.ps1");
+        assertTrue(Files.exists(script), "offline evaluator is missing");
+        Process process = new ProcessBuilder("powershell.exe", "-ExecutionPolicy", "Bypass", "-File",
+                script.toAbsolutePath().toString(), "-SelfTest").redirectErrorStream(true).start();
+        assertTrue(process.waitFor(20, java.util.concurrent.TimeUnit.SECONDS), "self-test timed out");
+        assertEquals(0, process.exitValue(), new String(process.getInputStream().readAllBytes()));
     }
 
     static double macroF1(int[][] m) { double sum = 0; for (int c = 0; c < m.length; c++) { double tp=m[c][c], fp=0, fn=0; for(int r=0;r<m.length;r++){if(r!=c)fp+=m[r][c]; if(r!=c)fn+=m[c][r];} sum += tp == 0 ? 0 : 2*tp/(2*tp+fp+fn); } return sum/m.length; }

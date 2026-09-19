@@ -1,19 +1,20 @@
 [CmdletBinding()]
-param([string]$Dataset = 'backend/raglaw-agentscope/src/test/resources/routing-benchmark-v1.json')
+param([string]$Dataset = 'backend/raglaw-agentscope/src/test/resources/routing-benchmark-v1.json',[switch]$SelfTest)
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $datasetPath = Join-Path $repo $Dataset
 $fixturePath = Join-Path $repo 'scripts/routing-fixtures.json'
 $samples = @((Get-Content -Raw $datasetPath | ConvertFrom-Json).samples)
 $fixture = (Get-Content -Raw $fixturePath | ConvertFrom-Json).predictions
-$sha = (Get-FileHash -Algorithm SHA256 $datasetPath).Hash.ToLowerInvariant()
+$sha = if($SelfTest){'self-test'}else{(Get-FileHash -Algorithm SHA256 $datasetPath).Hash.ToLowerInvariant()}
 try { $commit = (git -C $repo rev-parse HEAD).Trim() } catch { $commit = 'unavailable' }
 $taskLabels = @('GENERAL_CONSULTATION','STATUTE_LOOKUP','CASE_RESEARCH','CONTRACT_REVIEW','DISPUTE_ANALYSIS')
 $riskLabels = @('LOW','MEDIUM','HIGH','CRITICAL')
 function F1([int]$tp,[int]$fp,[int]$fn) { if (($tp + $fp + $fn) -eq 0) { return 0.0 }; return (2.0*$tp)/(2.0*$tp+$fp+$fn) }
 function PredictRule($s) { $q=$s.query.ToLowerInvariant();$task=if($q.Contains('contract')){'CONTRACT_REVIEW'}elseif($q.Contains('statute') -or $q.Contains('law')){'STATUTE_LOOKUP'}else{'DISPUTE_ANALYSIS'}; $risk=if($q -match 'deadline|criminal|arrest|send|ignore prior instructions'){'HIGH'}else{'CRITICAL'}; [pscustomobject]@{taskType=$task;riskLevel=$risk;executionMode='HUMAN_REVIEW'} }
 function RiskRank([string]$risk) { switch($risk){'LOW'{0};'MEDIUM'{1};'HIGH'{2};'CRITICAL'{3};default{3}} }
-function ApplySafetyOverlay($modelPrediction,$rulePrediction) { if((RiskRank $rulePrediction.riskLevel) -gt (RiskRank $modelPrediction.riskLevel)){ $modelPrediction.riskLevel=$rulePrediction.riskLevel; $modelPrediction.executionMode='HUMAN_REVIEW' }; return $modelPrediction }
+function ApplySafetyOverlay($modelPrediction,$rulePrediction) { if((RiskRank $rulePrediction.riskLevel) -gt (RiskRank $modelPrediction.riskLevel)){ $modelPrediction.riskLevel=$rulePrediction.riskLevel }; if((RiskRank $rulePrediction.riskLevel) -ge 2){$modelPrediction.executionMode='HUMAN_REVIEW'}; return $modelPrediction }
+if($SelfTest){$high=ApplySafetyOverlay ([pscustomobject]@{riskLevel='LOW';executionMode='SINGLE_AGENT'}) ([pscustomobject]@{riskLevel='HIGH'});$critical=ApplySafetyOverlay ([pscustomobject]@{riskLevel='MEDIUM';executionMode='MULTI_AGENT_WORKFLOW'}) ([pscustomobject]@{riskLevel='CRITICAL'});if($high.executionMode -ne 'HUMAN_REVIEW' -or $critical.executionMode -ne 'HUMAN_REVIEW' -or (RiskRank $high.riskLevel) -lt 2 -or $critical.riskLevel -ne 'CRITICAL'){exit 1};exit 0}
 function RowsFor([string]$name,[object[]]$items) { $rows=@();foreach($s in $items){$rule=PredictRule $s;if($name -eq 'rule-only'){$p=$rule}else{$p=$fixture.($s.id)};if($name -eq 'hybrid'){$p=ApplySafetyOverlay $p $rule};$rows += [pscustomobject]@{actual=$s;predicted=$p}};return ,$rows }
 function Score([object[]]$rows) {
   $taskF1=@();foreach($label in $taskLabels){$tp=0;$fp=0;$fn=0;foreach($r in $rows){if($r.predicted.taskType -eq $label -and $r.actual.taskType -eq $label){$tp++}elseif($r.predicted.taskType -eq $label){$fp++}elseif($r.actual.taskType -eq $label){$fn++}};$taskF1 += F1 $tp $fp $fn}
