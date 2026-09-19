@@ -66,8 +66,18 @@ class RoutingBenchmarkTest {
             assertTrue(report.path("policyVersion").isTextual());
             assertTrue(report.path("gitCommit").isTextual());
             assertEquals(30, report.path("holdoutSize").asInt());
+            assertEquals(120, report.path("developmentSize").asInt());
             assertEquals(3, report.path("candidates").size());
             assertTrue(report.path("gatePassed").asBoolean());
+            for (JsonNode candidate : report.path("candidates")) {
+                assertEquals(150, candidate.path("sampleCount").asInt());
+                assertEquals(120, candidate.path("development").path("sampleCount").asInt());
+                assertEquals(30, candidate.path("holdout").path("sampleCount").asInt());
+                assertTrue(candidate.path("development").has("riskWeightedF1"));
+                assertTrue(candidate.path("holdout").has("riskWeightedF1"));
+            }
+            assertNotEquals(report.path("candidates").get(0).path("development").path("taskMacroF1").asDouble(),
+                    report.path("candidates").get(1).path("development").path("taskMacroF1").asDouble());
         }
     }
 

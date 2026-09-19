@@ -1,16 +1,20 @@
 ﻿# Routing benchmark evaluation
 
 - Dataset SHA-256: 6a18389cfdf3223aef8dc2caaba14f11f6c7529de6cd72203c9ac2d99e6e770b
-- Git commit: bc16d824d6450e07ee029b9377fe4b2378af3437
+- Git commit: e99a1caf9b3aece6261380d26086ef9eebf336b4
 - Prompt/model/policy: routing-benchmark-prompt-v1 / offline-fixture-no-live-model / routing-safety-gate-v1
-- Holdout: 30 samples (route-121 through route-150), reported separately and not tuned
+- Development: route-001 through route-120 (120 samples)
+- Holdout: route-121 through route-150 (30 samples), never used for tuning
 
 ## Safety gate: **True**
 
-| Candidate | Task Macro-F1 | Risk weighted-F1 | High-risk recall | Critical false release | Path accuracy | p50/p95 ms | Model calls |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| rule-only | 0.581618 | 1 | 1 | 0 | 1 | 16/24 | 0 |
-| llm-only | 0.581618 | 1 | 1 | 0 | 1 | 16/24 | 0 |
-| hybrid | 0.581618 | 1 | 1 | 0 | 1 | 16/24 | 0 |
+| Candidate | Split | N | Task Macro-F1 | Risk weighted-F1 | High-risk recall | Critical false release | Path accuracy |
+|---|---|---:|---:|---:|---:|---:|---:|
+| rule-only | development | 120 | 0.143935 | 0 | 1 | 0 | 0.083333 |
+| rule-only | holdout | 30 | 0.18022 | 0.166667 | 1 | 0 | 1 |
+| llm-only | development | 120 | 0.6 | 1 | 1 | 0 | 1 |
+| llm-only | holdout | 30 | 0.331818 | 1 | 1 | 0 | 1 |
+| hybrid | development | 120 | 0.143935 | 0 | 1 | 0 | 0.083333 |
+| hybrid | holdout | 30 | 0.18022 | 0.166667 | 1 | 0 | 1 |
 
-The runner is offline: rule-only and hybrid use deterministic policy fixtures; llm-only reads the checked-in fixture stream. No live model or network call is made. The final holdout is emitted in the same candidate records as holdoutSize and remains untouched by tuning.
+The runner is offline. Rule-only predicts from query keywords with a conservative CRITICAL/HUMAN_REVIEW default; llm-only reads the checked-in fixture stream; hybrid overlays deterministic hard-risk rules. No live model or network call is made.
