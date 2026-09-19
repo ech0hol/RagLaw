@@ -1,10 +1,12 @@
 package com.raglaw.agentscope.routing;
 
 import com.raglaw.agentscope.workflow.WorkflowDefinition;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public final class TaskRoutingService {
     private final RulePrecheck precheck;
     private final TaskClassifier classifier;

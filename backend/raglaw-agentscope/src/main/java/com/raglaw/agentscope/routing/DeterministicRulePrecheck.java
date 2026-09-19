@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.springframework.stereotype.Component;
 
 /** Conservative, permission-independent hard evidence checks. */
+@Component
 public final class DeterministicRulePrecheck implements RulePrecheck {
     private static final Pattern IMMINENT_DEADLINE = Pattern.compile(
             "(?:(?:明天|今天|后天|within\\s+\\d+\\s+days?|tomorrow|today|imminent|immediately).*(?:期限|截止|到期|deadline|due date|arbitration)|(?:期限|截止|到期|deadline|due date|arbitration).*(?:明天|今天|后天|within\\s+\\d+\\s+days?|tomorrow|today|imminent))",

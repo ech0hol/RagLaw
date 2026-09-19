@@ -5,7 +5,9 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Comparator;
+import org.springframework.stereotype.Component;
 
+@Component
 public final class DeterministicRiskPolicyEngine implements RiskPolicyEngine {
     public static final String POLICY_VERSION = "risk-policy-v1";
 

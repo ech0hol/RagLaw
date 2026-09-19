@@ -8,6 +8,12 @@ import com.raglaw.agentscope.expert.ExpertContext;
 import com.raglaw.agentscope.expert.ExpertRouter;
 import com.raglaw.agentscope.shadow.ShadowRouteObserver;
 import com.raglaw.agentscope.routing.TaskRouteObserver;
+import com.raglaw.agentscope.routing.TaskRoutingService;
+import com.raglaw.agentscope.routing.RoutingRequest;
+import com.raglaw.agentscope.routing.WorkflowCatalog;
+import com.raglaw.agentscope.config.RoutingMode;
+import com.raglaw.agentscope.config.RoutingProperties;
+import com.raglaw.agentscope.workflow.WorkflowRunService;
 import com.raglaw.agentscope.runtime.AgentRunFactory;
 import com.raglaw.agentscope.runtime.AgentRunSession;
 import com.raglaw.agentscope.trace.TraceContext;
@@ -53,6 +59,9 @@ public class AguiReactRunFacade {
     private final ContractChatContextBuilder contractChatContextBuilder;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private TaskRouteObserver taskRouteObserver;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private TaskRoutingService taskRoutingService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private WorkflowRunService workflowRunService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private RoutingProperties routingProperties;
 
     public AguiReactRunFacade(
             ExpertRouter expertRouter,
@@ -97,6 +106,8 @@ public class AguiReactRunFacade {
             String contextDocumentId
     ) throws IOException {
         long startMs = System.currentTimeMillis();
+
+        if (enforceWorkflowBoundary(emitter, trace, userMessage, userId, conversationId, contextDocumentId)) return;
 
         ExpertContext expert = expertRouter.resolve(agent, userMessage, contextDocumentId);
         observeTaskRouteShadow(trace.traceId(), expert, userMessage);
@@ -228,6 +239,26 @@ public class AguiReactRunFacade {
                 "latencyMs", latency
         ));
         emitter.complete();
+    }
+
+    private boolean enforceWorkflowBoundary(SseEmitter emitter, TraceContext trace, String query, String userId,
+                                            String conversationId, String contextDocumentId) throws IOException {
+        if (routingProperties == null || routingProperties.getMode() != RoutingMode.ENFORCE || taskRoutingService == null || workflowRunService == null) return false;
+        var decision = taskRoutingService.route(new RoutingRequest("default", userId, contextDocumentId == null ? "none" : contextDocumentId,
+                conversationId, query, contextDocumentId != null, false));
+        var classification = new com.raglaw.agentscope.routing.TaskClassification(decision.taskType(), java.util.Set.of(), 1.0, java.util.List.of(), query, "facade", "facade");
+        var workflow = WorkflowCatalog.standard().match(classification).orElse(null);
+        // The production role-bound runner is injected in the workflow execution layer.
+        // Keep this boundary fail-closed while that adapter is unavailable; never emit a
+        // fabricated successful answer from the request facade.
+        var outcome = workflowRunService.route(decision, trace.traceId(), trace.traceId(), query, workflow, null);
+        if (outcome.approvalRequired()) {
+            AguiSseWriter.send(emitter, "approval_required", java.util.Map.of("traceId", trace.traceId(), "runId", outcome.runId())); emitter.complete(); return true;
+        }
+        if (outcome.execution() != null) {
+            AguiSseWriter.send(emitter, "done", java.util.Map.of("traceId", trace.traceId(), "status", outcome.status(), "runId", outcome.runId())); emitter.complete(); return true;
+        }
+        return false;
     }
 
     /** Additive seam for shadow observation; it never changes the expert selected above. */

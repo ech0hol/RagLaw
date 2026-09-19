@@ -52,6 +52,8 @@ management:
 
 raglaw:
   version: 0.1.0-SNAPSHOT
+  routing:
+    mode: ${RAGLAW_ROUTING_MODE:SHADOW}
   seed:
     admin-password: ${RAGLAW_SEED_ADMIN_PASSWORD:}
   jwt:
