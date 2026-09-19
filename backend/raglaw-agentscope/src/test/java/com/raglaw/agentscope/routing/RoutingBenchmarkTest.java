@@ -81,6 +81,17 @@ class RoutingBenchmarkTest {
         }
     }
 
+    @Test
+    void evaluatorDefinesNonLoweringHybridSafetyOverlay() throws Exception {
+        Path script = Path.of("scripts/eval-routing.ps1");
+        if (!Files.exists(script)) script = Path.of("../../scripts/eval-routing.ps1");
+        assertTrue(Files.exists(script), "offline evaluator script is missing");
+        String text = Files.readString(script);
+        assertTrue(text.contains("ApplySafetyOverlay"));
+        assertTrue(text.contains("RiskRank"));
+        assertTrue(text.contains("name -eq 'hybrid'"));
+    }
+
     static double macroF1(int[][] m) { double sum = 0; for (int c = 0; c < m.length; c++) { double tp=m[c][c], fp=0, fn=0; for(int r=0;r<m.length;r++){if(r!=c)fp+=m[r][c]; if(r!=c)fn+=m[c][r];} sum += tp == 0 ? 0 : 2*tp/(2*tp+fp+fn); } return sum/m.length; }
     static double weightedF1(int[][] m) { double total=0, sum=0; for(int[] row:m) for(int x:row) total+=x; for(int c=0;c<m.length;c++){double tp=m[c][c], fp=0, fn=0, support=0; for(int r=0;r<m.length;r++){support+=m[c][r]; if(r!=c){fp+=m[r][c];fn+=m[c][r];}} sum += support*(tp==0?0:2*tp/(2*tp+fp+fn));} return sum/total; }
     static double recall(int[][] m, int c) { double tp=m[c][c], fn=0; for(int j=0;j<m.length;j++) if(j!=c) fn+=m[c][j]; return tp/(tp+fn); }

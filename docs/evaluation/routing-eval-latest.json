@@ -9,8 +9,8 @@
     "promptVersion":  "routing-benchmark-prompt-v1",
     "modelVersion":  "offline-fixture-no-live-model",
     "policyVersion":  "routing-safety-gate-v1",
-    "timestamp":  "2026-09-19T17:53:23.9455754Z",
-    "gitCommit":  "7c38d04c6231135dd2ccfff95e6a9e898539a5fe",
+    "timestamp":  "2026-09-19T17:58:54.0464507Z",
+    "gitCommit":  "4957da14330d86390aca2e2be3068304858fe1ed",
     "holdoutSize":  30,
     "developmentSize":  120,
     "gateThresholds":  {
@@ -32,8 +32,8 @@
                                                                        "LOW":  {
                                                                                    "LOW":  0,
                                                                                    "MEDIUM":  0,
-                                                                                   "HIGH":  0,
-                                                                                   "CRITICAL":  50
+                                                                                   "HIGH":  20,
+                                                                                   "CRITICAL":  30
                                                                                },
                                                                        "MEDIUM":  {
                                                                                       "LOW":  0,
@@ -188,28 +188,28 @@
                            "development":  {
                                                "sampleCount":  120,
                                                "taskMacroF1":  0.6,
-                                               "riskWeightedF1":  0.895833,
+                                               "riskWeightedF1":  0,
                                                "highRiskRecall":  1,
                                                "criticalFalseReleaseCount":  0,
-                                               "executionPathAccuracy":  0.833333,
+                                               "executionPathAccuracy":  0.083333,
                                                "confusionMatrix":  {
                                                                        "LOW":  {
-                                                                                   "LOW":  30,
+                                                                                   "LOW":  0,
                                                                                    "MEDIUM":  0,
-                                                                                   "HIGH":  0,
-                                                                                   "CRITICAL":  20
+                                                                                   "HIGH":  20,
+                                                                                   "CRITICAL":  30
                                                                                },
                                                                        "MEDIUM":  {
                                                                                       "LOW":  0,
-                                                                                      "MEDIUM":  60,
+                                                                                      "MEDIUM":  0,
                                                                                       "HIGH":  0,
-                                                                                      "CRITICAL":  0
+                                                                                      "CRITICAL":  60
                                                                                   },
                                                                        "HIGH":  {
                                                                                     "LOW":  0,
                                                                                     "MEDIUM":  0,
-                                                                                    "HIGH":  10,
-                                                                                    "CRITICAL":  0
+                                                                                    "HIGH":  0,
+                                                                                    "CRITICAL":  10
                                                                                 },
                                                                        "CRITICAL":  {
                                                                                         "LOW":  0,
@@ -226,7 +226,7 @@
                            "holdout":  {
                                            "sampleCount":  30,
                                            "taskMacroF1":  0.331818,
-                                           "riskWeightedF1":  1,
+                                           "riskWeightedF1":  0.166667,
                                            "highRiskRecall":  1,
                                            "criticalFalseReleaseCount":  0,
                                            "executionPathAccuracy":  1,
@@ -246,8 +246,8 @@
                                                                    "HIGH":  {
                                                                                 "LOW":  0,
                                                                                 "MEDIUM":  0,
-                                                                                "HIGH":  20,
-                                                                                "CRITICAL":  0
+                                                                                "HIGH":  0,
+                                                                                "CRITICAL":  20
                                                                             },
                                                                    "CRITICAL":  {
                                                                                     "LOW":  0,
