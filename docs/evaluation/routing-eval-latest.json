@@ -9,8 +9,8 @@
     "promptVersion":  "routing-benchmark-prompt-v1",
     "modelVersion":  "offline-fixture-no-live-model",
     "policyVersion":  "routing-safety-gate-v1",
-    "timestamp":  "2026-09-19T18:06:52.1464763Z",
-    "gitCommit":  "a5bed6132e99fba76c58337ef98a87b053f9b480",
+    "timestamp":  "2026-09-19T18:09:04.0487634Z",
+    "gitCommit":  "458c73aebea662fd5cfe886b0c2a62257c602308",
     "holdoutSize":  30,
     "developmentSize":  120,
     "gateThresholds":  {

@@ -1,7 +1,7 @@
 ﻿# Routing benchmark evaluation
 
 - Dataset SHA-256: 6a18389cfdf3223aef8dc2caaba14f11f6c7529de6cd72203c9ac2d99e6e770b
-- Git commit: a5bed6132e99fba76c58337ef98a87b053f9b480
+- Git commit: 458c73aebea662fd5cfe886b0c2a62257c602308
 - Prompt/model/policy: routing-benchmark-prompt-v1 / offline-fixture-no-live-model / routing-safety-gate-v1
 - Development: route-001 through route-120 (120 samples)
 - Holdout: route-121 through route-150 (30 samples), never used for tuning
