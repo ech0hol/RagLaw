@@ -1,0 +1,12 @@
+package com.raglaw.agentscope.routing;
+
+public enum RiskSignal {
+    IMMINENT_DEADLINE,
+    CRIMINAL_EXPOSURE,
+    HIGH_VALUE_DISPUTE,
+    RIGHTS_WAIVER,
+    EXTERNAL_ACTION_REQUEST,
+    MISSING_CORE_MATERIAL,
+    CONFLICTING_FACTS,
+    MULTI_ISSUE_ANALYSIS
+}
