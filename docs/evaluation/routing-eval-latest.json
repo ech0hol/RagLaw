@@ -9,8 +9,8 @@
     "promptVersion":  "routing-benchmark-prompt-v1",
     "modelVersion":  "offline-fixture-no-live-model",
     "policyVersion":  "routing-safety-gate-v1",
-    "timestamp":  "2026-09-19T17:47:22.7561096Z",
-    "gitCommit":  "e99a1caf9b3aece6261380d26086ef9eebf336b4",
+    "timestamp":  "2026-09-19T17:53:23.9455754Z",
+    "gitCommit":  "7c38d04c6231135dd2ccfff95e6a9e898539a5fe",
     "holdoutSize":  30,
     "developmentSize":  120,
     "gateThresholds":  {
@@ -187,29 +187,29 @@
                            "candidate":  "hybrid",
                            "development":  {
                                                "sampleCount":  120,
-                                               "taskMacroF1":  0.143935,
-                                               "riskWeightedF1":  0,
+                                               "taskMacroF1":  0.6,
+                                               "riskWeightedF1":  0.895833,
                                                "highRiskRecall":  1,
                                                "criticalFalseReleaseCount":  0,
-                                               "executionPathAccuracy":  0.083333,
+                                               "executionPathAccuracy":  0.833333,
                                                "confusionMatrix":  {
                                                                        "LOW":  {
-                                                                                   "LOW":  0,
+                                                                                   "LOW":  30,
                                                                                    "MEDIUM":  0,
                                                                                    "HIGH":  0,
-                                                                                   "CRITICAL":  50
+                                                                                   "CRITICAL":  20
                                                                                },
                                                                        "MEDIUM":  {
                                                                                       "LOW":  0,
-                                                                                      "MEDIUM":  0,
+                                                                                      "MEDIUM":  60,
                                                                                       "HIGH":  0,
-                                                                                      "CRITICAL":  60
+                                                                                      "CRITICAL":  0
                                                                                   },
                                                                        "HIGH":  {
                                                                                     "LOW":  0,
                                                                                     "MEDIUM":  0,
-                                                                                    "HIGH":  0,
-                                                                                    "CRITICAL":  10
+                                                                                    "HIGH":  10,
+                                                                                    "CRITICAL":  0
                                                                                 },
                                                                        "CRITICAL":  {
                                                                                         "LOW":  0,
@@ -225,8 +225,8 @@
                                            },
                            "holdout":  {
                                            "sampleCount":  30,
-                                           "taskMacroF1":  0.18022,
-                                           "riskWeightedF1":  0.166667,
+                                           "taskMacroF1":  0.331818,
+                                           "riskWeightedF1":  1,
                                            "highRiskRecall":  1,
                                            "criticalFalseReleaseCount":  0,
                                            "executionPathAccuracy":  1,
@@ -246,8 +246,8 @@
                                                                    "HIGH":  {
                                                                                 "LOW":  0,
                                                                                 "MEDIUM":  0,
-                                                                                "HIGH":  0,
-                                                                                "CRITICAL":  20
+                                                                                "HIGH":  20,
+                                                                                "CRITICAL":  0
                                                                             },
                                                                    "CRITICAL":  {
                                                                                     "LOW":  0,
