@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raglaw.agentscope.domain.TaskRouteDecisionEntity;
 import com.raglaw.agentscope.domain.TaskRouteDecisionRepository;
 import com.raglaw.agentscope.expert.ExpertContext;
+import com.raglaw.agentscope.trace.TraceRecorder;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,17 @@ class TaskRouteObserverTest {
         observer.blockWorkers();
         for (int i = 0; i < 4; i++) observer.observeAsync("t", new ExpertContext("A", "A", "", List.of(), "A", "", false, false, null, false, List.of(), List.of()), new RouteDecision(TaskType.STATUTE_LOOKUP, RiskLevel.LOW, ExecutionMode.SINGLE_AGENT, "r", null, List.of(), false, "p"), List.of(), "pv", "mv", 1L);
         assertThat(observer.rejectionCount()).isPositive();
+        observer.shutdown();
+    }
+
+    @Test
+    void recordsSafeTraceStageWithoutAffectingObservation() throws Exception {
+        TaskRouteDecisionRepository repository = mock(TaskRouteDecisionRepository.class);
+        TraceRecorder traceRecorder = mock(TraceRecorder.class);
+        TaskRouteObserver observer = new TaskRouteObserver(repository, new ObjectMapper(), 1, 8);
+        observer.setTraceRecorder(traceRecorder);
+        observer.observeAsync("trace-fictional", new ExpertContext("STATUTE", "A", "", List.of(), "A", "", false, false, null, false, List.of(), List.of()), new RouteDecision(TaskType.CONTRACT_REVIEW, RiskLevel.MEDIUM, ExecutionMode.HUMAN_REVIEW, "r", null, List.of(), false, "p"), List.of(), "pv", "mv", 1L);
+        verify(traceRecorder, timeout(1000)).recordStage(eq("trace-fictional"), eq("task_route_shadow"), any(), eq(0L));
         observer.shutdown();
     }
 }

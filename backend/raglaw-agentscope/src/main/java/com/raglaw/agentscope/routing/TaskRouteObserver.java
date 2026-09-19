@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raglaw.agentscope.domain.TaskRouteDecisionEntity;
 import com.raglaw.agentscope.domain.TaskRouteDecisionRepository;
 import com.raglaw.agentscope.expert.ExpertContext;
+import com.raglaw.agentscope.trace.TraceRecorder;
+import java.util.Map;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +28,7 @@ public class TaskRouteObserver {
     private final AtomicLong rejections = new AtomicLong();
     private final AtomicLong persistenceFailures = new AtomicLong();
     private volatile CountDownLatch workerGate;
+    private volatile TraceRecorder traceRecorder;
 
     public TaskRouteObserver(TaskRouteDecisionRepository repository, ObjectMapper objectMapper) {
         this(repository, objectMapper, 2, 200);
@@ -39,12 +42,19 @@ public class TaskRouteObserver {
     public void observeAsync(String traceId, ExpertContext actual, RouteDecision candidate,
                              List<String> missingMaterials, String promptVersion,
                              String modelVersion, long classifierLatencyMs) {
+        observeAsync(traceId, actual, candidate, missingMaterials, promptVersion, modelVersion, classifierLatencyMs, null);
+    }
+    public void observeAsync(String traceId, ExpertContext actual, RouteDecision candidate,
+                             List<String> missingMaterials, String promptVersion,
+                             String modelVersion, long classifierLatencyMs, String errorCode) {
         if (candidate == null || actual == null) return;
-        try { executor.execute(() -> persist(traceId, actual, candidate, missingMaterials, promptVersion, modelVersion, classifierLatencyMs)); }
+        try { executor.execute(() -> persist(traceId, actual, candidate, missingMaterials, promptVersion, modelVersion, classifierLatencyMs, errorCode)); }
         catch (RejectedExecutionException e) { rejections.incrementAndGet(); log.warn("Task route shadow queue full traceId={}", traceId); }
     }
     public long rejectionCount() { return rejections.get(); }
     public long persistenceFailureCount() { return persistenceFailures.get(); }
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setTraceRecorder(TraceRecorder traceRecorder) { this.traceRecorder = traceRecorder; }
     /** Compatibility hook for the current facade boundary where classifier provenance is unavailable. */
     public void observeAsync(String traceId, ExpertContext actual, String query) {
         String text = query == null ? "" : query.toLowerCase(java.util.Locale.ROOT);
@@ -55,7 +65,7 @@ public class TaskRouteObserver {
     }
     public void shutdown() { executor.shutdownNow(); }
     public void blockWorkers() { workerGate = new CountDownLatch(1); executor.prestartAllCoreThreads(); }
-    private void persist(String traceId, ExpertContext actual, RouteDecision c, List<String> missing, String prompt, String model, long latency) {
+    private void persist(String traceId, ExpertContext actual, RouteDecision c, List<String> missing, String prompt, String model, long latency, String errorCode) {
         try {
             CountDownLatch gate = workerGate;
             if (gate != null) gate.await(5, TimeUnit.SECONDS);
@@ -66,9 +76,32 @@ public class TaskRouteObserver {
             e.setExpertRole(c.expertRole()); e.setWorkflowCode(c.workflowCode());
             e.setAgreement(agrees(actual.peerCode(), c.taskType()));
             e.setClassifierLatencyMs(latency); e.setPromptVersion(prompt); e.setModelVersion(model); e.setPolicyVersion(c.policyVersion());
-            e.setPolicyReasonsJson(objectMapper.writeValueAsString(c.policyReasons())); e.setMissingMaterialsJson(objectMapper.writeValueAsString(missing == null ? List.of() : missing));
+            e.setErrorCode(errorCode);
+            try {
+                e.setPolicyReasonsJson(objectMapper.writeValueAsString(c.policyReasons()));
+                e.setMissingMaterialsJson(objectMapper.writeValueAsString(missing == null ? List.of() : missing));
+            } catch (Exception serializationFailure) {
+                e.setPolicyReasonsJson("[]"); e.setMissingMaterialsJson("[]"); e.setErrorCode("SERIALIZATION_FAILED");
+            }
             repository.save(e);
+            recordTrace(traceId, c, e.getAgreement(), e.getErrorCode());
         } catch (Exception ex) { persistenceFailures.incrementAndGet(); log.warn("Task route shadow persistence failed traceId={}", traceId, ex); }
+    }
+
+    private void recordTrace(String traceId, RouteDecision candidate, Boolean agreement, String errorCode) {
+        TraceRecorder recorder = traceRecorder;
+        if (recorder == null) return;
+        try {
+            recorder.recordStage(traceId, "task_route_shadow", Map.of(
+                    "candidateTaskType", candidate.taskType().name(),
+                    "riskLevel", candidate.riskLevel().name(),
+                    "executionMode", candidate.executionMode().name(),
+                    "agreement", Boolean.TRUE.equals(agreement),
+                    "errorCode", errorCode == null ? "" : errorCode
+            ), 0L);
+        } catch (Exception traceFailure) {
+            log.debug("Task route shadow trace recording failed traceId={}", traceId, traceFailure);
+        }
     }
 
     private static boolean agrees(String expertCode, TaskType taskType) {
