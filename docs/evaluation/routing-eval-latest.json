@@ -1,269 +1,269 @@
-﻿{
-    "benchmarkVersion":  "routing-benchmark-v1",
-    "datasetSha256":  "6a18389cfdf3223aef8dc2caaba14f11f6c7529de6cd72203c9ac2d99e6e770b",
-    "candidateNames":  [
-                           "rule-only",
-                           "llm-only",
-                           "hybrid"
-                       ],
-    "promptVersion":  "routing-benchmark-prompt-v1",
-    "modelVersion":  "offline-fixture-no-live-model",
-    "policyVersion":  "routing-safety-gate-v1",
-    "timestamp":  "2026-09-19T18:09:04.0487634Z",
-    "gitCommit":  "458c73aebea662fd5cfe886b0c2a62257c602308",
-    "holdoutSize":  30,
-    "developmentSize":  120,
-    "gateThresholds":  {
-                           "criticalFalseReleaseCount":  0,
-                           "highRiskRecall":  0.95
-                       },
-    "gatePassed":  true,
-    "candidates":  [
-                       {
-                           "candidate":  "rule-only",
-                           "development":  {
-                                               "sampleCount":  120,
-                                               "taskMacroF1":  0.143935,
-                                               "riskWeightedF1":  0,
-                                               "highRiskRecall":  1,
-                                               "criticalFalseReleaseCount":  0,
-                                               "executionPathAccuracy":  0.083333,
-                                               "confusionMatrix":  {
-                                                                       "LOW":  {
-                                                                                   "LOW":  0,
-                                                                                   "MEDIUM":  0,
-                                                                                   "HIGH":  20,
-                                                                                   "CRITICAL":  30
-                                                                               },
-                                                                       "MEDIUM":  {
-                                                                                      "LOW":  0,
-                                                                                      "MEDIUM":  0,
-                                                                                      "HIGH":  0,
-                                                                                      "CRITICAL":  60
-                                                                                  },
-                                                                       "HIGH":  {
-                                                                                    "LOW":  0,
-                                                                                    "MEDIUM":  0,
-                                                                                    "HIGH":  0,
-                                                                                    "CRITICAL":  10
-                                                                                },
-                                                                       "CRITICAL":  {
-                                                                                        "LOW":  0,
-                                                                                        "MEDIUM":  0,
-                                                                                        "HIGH":  0,
-                                                                                        "CRITICAL":  0
-                                                                                    }
-                                                                   },
-                                               "p50LatencyMs":  16,
-                                               "p95LatencyMs":  24,
-                                               "averageModelCallsPerRequest":  0,
-                                               "gatePassed":  true
-                                           },
-                           "holdout":  {
-                                           "sampleCount":  30,
-                                           "taskMacroF1":  0.18022,
-                                           "riskWeightedF1":  0.166667,
-                                           "highRiskRecall":  1,
-                                           "criticalFalseReleaseCount":  0,
-                                           "executionPathAccuracy":  1,
-                                           "confusionMatrix":  {
-                                                                   "LOW":  {
-                                                                               "LOW":  0,
-                                                                               "MEDIUM":  0,
-                                                                               "HIGH":  0,
-                                                                               "CRITICAL":  0
-                                                                           },
-                                                                   "MEDIUM":  {
-                                                                                  "LOW":  0,
-                                                                                  "MEDIUM":  0,
-                                                                                  "HIGH":  0,
-                                                                                  "CRITICAL":  0
-                                                                              },
-                                                                   "HIGH":  {
-                                                                                "LOW":  0,
-                                                                                "MEDIUM":  0,
-                                                                                "HIGH":  0,
-                                                                                "CRITICAL":  20
-                                                                            },
-                                                                   "CRITICAL":  {
-                                                                                    "LOW":  0,
-                                                                                    "MEDIUM":  0,
-                                                                                    "HIGH":  0,
-                                                                                    "CRITICAL":  10
-                                                                                }
-                                                               },
-                                           "p50LatencyMs":  15,
-                                           "p95LatencyMs":  22,
-                                           "averageModelCallsPerRequest":  0,
-                                           "gatePassed":  true
-                                       },
-                           "sampleCount":  150,
-                           "holdoutSize":  30,
-                           "gatePassed":  true
-                       },
-                       {
-                           "candidate":  "llm-only",
-                           "development":  {
-                                               "sampleCount":  120,
-                                               "taskMacroF1":  0.6,
-                                               "riskWeightedF1":  1,
-                                               "highRiskRecall":  1,
-                                               "criticalFalseReleaseCount":  0,
-                                               "executionPathAccuracy":  1,
-                                               "confusionMatrix":  {
-                                                                       "LOW":  {
-                                                                                   "LOW":  50,
-                                                                                   "MEDIUM":  0,
-                                                                                   "HIGH":  0,
-                                                                                   "CRITICAL":  0
-                                                                               },
-                                                                       "MEDIUM":  {
-                                                                                      "LOW":  0,
-                                                                                      "MEDIUM":  60,
-                                                                                      "HIGH":  0,
-                                                                                      "CRITICAL":  0
-                                                                                  },
-                                                                       "HIGH":  {
-                                                                                    "LOW":  0,
-                                                                                    "MEDIUM":  0,
-                                                                                    "HIGH":  10,
-                                                                                    "CRITICAL":  0
-                                                                                },
-                                                                       "CRITICAL":  {
-                                                                                        "LOW":  0,
-                                                                                        "MEDIUM":  0,
-                                                                                        "HIGH":  0,
-                                                                                        "CRITICAL":  0
-                                                                                    }
-                                                                   },
-                                               "p50LatencyMs":  16,
-                                               "p95LatencyMs":  24,
-                                               "averageModelCallsPerRequest":  0,
-                                               "gatePassed":  true
-                                           },
-                           "holdout":  {
-                                           "sampleCount":  30,
-                                           "taskMacroF1":  0.331818,
-                                           "riskWeightedF1":  1,
-                                           "highRiskRecall":  1,
-                                           "criticalFalseReleaseCount":  0,
-                                           "executionPathAccuracy":  1,
-                                           "confusionMatrix":  {
-                                                                   "LOW":  {
-                                                                               "LOW":  0,
-                                                                               "MEDIUM":  0,
-                                                                               "HIGH":  0,
-                                                                               "CRITICAL":  0
-                                                                           },
-                                                                   "MEDIUM":  {
-                                                                                  "LOW":  0,
-                                                                                  "MEDIUM":  0,
-                                                                                  "HIGH":  0,
-                                                                                  "CRITICAL":  0
-                                                                              },
-                                                                   "HIGH":  {
-                                                                                "LOW":  0,
-                                                                                "MEDIUM":  0,
-                                                                                "HIGH":  20,
-                                                                                "CRITICAL":  0
-                                                                            },
-                                                                   "CRITICAL":  {
-                                                                                    "LOW":  0,
-                                                                                    "MEDIUM":  0,
-                                                                                    "HIGH":  0,
-                                                                                    "CRITICAL":  10
-                                                                                }
-                                                               },
-                                           "p50LatencyMs":  15,
-                                           "p95LatencyMs":  22,
-                                           "averageModelCallsPerRequest":  0,
-                                           "gatePassed":  true
-                                       },
-                           "sampleCount":  150,
-                           "holdoutSize":  30,
-                           "gatePassed":  true
-                       },
-                       {
-                           "candidate":  "hybrid",
-                           "development":  {
-                                               "sampleCount":  120,
-                                               "taskMacroF1":  0.6,
-                                               "riskWeightedF1":  0,
-                                               "highRiskRecall":  1,
-                                               "criticalFalseReleaseCount":  0,
-                                               "executionPathAccuracy":  0.083333,
-                                               "confusionMatrix":  {
-                                                                       "LOW":  {
-                                                                                   "LOW":  0,
-                                                                                   "MEDIUM":  0,
-                                                                                   "HIGH":  20,
-                                                                                   "CRITICAL":  30
-                                                                               },
-                                                                       "MEDIUM":  {
-                                                                                      "LOW":  0,
-                                                                                      "MEDIUM":  0,
-                                                                                      "HIGH":  0,
-                                                                                      "CRITICAL":  60
-                                                                                  },
-                                                                       "HIGH":  {
-                                                                                    "LOW":  0,
-                                                                                    "MEDIUM":  0,
-                                                                                    "HIGH":  0,
-                                                                                    "CRITICAL":  10
-                                                                                },
-                                                                       "CRITICAL":  {
-                                                                                        "LOW":  0,
-                                                                                        "MEDIUM":  0,
-                                                                                        "HIGH":  0,
-                                                                                        "CRITICAL":  0
-                                                                                    }
-                                                                   },
-                                               "p50LatencyMs":  16,
-                                               "p95LatencyMs":  24,
-                                               "averageModelCallsPerRequest":  0,
-                                               "gatePassed":  true
-                                           },
-                           "holdout":  {
-                                           "sampleCount":  30,
-                                           "taskMacroF1":  0.331818,
-                                           "riskWeightedF1":  0.166667,
-                                           "highRiskRecall":  1,
-                                           "criticalFalseReleaseCount":  0,
-                                           "executionPathAccuracy":  1,
-                                           "confusionMatrix":  {
-                                                                   "LOW":  {
-                                                                               "LOW":  0,
-                                                                               "MEDIUM":  0,
-                                                                               "HIGH":  0,
-                                                                               "CRITICAL":  0
-                                                                           },
-                                                                   "MEDIUM":  {
-                                                                                  "LOW":  0,
-                                                                                  "MEDIUM":  0,
-                                                                                  "HIGH":  0,
-                                                                                  "CRITICAL":  0
-                                                                              },
-                                                                   "HIGH":  {
-                                                                                "LOW":  0,
-                                                                                "MEDIUM":  0,
-                                                                                "HIGH":  0,
-                                                                                "CRITICAL":  20
-                                                                            },
-                                                                   "CRITICAL":  {
-                                                                                    "LOW":  0,
-                                                                                    "MEDIUM":  0,
-                                                                                    "HIGH":  0,
-                                                                                    "CRITICAL":  10
-                                                                                }
-                                                               },
-                                           "p50LatencyMs":  15,
-                                           "p95LatencyMs":  22,
-                                           "averageModelCallsPerRequest":  0,
-                                           "gatePassed":  true
-                                       },
-                           "sampleCount":  150,
-                           "holdoutSize":  30,
-                           "gatePassed":  true
-                       }
-                   ]
+{
+  "benchmarkVersion": "routing-benchmark-v1",
+  "datasetSha256": "6a18389cfdf3223aef8dc2caaba14f11f6c7529de6cd72203c9ac2d99e6e770b",
+  "candidateNames": [
+    "rule-only",
+    "llm-only",
+    "hybrid"
+  ],
+  "promptVersion": "routing-benchmark-prompt-v1",
+  "modelVersion": "offline-fixture-no-live-model",
+  "policyVersion": "routing-safety-gate-v1",
+  "timestamp": "2026-09-19T18:38:29.8586408Z",
+  "gitCommit": "d337a5862ec18f8383fd5d50d8e24bf228ea1561",
+  "holdoutSize": 30,
+  "developmentSize": 120,
+  "gateThresholds": {
+    "criticalFalseReleaseCount": 0,
+    "highRiskRecall": 0.95
+  },
+  "gatePassed": true,
+  "candidates": [
+    {
+      "candidate": "rule-only",
+      "development": {
+        "sampleCount": 120,
+        "taskMacroF1": 0.143935,
+        "riskWeightedF1": 0.0,
+        "highRiskRecall": 1.0,
+        "criticalFalseReleaseCount": 0,
+        "executionPathAccuracy": 0.083333,
+        "confusionMatrix": {
+          "LOW": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 20,
+            "CRITICAL": 30
+          },
+          "MEDIUM": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 60
+          },
+          "HIGH": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 10
+          },
+          "CRITICAL": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 0
+          }
+        },
+        "p50LatencyMs": 16,
+        "p95LatencyMs": 24,
+        "averageModelCallsPerRequest": 0.0,
+        "gatePassed": true
+      },
+      "holdout": {
+        "sampleCount": 30,
+        "taskMacroF1": 0.18022,
+        "riskWeightedF1": 0.166667,
+        "highRiskRecall": 1.0,
+        "criticalFalseReleaseCount": 0,
+        "executionPathAccuracy": 1.0,
+        "confusionMatrix": {
+          "LOW": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 0
+          },
+          "MEDIUM": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 0
+          },
+          "HIGH": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 20
+          },
+          "CRITICAL": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 10
+          }
+        },
+        "p50LatencyMs": 15,
+        "p95LatencyMs": 22,
+        "averageModelCallsPerRequest": 0.0,
+        "gatePassed": true
+      },
+      "sampleCount": 150,
+      "holdoutSize": 30,
+      "gatePassed": true
+    },
+    {
+      "candidate": "llm-only",
+      "development": {
+        "sampleCount": 120,
+        "taskMacroF1": 0.6,
+        "riskWeightedF1": 1.0,
+        "highRiskRecall": 1.0,
+        "criticalFalseReleaseCount": 0,
+        "executionPathAccuracy": 1.0,
+        "confusionMatrix": {
+          "LOW": {
+            "LOW": 50,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 0
+          },
+          "MEDIUM": {
+            "LOW": 0,
+            "MEDIUM": 60,
+            "HIGH": 0,
+            "CRITICAL": 0
+          },
+          "HIGH": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 10,
+            "CRITICAL": 0
+          },
+          "CRITICAL": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 0
+          }
+        },
+        "p50LatencyMs": 16,
+        "p95LatencyMs": 24,
+        "averageModelCallsPerRequest": 0.0,
+        "gatePassed": true
+      },
+      "holdout": {
+        "sampleCount": 30,
+        "taskMacroF1": 0.331818,
+        "riskWeightedF1": 1.0,
+        "highRiskRecall": 1.0,
+        "criticalFalseReleaseCount": 0,
+        "executionPathAccuracy": 1.0,
+        "confusionMatrix": {
+          "LOW": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 0
+          },
+          "MEDIUM": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 0
+          },
+          "HIGH": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 20,
+            "CRITICAL": 0
+          },
+          "CRITICAL": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 10
+          }
+        },
+        "p50LatencyMs": 15,
+        "p95LatencyMs": 22,
+        "averageModelCallsPerRequest": 0.0,
+        "gatePassed": true
+      },
+      "sampleCount": 150,
+      "holdoutSize": 30,
+      "gatePassed": true
+    },
+    {
+      "candidate": "hybrid",
+      "development": {
+        "sampleCount": 120,
+        "taskMacroF1": 0.6,
+        "riskWeightedF1": 0.0,
+        "highRiskRecall": 1.0,
+        "criticalFalseReleaseCount": 0,
+        "executionPathAccuracy": 0.083333,
+        "confusionMatrix": {
+          "LOW": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 20,
+            "CRITICAL": 30
+          },
+          "MEDIUM": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 60
+          },
+          "HIGH": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 10
+          },
+          "CRITICAL": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 0
+          }
+        },
+        "p50LatencyMs": 16,
+        "p95LatencyMs": 24,
+        "averageModelCallsPerRequest": 0.0,
+        "gatePassed": true
+      },
+      "holdout": {
+        "sampleCount": 30,
+        "taskMacroF1": 0.331818,
+        "riskWeightedF1": 0.166667,
+        "highRiskRecall": 1.0,
+        "criticalFalseReleaseCount": 0,
+        "executionPathAccuracy": 1.0,
+        "confusionMatrix": {
+          "LOW": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 0
+          },
+          "MEDIUM": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 0
+          },
+          "HIGH": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 20
+          },
+          "CRITICAL": {
+            "LOW": 0,
+            "MEDIUM": 0,
+            "HIGH": 0,
+            "CRITICAL": 10
+          }
+        },
+        "p50LatencyMs": 15,
+        "p95LatencyMs": 22,
+        "averageModelCallsPerRequest": 0.0,
+        "gatePassed": true
+      },
+      "sampleCount": 150,
+      "holdoutSize": 30,
+      "gatePassed": true
+    }
+  ]
 }
