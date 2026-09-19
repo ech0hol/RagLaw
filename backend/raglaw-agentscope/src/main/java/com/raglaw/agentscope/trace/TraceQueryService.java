@@ -10,6 +10,8 @@ import com.raglaw.agentscope.domain.RagTraceEntity;
 import com.raglaw.agentscope.domain.RagTraceRepository;
 import com.raglaw.agentscope.domain.RagTraceStageEntity;
 import com.raglaw.agentscope.domain.RagTraceStageRepository;
+import com.raglaw.agentscope.domain.TaskRouteDecisionEntity;
+import com.raglaw.agentscope.domain.TaskRouteDecisionRepository;
 import com.raglaw.agentscope.dto.TraceA2aCallDto;
 import com.raglaw.agentscope.dto.TraceChunkDto;
 import com.raglaw.agentscope.dto.TraceDetailDto;
@@ -34,6 +36,7 @@ public class TraceQueryService {
     private final A2aCallLogRepository a2aCallLogRepository;
     private final LangfuseBridge langfuseBridge;
     private final ShadowRouteQueryService shadowRouteQueryService;
+    private final TaskRouteDecisionRepository taskRouteDecisionRepository;
 
     public TraceQueryService(
             RagTraceRepository traceRepository,
@@ -42,7 +45,8 @@ public class TraceQueryService {
             LlmUsageLogRepository llmUsageLogRepository,
             A2aCallLogRepository a2aCallLogRepository,
             LangfuseBridge langfuseBridge,
-            ShadowRouteQueryService shadowRouteQueryService
+            ShadowRouteQueryService shadowRouteQueryService,
+            TaskRouteDecisionRepository taskRouteDecisionRepository
     ) {
         this.traceRepository = traceRepository;
         this.stageRepository = stageRepository;
@@ -51,6 +55,7 @@ public class TraceQueryService {
         this.a2aCallLogRepository = a2aCallLogRepository;
         this.langfuseBridge = langfuseBridge;
         this.shadowRouteQueryService = shadowRouteQueryService;
+        this.taskRouteDecisionRepository = taskRouteDecisionRepository;
     }
 
     public List<TraceSummaryDto> listRecent() {
@@ -100,6 +105,11 @@ public class TraceQueryService {
 
     public List<RagTraceStageEntity> listStages(String traceId) {
         return stageRepository.findByTraceId(traceId);
+    }
+
+    /** Shadow candidate decisions are additive trace evidence; they never affect execution. */
+    public List<TaskRouteDecisionEntity> listTaskRouteDecisions(String traceId) {
+        return taskRouteDecisionRepository.findByTraceIdOrderByCreatedAtAsc(traceId);
     }
 
     private TraceStageDto toStage(RagTraceStageEntity stage) {

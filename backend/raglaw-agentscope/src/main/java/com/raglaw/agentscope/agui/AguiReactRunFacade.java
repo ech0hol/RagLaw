@@ -7,6 +7,7 @@ import com.raglaw.agentscope.config.AgentscopeLlmProperties;
 import com.raglaw.agentscope.expert.ExpertContext;
 import com.raglaw.agentscope.expert.ExpertRouter;
 import com.raglaw.agentscope.shadow.ShadowRouteObserver;
+import com.raglaw.agentscope.routing.TaskRouteObserver;
 import com.raglaw.agentscope.runtime.AgentRunFactory;
 import com.raglaw.agentscope.runtime.AgentRunSession;
 import com.raglaw.agentscope.trace.TraceContext;
@@ -50,6 +51,8 @@ public class AguiReactRunFacade {
     private final Environment environment;
     private final ShadowRouteObserver shadowRouteObserver;
     private final ContractChatContextBuilder contractChatContextBuilder;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private TaskRouteObserver taskRouteObserver;
 
     public AguiReactRunFacade(
             ExpertRouter expertRouter,
@@ -96,6 +99,9 @@ public class AguiReactRunFacade {
         long startMs = System.currentTimeMillis();
 
         ExpertContext expert = expertRouter.resolve(agent, userMessage, contextDocumentId);
+        if (taskRouteObserver != null) {
+            taskRouteObserver.observeAsync(trace.traceId(), expert, userMessage);
+        }
         shadowRouteObserver.observeAsync(
                 trace.traceId(),
                 userMessage,
