@@ -2,6 +2,23 @@
 
 The legacy `ExpertRouter` remains the request execution authority. Routing mode is configured as `OFF`, `SHADOW` (the default), or `ENFORCE`.
 
+```mermaid
+flowchart LR
+    A[User request] --> B{Routing mode}
+    B -->|OFF| C[Legacy ExpertRouter]
+    B -->|SHADOW| D[Classify + policy + persist candidate]
+    D --> C
+    B -->|ENFORCE| E[Rule precheck + structured classifier]
+    E --> F[Deterministic risk policy]
+    F -->|LOW| C
+    F -->|MEDIUM + catalog match| G[Bounded workflow DAG]
+    F -->|HIGH / CRITICAL| H[WAITING_APPROVAL]
+    G --> I[Role-bound node runner]
+    I --> J[Audited run/node state]
+    H -->|approve| G
+    H -->|reject / timeout| K[Terminal rejected state]
+```
+
 - `OFF` leaves the legacy expert/tool/response path untouched.
 - `SHADOW` evaluates classification and policy, persists candidate decisions and trace evidence asynchronously, but never replaces the selected expert or executes a workflow.
 - `ENFORCE` applies the deterministic risk policy before expert/tool resolution. High and critical paths require the declared execution mode and fail closed when workflow or required materials are unavailable.
