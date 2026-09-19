@@ -20,11 +20,11 @@
 
 The existing `ExpertRouter`/SSE path remains authoritative. This task adds persistence and trace exposure without enforcing candidate routes or executing workflows. The facade hook uses explicit `unknown-*` provenance placeholders because a concrete `TaskRoutingService` bean and complete classifier provenance are not currently available at that boundary. No user query or legal document text is persisted by the new observer.
 
-Commits: `7e4c024` — `feat: observe task routing in shadow mode`; `59215f2` — `fix: record shadow route errors and isolation` (parent committed after the worker encountered a Windows `.git/index.lock` permission denial).
+Commits: `7e4c024` — `feat: observe task routing in shadow mode`; `59215f2` — `fix: record shadow route errors and isolation`; `017643b` — `fix: strengthen shadow route isolation coverage`; `bc16d82` — `fix: emit shadow route trace failures`.
 
 ## Final isolation-coverage update
 
 - Updated `TaskRouteShadowIT` to call `AguiReactRunFacade.observeTaskRouteShadow` with a mocked current `ExpertRouter` result, verify exactly one persisted `CONTRACT_REVIEW` candidate, and assert the actual `ExpertContext` remains unchanged.
 - The test now loads `V39__task_route_decision.sql` from the classpath and checks the table plus all required indexes.
 - Focused Maven verification reached the existing managed Windows/JDK compiler failure in the unchanged AgentScope compilation (`unknown compilation problem`); no test execution was possible in that run.
-- Commit: `7bbb1f4` — `fix: strengthen shadow route isolation coverage`.
+- Commit: `017643b` — `fix: strengthen shadow route isolation coverage`.
