@@ -85,7 +85,11 @@ public class TaskRouteObserver {
             }
             repository.save(e);
             recordTrace(traceId, c, e.getAgreement(), e.getErrorCode());
-        } catch (Exception ex) { persistenceFailures.incrementAndGet(); log.warn("Task route shadow persistence failed traceId={}", traceId, ex); }
+        } catch (Exception ex) {
+            persistenceFailures.incrementAndGet();
+            recordTraceFailure(traceId, c, "PERSISTENCE_FAILED");
+            log.warn("Task route shadow persistence failed traceId={}", traceId, ex);
+        }
     }
 
     private void recordTrace(String traceId, RouteDecision candidate, Boolean agreement, String errorCode) {
@@ -102,6 +106,11 @@ public class TaskRouteObserver {
         } catch (Exception traceFailure) {
             log.debug("Task route shadow trace recording failed traceId={}", traceId, traceFailure);
         }
+    }
+
+    private void recordTraceFailure(String traceId, RouteDecision candidate, String errorCode) {
+        if (candidate == null) return;
+        recordTrace(traceId, candidate, false, errorCode);
     }
 
     private static boolean agrees(String expertCode, TaskType taskType) {

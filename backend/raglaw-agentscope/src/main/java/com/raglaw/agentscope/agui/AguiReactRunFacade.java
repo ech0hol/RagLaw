@@ -99,9 +99,7 @@ public class AguiReactRunFacade {
         long startMs = System.currentTimeMillis();
 
         ExpertContext expert = expertRouter.resolve(agent, userMessage, contextDocumentId);
-        if (taskRouteObserver != null) {
-            taskRouteObserver.observeAsync(trace.traceId(), expert, userMessage);
-        }
+        observeTaskRouteShadow(trace.traceId(), expert, userMessage);
         shadowRouteObserver.observeAsync(
                 trace.traceId(),
                 userMessage,
@@ -230,6 +228,11 @@ public class AguiReactRunFacade {
                 "latencyMs", latency
         ));
         emitter.complete();
+    }
+
+    /** Additive seam for shadow observation; it never changes the expert selected above. */
+    public void observeTaskRouteShadow(String traceId, ExpertContext expert, String userMessage) {
+        if (taskRouteObserver != null) taskRouteObserver.observeAsync(traceId, expert, userMessage);
     }
 
     private String executeMockRun(
