@@ -111,7 +111,7 @@ class AgentScopeWorkflowAgentInvokerTest {
                 mock(AgentRunFactory.class), registry, properties, mock(Environment.class), new ObjectMapper(), new AgentscopeMcpProperties());
         ResolvedWorkflowNode node = new ResolvedWorkflowNode("node", "ROLE", "labor-expert", 1, Set.of(), "", List.of());
 
-        assertThat(invoker.invoke(node, null, "query", new WorkflowExecutionContext("run", "trace", "input", Map.of())).text())
+        assertThat(invoker.invoke(node, null, "query", new WorkflowExecutionContext("run", "trace", "input", Map.of())).answer())
                 .contains("labor-expert@v1");
     }
 

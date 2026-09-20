@@ -65,7 +65,16 @@ public class TaskRouteObserver {
                 "unknown-role", null, List.of("facade-shadow-placeholder"), false, "unknown-policy");
         observeAsync(traceId, actual, candidate, List.of(), "unknown-prompt", "unknown-model", 0L);
     }
-    public void shutdown() { executor.shutdownNow(); }
+    public void shutdown() {
+        executor.shutdownNow();
+        try {
+            if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+                log.warn("Task route shadow executor did not terminate within timeout");
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+        }
+    }
     public void blockWorkers() { workerGate = new CountDownLatch(1); executor.prestartAllCoreThreads(); }
     private void persist(String traceId, ExpertContext actual, RouteDecision c, List<String> missing, String prompt, String model, long latency, String errorCode) {
         try {
