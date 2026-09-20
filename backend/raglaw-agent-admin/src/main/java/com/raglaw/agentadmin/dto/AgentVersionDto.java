@@ -12,5 +12,7 @@ public record AgentVersionDto(
         Instant createdAt,
         String createdBy,
         Instant publishedAt,
-        String publishedBy
+        String publishedBy,
+        Instant transitionedAt,
+        String transitionedBy
 ) {}

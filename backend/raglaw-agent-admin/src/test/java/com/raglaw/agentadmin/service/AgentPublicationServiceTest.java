@@ -71,6 +71,18 @@ class AgentPublicationServiceTest {
         assertThat(service.publishedCandidates()).isEmpty();
     }
 
+    @Test
+    void disablingVersionRecordsTheTransitionActorAndTime() {
+        version = entity("labor_expert", 2, AgentPublishStatus.PUBLISHED, 0.95);
+        when(repository.findByAgentCodeAndVersion("labor_expert", 2)).thenReturn(Optional.of(version));
+        var dto = service.disable("labor_expert", 2, "reviewer-7");
+        assertThat(dto.status()).isEqualTo(AgentPublishStatus.DISABLED);
+        assertThat(dto.transitionedBy()).isEqualTo("reviewer-7");
+        assertThat(dto.transitionedAt()).isNotNull();
+        assertThat(version.getTransitionedBy()).isEqualTo("reviewer-7");
+        assertThat(version.getTransitionedAt()).isNotNull();
+    }
+
     private static AgentCapabilityManifest manifest() {
         return new AgentCapabilityManifest(Set.of("LABOR_LAW"), Set.of("LEGAL_ANALYSIS"),
                 Set.of("LEGAL_ANALYSIS"), Set.of("HIGH"), Set.of(), "Result");

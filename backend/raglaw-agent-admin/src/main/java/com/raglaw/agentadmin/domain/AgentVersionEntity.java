@@ -35,6 +35,8 @@ public class AgentVersionEntity {
     @Column(name = "created_by", nullable = false, length = 128) private String createdBy;
     @Column(name = "published_at") private Instant publishedAt;
     @Column(name = "published_by", length = 128) private String publishedBy;
+    @Column(name = "transitioned_at") private Instant transitionedAt;
+    @Column(name = "transitioned_by", length = 128) private String transitionedBy;
 
     protected AgentVersionEntity() {}
 
@@ -73,19 +75,27 @@ public class AgentVersionEntity {
     public String getCreatedBy() { return createdBy; }
     public Instant getPublishedAt() { return publishedAt; }
     public String getPublishedBy() { return publishedBy; }
+    public Instant getTransitionedAt() { return transitionedAt; }
+    public String getTransitionedBy() { return transitionedBy; }
     private static final Map<AgentPublishStatus, Set<AgentPublishStatus>> ALLOWED_TRANSITIONS = transitions();
 
     public void transitionTo(AgentPublishStatus next) {
+        transitionTo(next, "system", Instant.now());
+    }
+
+    public void transitionTo(AgentPublishStatus next, String actor, Instant now) {
         if (next == null) throw new IllegalArgumentException("next status");
         if (status == next) return;
         if (!ALLOWED_TRANSITIONS.getOrDefault(status, Set.of()).contains(next)) {
             throw new IllegalStateException("Invalid agent version transition: " + status + " -> " + next);
         }
         this.status = next;
+        this.transitionedBy = actor == null || actor.isBlank() ? "system" : actor;
+        this.transitionedAt = now == null ? Instant.now() : now;
     }
 
     public void publish(String publisherId, Instant now) {
-        transitionTo(AgentPublishStatus.PUBLISHED);
+        transitionTo(AgentPublishStatus.PUBLISHED, publisherId, now);
         this.publishedBy = publisherId;
         this.publishedAt = now;
     }

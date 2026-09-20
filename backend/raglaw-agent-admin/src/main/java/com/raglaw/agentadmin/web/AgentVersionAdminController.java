@@ -45,8 +45,9 @@ public class AgentVersionAdminController {
     @PostMapping("/{agentCode}/{version}/transition")
     public ApiResponse<AgentVersionDto> transition(@PathVariable("agentCode") String agentCode,
                                                    @PathVariable("version") int version,
-                                                   @RequestBody TransitionAgentVersionRequest request) {
-        return ApiResponse.ok(publicationService.transitionTo(agentCode, version, request == null ? null : request.targetStatus()));
+                                                   @RequestBody TransitionAgentVersionRequest request,
+                                                   Principal principal) {
+        return ApiResponse.ok(publicationService.transitionTo(agentCode, version, request == null ? null : request.targetStatus(), actor(principal)));
     }
 
     @PostMapping("/{agentCode}/publish")
@@ -58,22 +59,22 @@ public class AgentVersionAdminController {
     public ApiResponse<List<AgentVersionDto>> published() {
         return ApiResponse.ok(publicationService.publishedCandidates().stream()
                 .map(snapshot -> new AgentVersionDto(snapshot.agentCode(), snapshot.version(), snapshot.status(),
-                        snapshot.evaluationScore(), snapshot.configChecksum(), null, null, null, null)).toList());
+                        snapshot.evaluationScore(), snapshot.configChecksum(), null, null, null, null, null, null)).toList());
     }
 
     @PostMapping("/{agentCode}/{version}/deprecate")
-    public ApiResponse<AgentVersionDto> deprecate(@PathVariable("agentCode") String agentCode, @PathVariable("version") int version) {
-        return ApiResponse.ok(publicationService.deprecate(agentCode, version));
+    public ApiResponse<AgentVersionDto> deprecate(@PathVariable("agentCode") String agentCode, @PathVariable("version") int version, Principal principal) {
+        return ApiResponse.ok(publicationService.deprecate(agentCode, version, actor(principal)));
     }
 
     @PostMapping("/{agentCode}/{version}/disable")
-    public ApiResponse<AgentVersionDto> disable(@PathVariable("agentCode") String agentCode, @PathVariable("version") int version) {
-        return ApiResponse.ok(publicationService.disable(agentCode, version));
+    public ApiResponse<AgentVersionDto> disable(@PathVariable("agentCode") String agentCode, @PathVariable("version") int version, Principal principal) {
+        return ApiResponse.ok(publicationService.disable(agentCode, version, actor(principal)));
     }
 
     @PostMapping("/{agentCode}/{version}/archive")
-    public ApiResponse<AgentVersionDto> archive(@PathVariable("agentCode") String agentCode, @PathVariable("version") int version) {
-        return ApiResponse.ok(publicationService.archive(agentCode, version));
+    public ApiResponse<AgentVersionDto> archive(@PathVariable("agentCode") String agentCode, @PathVariable("version") int version, Principal principal) {
+        return ApiResponse.ok(publicationService.archive(agentCode, version, actor(principal)));
     }
 
     @GetMapping("/{agentCode}/history")

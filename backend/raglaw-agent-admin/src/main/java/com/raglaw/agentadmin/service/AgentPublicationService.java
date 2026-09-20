@@ -107,30 +107,50 @@ public class AgentPublicationService {
 
     @Transactional
     public AgentVersionDto deprecate(String agentCode, int version) {
-        return transitionTo(agentCode, version, AgentPublishStatus.DEPRECATED);
+        return deprecate(agentCode, version, "system");
+    }
+
+    @Transactional
+    public AgentVersionDto deprecate(String agentCode, int version, String actor) {
+        return transitionTo(agentCode, version, AgentPublishStatus.DEPRECATED, actor);
     }
 
     @Transactional
     public AgentVersionDto disable(String agentCode, int version) {
-        AgentVersionDto dto = transition(agentCode, version, AgentPublishStatus.DISABLED);
+        return disable(agentCode, version, "system");
+    }
+
+    @Transactional
+    public AgentVersionDto disable(String agentCode, int version, String actor) {
+        AgentVersionDto dto = transition(agentCode, version, AgentPublishStatus.DISABLED, actor);
         reloadAfterCommit();
         return dto;
     }
 
     @Transactional
     public AgentVersionDto archive(String agentCode, int version) {
-        AgentVersionDto dto = transition(agentCode, version, AgentPublishStatus.ARCHIVED);
+        return archive(agentCode, version, "system");
+    }
+
+    @Transactional
+    public AgentVersionDto archive(String agentCode, int version, String actor) {
+        AgentVersionDto dto = transition(agentCode, version, AgentPublishStatus.ARCHIVED, actor);
         reloadAfterCommit();
         return dto;
     }
 
     @Transactional
     public AgentVersionDto transitionTo(String agentCode, int version, AgentPublishStatus next) {
+        return transitionTo(agentCode, version, next, "system");
+    }
+
+    @Transactional
+    public AgentVersionDto transitionTo(String agentCode, int version, AgentPublishStatus next, String actor) {
         if (next == null) throw new IllegalArgumentException("targetStatus");
         if (next == AgentPublishStatus.PUBLISHED) {
             throw new IllegalStateException("Use the publish operation to enter PUBLISHED");
         }
-        AgentVersionDto dto = transition(agentCode, version, next);
+        AgentVersionDto dto = transition(agentCode, version, next, actor);
         reloadAfterCommit();
         return dto;
     }
@@ -192,9 +212,9 @@ public class AgentPublicationService {
         } catch (JsonProcessingException e) { throw new IllegalStateException("Invalid agent version JSON", e); }
     }
 
-    private AgentVersionDto transition(String agentCode, int version, AgentPublishStatus next) {
+    private AgentVersionDto transition(String agentCode, int version, AgentPublishStatus next, String actor) {
         AgentVersionEntity entity = require(agentCode, version);
-        entity.transitionTo(next);
+        entity.transitionTo(next, actor, Instant.now(clock));
         repository.save(entity);
         return toDto(entity);
     }
@@ -233,6 +253,7 @@ public class AgentPublicationService {
 
     private static AgentVersionDto toDto(AgentVersionEntity entity) {
         return new AgentVersionDto(entity.getAgentCode(), entity.getVersion(), entity.getStatus(), entity.getEvaluationScore(),
-                entity.getConfigChecksum(), entity.getCreatedAt(), entity.getCreatedBy(), entity.getPublishedAt(), entity.getPublishedBy());
+                entity.getConfigChecksum(), entity.getCreatedAt(), entity.getCreatedBy(), entity.getPublishedAt(), entity.getPublishedBy(),
+                entity.getTransitionedAt(), entity.getTransitionedBy());
     }
 }
