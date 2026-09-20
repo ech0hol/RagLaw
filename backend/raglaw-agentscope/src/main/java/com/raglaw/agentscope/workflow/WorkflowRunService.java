@@ -90,6 +90,7 @@ public class WorkflowRunService {
         run.setManifestJson(bound.frozenManifestJson());
         try { run.setWorkflowDefinitionJson(MANIFEST_MAPPER.writeValueAsString(workflow)); }
         catch (Exception exception) { throw new IllegalStateException("workflow definition serialization failed", exception); }
+        run.setWorkflowDefinitionHash(WorkflowDefinitionFingerprint.hash(workflow));
         WorkflowExecutionManifest manifest = bound.frozenManifest();
         if (manifest != null) {
             run.setTenantId(manifest.tenantId());

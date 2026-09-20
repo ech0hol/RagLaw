@@ -22,5 +22,10 @@ class WorkflowSharedStateMigrationIT {
             assertTrue(sql.contains("snapshot_version"));
             assertTrue(sql.contains("workflow_definition_json"));
         }
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream("db/migration/V46__workflow_recovery_identity.sql")) {
+            String sql = new String(input.readAllBytes(), StandardCharsets.UTF_8).toLowerCase();
+            assertTrue(sql.contains("workflow_definition_hash"));
+            assertTrue(sql.contains("input_hash"));
+        }
     }
 }

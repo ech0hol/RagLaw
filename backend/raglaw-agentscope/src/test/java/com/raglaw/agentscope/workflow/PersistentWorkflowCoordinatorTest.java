@@ -73,6 +73,8 @@ class PersistentWorkflowCoordinatorTest {
         ObjectMapper mapper = new ObjectMapper();
         run.setManifestJson(mapper.writeValueAsString(manifest));
         run.setWorkflowDefinitionJson(mapper.writeValueAsString(definition));
+        run.setWorkflowDefinitionHash(WorkflowDefinitionFingerprint.hash(definition));
+        run.setInputHash(hash("input"));
         java.util.concurrent.atomic.AtomicInteger invocations = new java.util.concurrent.atomic.AtomicInteger();
         WorkflowNodeRunner boundRunner = new WorkflowNodeRunner() {
             @Override public WorkflowNodeResult run(WorkflowNodeDefinition node, WorkflowExecutionContext context) { invocations.incrementAndGet(); return new WorkflowNodeResult(node.code(), "SUCCEEDED", "{}", List.of(), 1); }
@@ -112,5 +114,14 @@ class PersistentWorkflowCoordinatorTest {
         run.setWorkflowCode("wf"); run.setStatus("CREATED"); run.setApprovalStatus("APPROVED");
         run.setStartedAt(java.time.Instant.now());
         return run;
+    }
+
+    private static String hash(String value) {
+        try {
+            byte[] bytes = java.security.MessageDigest.getInstance("SHA-256").digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder result = new StringBuilder();
+            for (byte item : bytes) result.append(String.format("%02x", item));
+            return result.toString();
+        } catch (Exception exception) { throw new IllegalStateException(exception); }
     }
 }

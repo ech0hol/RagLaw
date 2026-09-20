@@ -74,6 +74,8 @@ public class PersistentWorkflowCoordinator {
         require(command.runner(), "runner");
         WorkflowRunEntity run = command.run();
         if (isTerminal(run.getStatus())) return new WorkflowRunOutcome(run.getStatus(), run.getId(), null, run.getErrorCode());
+        ensureInputHash(run, command.input(), false);
+        ensureDefinitionHash(run, command.workflow(), false);
         run.setStatus("RUNNING");
         if (run.getStartedAt() == null) run.setStartedAt(Instant.now());
         runs.save(run);
@@ -87,6 +89,8 @@ public class PersistentWorkflowCoordinator {
         WorkflowRunEntity run = runs.findById(command.runId()).orElseThrow(() -> new IllegalArgumentException("workflow run not found"));
         if (isTerminal(run.getStatus())) return new WorkflowRunOutcome(run.getStatus(), run.getId(), null, run.getErrorCode());
         validatePersistedBinding(run, command.workflow(), command.runner());
+        ensureInputHash(run, command.input(), true);
+        ensureDefinitionHash(run, command.workflow(), true);
         if (hasNonSuccessfulTerminal(run.getId())) {
             run.setStatus("FAILED");
             run.setErrorCode("WORKFLOW_NODE_FAILED");
@@ -107,6 +111,8 @@ public class PersistentWorkflowCoordinator {
         require(runner, "runner");
         WorkflowNodeRunner bound = runner.bindRunId(run.getId());
         validatePersistedBinding(run, workflow, bound);
+        ensureInputHash(run, input, false);
+        ensureDefinitionHash(run, workflow, false);
         return execute(run, workflow, traceId, input, bound, loadCompleted(run.getId()));
     }
 
@@ -189,7 +195,9 @@ public class PersistentWorkflowCoordinator {
                 throw new IllegalStateException("WORKFLOW_MANIFEST_MISMATCH");
             }
             Map<String, Object> definition = objectMapper.readValue(run.getWorkflowDefinitionJson(), OBJECT_MAP);
-            if (!workflow.code().equals(String.valueOf(definition.get("code")))) {
+            if (!workflow.code().equals(String.valueOf(definition.get("code")))
+                    || run.getWorkflowDefinitionHash() == null
+                    || !run.getWorkflowDefinitionHash().equals(WorkflowDefinitionFingerprint.hash(workflow))) {
                 throw new IllegalStateException("WORKFLOW_DEFINITION_MISMATCH");
             }
         } catch (IllegalStateException exception) {
@@ -282,6 +290,30 @@ public class PersistentWorkflowCoordinator {
             for (byte item : bytes) result.append(String.format("%02x", item));
             return result.toString();
         } catch (Exception e) { throw new IllegalStateException("workflow key hashing failed", e); }
+    }
+
+    private static String inputHash(String input) { return digest(input == null ? "" : input); }
+
+    private void ensureInputHash(WorkflowRunEntity run, String input, boolean requireExisting) {
+        String hash = inputHash(input);
+        if (run.getInputHash() == null || run.getInputHash().isBlank()) {
+            if (requireExisting) throw new IllegalStateException("WORKFLOW_INPUT_HASH_NOT_FOUND");
+            run.setInputHash(hash);
+            runs.save(run);
+        } else if (!run.getInputHash().equals(hash)) {
+            throw new IllegalStateException("WORKFLOW_INPUT_MISMATCH");
+        }
+    }
+
+    private void ensureDefinitionHash(WorkflowRunEntity run, WorkflowDefinition workflow, boolean requireExisting) {
+        String hash = WorkflowDefinitionFingerprint.hash(workflow);
+        if (run.getWorkflowDefinitionHash() == null || run.getWorkflowDefinitionHash().isBlank()) {
+            if (requireExisting) throw new IllegalStateException("WORKFLOW_DEFINITION_HASH_NOT_FOUND");
+            run.setWorkflowDefinitionHash(hash);
+            runs.save(run);
+        } else if (!run.getWorkflowDefinitionHash().equals(hash)) {
+            throw new IllegalStateException("WORKFLOW_DEFINITION_MISMATCH");
+        }
     }
 
     private static List<String> split(String values) {
