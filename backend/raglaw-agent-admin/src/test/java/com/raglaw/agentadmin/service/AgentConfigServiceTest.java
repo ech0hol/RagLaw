@@ -12,6 +12,7 @@ import com.raglaw.agentadmin.domain.AgentConfigEntity;
 import com.raglaw.agentadmin.domain.AgentConfigRepository;
 import com.raglaw.agentadmin.dto.AgentConfigCreateRequest;
 import com.raglaw.agentadmin.dto.AgentConfigUpdateRequest;
+import com.raglaw.agentadmin.dto.CreateAgentVersionRequest;
 import com.raglaw.agentadmin.registry.AgentRegistry;
 import com.raglaw.common.exception.BusinessException;
 import java.util.List;
@@ -187,5 +188,21 @@ class AgentConfigServiceTest {
                 .hasMessageContaining("内置");
 
         verify(repository, never()).delete(any());
+    }
+
+    @Test
+    void legacyCreateAlsoCreatesUnpublishedVersionWhenBridgeIsConfigured() {
+        var publicationService = org.mockito.Mockito.mock(AgentPublicationService.class);
+        when(repository.existsByCode("MY_AGENT")).thenReturn(false);
+        var bridged = new AgentConfigService(repository, registry, new ObjectMapper(), false, publicationService);
+
+        bridged.create(new AgentConfigCreateRequest(
+                "MY_AGENT", "我的助手", "dashscope:qwen-plus", "提示词",
+                List.of(), List.of("rag_search"), List.of(), List.of(), true), "operator-1");
+
+        var request = ArgumentCaptor.forClass(CreateAgentVersionRequest.class);
+        verify(publicationService).createVersion(org.mockito.ArgumentMatchers.eq("MY_AGENT"), request.capture(), org.mockito.ArgumentMatchers.eq("operator-1"));
+        assertThat(request.getValue().manifest().supportedRiskLevels()).contains("HIGH", "CRITICAL");
+        assertThat(request.getValue().toolPolicy().toolNames()).containsExactly("rag_search");
     }
 }

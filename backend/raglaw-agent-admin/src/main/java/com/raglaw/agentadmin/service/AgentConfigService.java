@@ -9,11 +9,16 @@ import com.raglaw.agentadmin.dto.AgentConfigCreateRequest;
 import com.raglaw.agentadmin.dto.AgentConfigDto;
 import com.raglaw.agentadmin.dto.AgentConfigUpdateRequest;
 import com.raglaw.agentadmin.dto.AgentToolCatalogDto;
+import com.raglaw.agentadmin.dto.CreateAgentVersionRequest;
+import com.raglaw.agentadmin.model.AgentCapabilityManifest;
 import com.raglaw.agentadmin.model.AgentConfigSnapshot;
+import com.raglaw.agentadmin.model.AgentToolGrant;
+import com.raglaw.agentadmin.model.AgentToolPolicy;
 import com.raglaw.agentadmin.registry.AgentRegistry;
 import com.raglaw.common.api.ErrorCodes;
 import com.raglaw.common.exception.BusinessException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -41,6 +46,7 @@ public class AgentConfigService {
     private final AgentRegistry registry;
     private final ObjectMapper objectMapper;
     private final boolean globalMcpEnabled;
+    private final AgentPublicationService publicationService;
 
     public AgentConfigService(
             AgentConfigRepository repository,
@@ -48,10 +54,22 @@ public class AgentConfigService {
             ObjectMapper objectMapper,
             @Value("${raglaw.agentscope.mcp.enabled:false}") boolean globalMcpEnabled
     ) {
+        this(repository, registry, objectMapper, globalMcpEnabled, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AgentConfigService(
+            AgentConfigRepository repository,
+            AgentRegistry registry,
+            ObjectMapper objectMapper,
+            @Value("${raglaw.agentscope.mcp.enabled:false}") boolean globalMcpEnabled,
+            AgentPublicationService publicationService
+    ) {
         this.repository = repository;
         this.registry = registry;
         this.objectMapper = objectMapper;
         this.globalMcpEnabled = globalMcpEnabled;
+        this.publicationService = publicationService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -73,6 +91,11 @@ public class AgentConfigService {
 
     @Transactional
     public AgentConfigDto update(String code, AgentConfigUpdateRequest request) {
+        return update(code, request, "legacy-admin");
+    }
+
+    @Transactional
+    public AgentConfigDto update(String code, AgentConfigUpdateRequest request, String actor) {
         AgentConfigEntity entity = repository.findByCode(code)
                 .orElseThrow(() -> new IllegalArgumentException("Agent not found: " + code));
 
@@ -110,11 +133,17 @@ public class AgentConfigService {
         entity.touchUpdatedAt();
         repository.save(entity);
         reload();
+        createDraftVersion(entity, actor);
         return toDto(entity);
     }
 
     @Transactional
     public AgentConfigDto create(AgentConfigCreateRequest request) {
+        return create(request, "legacy-admin");
+    }
+
+    @Transactional
+    public AgentConfigDto create(AgentConfigCreateRequest request, String actor) {
         String code = normalizeCode(request.code());
         validateNewCode(code);
 
@@ -148,6 +177,7 @@ public class AgentConfigService {
         normalizeToolsAndMcp(entity);
         repository.save(entity);
         reload();
+        createDraftVersion(entity, actor);
         return toDto(entity);
     }
 
@@ -306,6 +336,33 @@ public class AgentConfigService {
         }
         entity.setToolsJson(writeJson(tools));
         entity.setMcpServersJson(writeJson(mcpServers));
+    }
+
+    /**
+     * Compatibility bridge: legacy CRUD remains available to the single-agent path,
+     * but every create/update also produces an unpublished immutable version. The
+     * version registry still excludes it until validation, shadow evaluation, and publish.
+     */
+    private void createDraftVersion(AgentConfigEntity entity, String actor) {
+        if (publicationService == null) return;
+        Set<String> risks = new LinkedHashSet<>(List.of("LOW", "MEDIUM", "HIGH", "CRITICAL"));
+        AgentCapabilityManifest manifest = new AgentCapabilityManifest(
+                Set.of(entity.getType() == null || entity.getType().isBlank() ? "GENERAL" : entity.getType()),
+                Set.of("LEGAL_ANALYSIS"), Set.of("LEGAL_ANALYSIS"), risks, Set.of(), "LegalAnswer");
+        List<AgentToolGrant> grants = new ArrayList<>();
+        for (String tool : readStringList(entity.getToolsJson())) {
+            if ("rag_search".equals(tool)) {
+                grants.add(new AgentToolGrant(tool, "READ_ONLY", false, Set.of(), 10_000));
+            } else if ("tavily-search".equals(tool)) {
+                grants.add(new AgentToolGrant(tool, "NETWORK", true, Set.of(), 15_000));
+            }
+        }
+        AgentToolPolicy policy = new AgentToolPolicy(grants, new LinkedHashSet<>(readStringList(entity.getMcpServersJson())));
+        publicationService.createVersion(entity.getCode(), new CreateAgentVersionRequest(
+                null, entity.getModel(), entity.getSystemPrompt(), manifest, policy,
+                readStringList(entity.getSkillsJson()), readStringList(entity.getKnowledgeScopesJson()),
+                readStringList(entity.getMcpServersJson()), 0.0, null),
+                actor == null || actor.isBlank() ? "legacy-admin" : actor);
     }
 
     private List<String> readStringList(String json) {
