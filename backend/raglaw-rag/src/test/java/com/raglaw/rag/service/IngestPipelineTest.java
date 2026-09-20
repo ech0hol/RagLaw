@@ -30,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 import com.raglaw.rag.search.ElasticsearchRetriever;
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -125,7 +124,6 @@ class IngestPipelineTest {
         when(elasticsearchRetriever.getIfAvailable()).thenReturn(elasticsearchRetrieverBean);
         when(elasticsearchRetrieverBean.isEnabled()).thenReturn(true);
         when(embeddingService.isEnabled()).thenReturn(true);
-        when(embeddingService.embed(anyString())).thenReturn(Optional.of(new float[] {0.1f, 0.2f}));
         DocumentChunkEntity chunk = new DocumentChunkEntity(
                 "chunk-1",
                 "doc-1",
@@ -158,7 +156,6 @@ class IngestPipelineTest {
         when(elasticsearchRetriever.getIfAvailable()).thenReturn(elasticsearchRetrieverBean);
         when(elasticsearchRetrieverBean.isEnabled()).thenReturn(true);
         when(embeddingService.isEnabled()).thenReturn(true);
-        when(embeddingService.embed(anyString())).thenReturn(Optional.of(new float[] {0.1f, 0.2f}));
         DocumentChunkEntity chunk = new DocumentChunkEntity(
                 "chunk-1",
                 "doc-1",
