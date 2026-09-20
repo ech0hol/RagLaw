@@ -98,6 +98,19 @@ public class ConversationService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<MessageDto> findMessageInCase(String userId, String caseId, String messageId) {
+        if (userId == null || userId.isBlank() || caseId == null || caseId.isBlank()
+                || messageId == null || messageId.isBlank()) {
+            return Optional.empty();
+        }
+        return messageRepository.findById(messageId)
+                .flatMap(message -> conversationRepository.findById(message.getConversationId())
+                        .filter(conversation -> userId.equals(conversation.getUserId()))
+                        .filter(conversation -> caseId.equals(conversation.getCaseId()))
+                        .map(ignored -> toDto(message)));
+    }
+
+    @Transactional(readOnly = true)
     public Optional<ConversationDto> get(String userId, String conversationId) {
         return conversationRepository.findById(conversationId)
                 .filter(conversation -> conversation.getUserId().equals(userId))

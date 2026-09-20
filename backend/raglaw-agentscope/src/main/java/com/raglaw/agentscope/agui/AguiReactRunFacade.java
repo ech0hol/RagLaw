@@ -26,6 +26,7 @@ import com.raglaw.rag.tool.RagSearchHit;
 import com.raglaw.rag.tool.RagSearchResult;
 import com.raglaw.rag.tool.RagSearchTool;
 import com.raglaw.agentscope.tools.AgentscopeRagSearchTool;
+import com.raglaw.memory.casefile.CaseScope;
 import io.agentscope.core.ReActAgent;
 import io.agentscope.core.agent.RuntimeContext;
 import io.agentscope.core.event.AgentEvent;
@@ -123,6 +124,10 @@ public class AguiReactRunFacade {
         AgentRunSession session = new AgentRunSession(taskId);
         session.setTraceId(trace.traceId());
         session.setUserMessage(userMessage);
+        java.util.Optional<String> caseId = conversationService.findCaseId(userId, conversationId);
+        if (caseId != null) {
+            caseId.ifPresent(id -> session.setCaseScope(new CaseScope("default", userId, id)));
+        }
 
         checkCancelled(taskId, session);
         eventBridge.sendDelegatedStatus(emitter, expert);

@@ -1,5 +1,6 @@
 package com.raglaw.agentscope.runtime;
 
+import com.raglaw.memory.casefile.CaseScope;
 import com.raglaw.rag.tool.RagSearchHit;
 import com.raglaw.rag.tool.RagSearchResult;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ public class AgentRunSession {
     private volatile String userMessage;
     private volatile int emittedReferenceCount;
     private volatile boolean presearchCompleted;
+    private volatile CaseScope caseScope;
 
     public AgentRunSession(String taskId) {
         this.taskId = taskId;
@@ -62,6 +64,14 @@ public class AgentRunSession {
 
     public String taskId() {
         return taskId;
+    }
+
+    public void setCaseScope(CaseScope caseScope) {
+        this.caseScope = caseScope;
+    }
+
+    public CaseScope caseScope() {
+        return caseScope;
     }
 
     public List<com.raglaw.agentscope.agui.WebReference> webReferences() {
