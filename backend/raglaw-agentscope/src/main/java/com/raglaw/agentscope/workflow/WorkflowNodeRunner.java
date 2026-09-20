@@ -7,4 +7,8 @@ public interface WorkflowNodeRunner {
 
     /** Binds an already-created runner to the durable workflow run identity. */
     default WorkflowNodeRunner bindRunId(String runId) { return this; }
+
+    /** Serialized immutable manifest, when the runner is manifest-bound. */
+    default String frozenManifestJson() { return null; }
+    default WorkflowExecutionManifest frozenManifest() { return null; }
 }

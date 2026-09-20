@@ -30,9 +30,16 @@ public class WorkflowExecutor implements AutoCloseable {
     }
     public ExecutionResult execute(WorkflowDefinition definition, String runId, String traceId, String input,
                                    WorkflowNodeRunner runner, CancellationToken cancellation) {
+        return execute(definition, runId, traceId, input, runner, cancellation, Map.of());
+    }
+    public ExecutionResult execute(WorkflowDefinition definition, String runId, String traceId, String input,
+                                   WorkflowNodeRunner runner, CancellationToken cancellation,
+                                   Map<String, WorkflowNodeResult> initialCompleted) {
         long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         Map<String, WorkflowNodeResult> done = new LinkedHashMap<>();
+        if (initialCompleted != null) done.putAll(initialCompleted);
         Set<String> remaining = new java.util.LinkedHashSet<>(); definition.nodes().forEach(n -> remaining.add(n.code()));
+        remaining.removeAll(done.keySet());
         while (!remaining.isEmpty()) {
                 if (cancellation.cancelled()) return new ExecutionResult(Status.CANCELLED, done, "CANCELLED");
                 if (System.nanoTime() >= deadline) return new ExecutionResult(Status.TIMED_OUT, done, "WORKFLOW_TIMEOUT");

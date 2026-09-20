@@ -22,14 +22,14 @@ class HumanGatedWorkflowIT {
     }
     @Test void approvalCreatesNewRunAndRejectionIsTerminal() {
         var runs = mock(WorkflowRunRepository.class); var nodes = mock(WorkflowNodeRunRepository.class); var props = new RoutingProperties(); props.setMode(com.raglaw.agentscope.config.RoutingMode.ENFORCE);
-        var service = new WorkflowRunService(new WorkflowExecutor(), runs, nodes, props); var prior = new WorkflowRunEntity(); prior.setId("run-prior"); prior.setRouteDecisionId("route-decision-fictional"); when(runs.findById("run-prior")).thenReturn(Optional.of(prior)); when(runs.save(any())).thenAnswer(i -> i.getArgument(0));
+        var service = new WorkflowRunService(new WorkflowExecutor(), runs, nodes, props); var prior = new WorkflowRunEntity(); prior.setId("run-prior"); prior.setRouteDecisionId("route-decision-fictional"); prior.setStatus("WAITING_APPROVAL"); prior.setApprovalStatus("WAITING_APPROVAL"); when(runs.findById("run-prior")).thenReturn(Optional.of(prior)); when(runs.save(any())).thenAnswer(i -> i.getArgument(0));
         var wf = new WorkflowDefinition("FICTIONAL", Set.of(TaskType.DISPUTE_ANALYSIS), Set.of(), List.of(new WorkflowNodeDefinition("FACTS", "FACT", List.of(), false)));
         var approved = service.approve("run-prior", "trace-fictional", high(RiskLevel.HIGH), wf, "fictional", (n,c) -> new WorkflowNodeResult(n.code(), "SUCCEEDED", "{}", List.of(), 1));
-        assertEquals("SUCCEEDED", approved.status()); assertNotEquals("run-prior", approved.runId());
+        assertEquals("approval_required", approved.status()); assertNotEquals("run-prior", approved.runId());
         var savedRuns = org.mockito.ArgumentCaptor.forClass(WorkflowRunEntity.class);
         verify(runs, atLeastOnce()).save(savedRuns.capture());
         assertTrue(savedRuns.getAllValues().stream().anyMatch(value -> "route-decision-fictional".equals(value.getRouteDecisionId())));
-        var rejectionRun = new WorkflowRunEntity(); rejectionRun.setId("run-reject"); when(runs.findById("run-reject")).thenReturn(Optional.of(rejectionRun));
+        var rejectionRun = new WorkflowRunEntity(); rejectionRun.setId("run-reject"); rejectionRun.setStatus("WAITING_APPROVAL"); rejectionRun.setApprovalStatus("WAITING_APPROVAL"); when(runs.findById("run-reject")).thenReturn(Optional.of(rejectionRun));
         assertEquals("REJECTED", service.reject("run-reject", "fictional reviewer rejected").status()); assertEquals("REJECTED", rejectionRun.getStatus());
     }
     @Test void migrationAndDefaultModeArePresent() throws Exception {

@@ -47,6 +47,15 @@ public final class AgentScopeWorkflowNodeRunner implements WorkflowNodeRunner {
     }
 
     @Override
+    public String frozenManifestJson() {
+        try { return objectMapper.writeValueAsString(manifest); }
+        catch (Exception exception) { throw new IllegalStateException("workflow manifest serialization failed", exception); }
+    }
+
+    @Override
+    public WorkflowExecutionManifest frozenManifest() { return manifest; }
+
+    @Override
     public WorkflowNodeResult run(WorkflowNodeDefinition node, WorkflowExecutionContext executionContext) throws Exception {
         long started = System.currentTimeMillis();
         ResolvedWorkflowNode resolved = manifest.nodes().get(node.code());
