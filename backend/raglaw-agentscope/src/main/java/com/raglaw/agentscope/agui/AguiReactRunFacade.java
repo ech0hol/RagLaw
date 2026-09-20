@@ -8,6 +8,7 @@ import com.raglaw.agentscope.agui.dto.AguiRunRequest;
 import com.raglaw.agentscope.config.AgentscopeLlmProperties;
 import com.raglaw.agentscope.expert.ExpertContext;
 import com.raglaw.agentscope.expert.ExpertRouter;
+import com.raglaw.agentscope.context.AgentContextRenderer;
 import com.raglaw.agentscope.shadow.ShadowRouteObserver;
 import com.raglaw.agentscope.routing.TaskRouteObserver;
 import com.raglaw.agentscope.routing.TaskRoutingService;
@@ -47,6 +48,9 @@ import com.raglaw.memory.service.CaseMemorySnapshot;
 import com.raglaw.memory.service.ContextAssembler;
 import com.raglaw.memory.service.ContextRequest;
 import com.raglaw.memory.service.MemorySnapshotService;
+import com.raglaw.memory.context.ContextItem;
+import com.raglaw.memory.context.ContextPriority;
+import com.raglaw.memory.context.ContextSectionType;
 import io.agentscope.core.ReActAgent;
 import io.agentscope.core.agent.RuntimeContext;
 import io.agentscope.core.event.AgentEvent;
@@ -93,6 +97,7 @@ public class AguiReactRunFacade {
     @org.springframework.beans.factory.annotation.Autowired(required = false) private MemoryProperties memoryProperties;
     @org.springframework.beans.factory.annotation.Autowired(required = false) private MemorySnapshotService memorySnapshotService;
     @org.springframework.beans.factory.annotation.Autowired(required = false) private ContextAssembler contextAssembler;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private AgentContextRenderer agentContextRenderer;
 
     public AguiReactRunFacade(
             ExpertRouter expertRouter,
@@ -295,8 +300,19 @@ public class AguiReactRunFacade {
                 "characters", assembled.characters(),
                 "truncated", assembled.truncated()
         ), 0L);
-        if (mode == MemoryMode.SHADOW || assembled.memoryIds().isEmpty()) return userMessage;
-        return userMessage + "\n\n" + assembled.dataBlock();
+        if (assembled.memoryIds().isEmpty()) return userMessage;
+        if (agentContextRenderer == null) {
+            if (mode == MemoryMode.SHADOW) return userMessage;
+            return userMessage + "\n\n" + assembled.dataBlock();
+        }
+        List<ContextItem> items = List.of(
+                new ContextItem("current-task", ContextSectionType.CURRENT_TASK, ContextPriority.P0_REQUIRED,
+                        userMessage, Math.max(1, userMessage.length() / 4), false, List.of()),
+                new ContextItem("case-memory", ContextSectionType.CASE_FACTS, ContextPriority.P1_HIGH,
+                        assembled.dataBlock(), Math.max(1, assembled.characters() / 4), false, assembled.sourceIds())
+        );
+        return agentContextRenderer.render(new AgentContextRenderer.RenderRequest(
+                trace.traceId(), conversationId, "SINGLE_ADVISOR", snapshot.version(), userMessage, items)).prompt();
     }
 
     private boolean enforceWorkflowBoundary(SseEmitter emitter, TraceContext trace, String query, String userId,

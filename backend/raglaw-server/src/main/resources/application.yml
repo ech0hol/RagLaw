@@ -54,6 +54,9 @@ raglaw:
   version: 0.1.0-SNAPSHOT
   routing:
     mode: ${RAGLAW_ROUTING_MODE:SHADOW}
+  context:
+    mode: ${RAGLAW_CONTEXT_MODE:SHADOW}
+    model-window-tokens: ${RAGLAW_CONTEXT_MODEL_WINDOW_TOKENS:32000}
   seed:
     admin-password: ${RAGLAW_SEED_ADMIN_PASSWORD:}
   jwt:
