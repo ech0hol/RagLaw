@@ -13,6 +13,7 @@
     <modules>
         <module>raglaw-common</module>
         <module>raglaw-chat</module>
+        <module>raglaw-memory</module>
         <module>raglaw-agentscope</module>
         <module>raglaw-agent-admin</module>
         <module>raglaw-rag</module>
@@ -45,6 +46,11 @@
             <dependency>
                 <groupId>com.raglaw</groupId>
                 <artifactId>raglaw-chat</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.raglaw</groupId>
+                <artifactId>raglaw-memory</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

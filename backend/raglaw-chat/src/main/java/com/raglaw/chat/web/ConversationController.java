@@ -47,7 +47,12 @@ public class ConversationController {
         }
         String agentCode = request == null ? null : request.agentCode();
         String contextDocumentId = request == null ? null : request.contextDocumentId();
-        return ApiResponse.ok(conversationService.create(userId, agentCode, contextDocumentId));
+        String caseId = request == null ? null : request.caseId();
+        try {
+            return ApiResponse.ok(conversationService.create(userId, agentCode, contextDocumentId, caseId));
+        } catch (IllegalArgumentException exception) {
+            return ApiResponse.fail(ErrorCodes.VALIDATION, exception.getMessage());
+        }
     }
 
     @GetMapping("/{id}")

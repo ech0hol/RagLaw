@@ -8,6 +8,7 @@ public record ConversationDto(
         String title,
         String agentCode,
         String contextDocumentId,
+        String caseId,
         Instant createdAt,
         Instant updatedAt
 ) {

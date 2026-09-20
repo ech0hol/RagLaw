@@ -19,6 +19,10 @@
         </dependency>
         <dependency>
             <groupId>com.raglaw</groupId>
+            <artifactId>raglaw-memory</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.raglaw</groupId>
             <artifactId>raglaw-chat</artifactId>
         </dependency>
         <dependency>

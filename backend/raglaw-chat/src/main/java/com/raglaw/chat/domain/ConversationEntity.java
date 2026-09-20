@@ -25,6 +25,9 @@ public class ConversationEntity {
     @Column(name = "context_document_id", length = 36)
     private String contextDocumentId;
 
+    @Column(name = "case_id", length = 36)
+    private String caseId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -40,6 +43,7 @@ public class ConversationEntity {
             String title,
             String agentCode,
             String contextDocumentId,
+            String caseId,
             Instant createdAt,
             Instant updatedAt
     ) {
@@ -48,8 +52,21 @@ public class ConversationEntity {
         this.title = title;
         this.agentCode = agentCode;
         this.contextDocumentId = contextDocumentId;
+        this.caseId = caseId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public ConversationEntity(
+            String id,
+            String userId,
+            String title,
+            String agentCode,
+            String contextDocumentId,
+            Instant createdAt,
+            Instant updatedAt
+    ) {
+        this(id, userId, title, agentCode, contextDocumentId, null, createdAt, updatedAt);
     }
 
     public String getId() {
@@ -74,6 +91,10 @@ public class ConversationEntity {
 
     public String getContextDocumentId() {
         return contextDocumentId;
+    }
+
+    public String getCaseId() {
+        return caseId;
     }
 
     public Instant getCreatedAt() {

@@ -8,6 +8,7 @@ import com.raglaw.chat.dto.ConversationDto;
 import com.raglaw.chat.dto.MessageDto;
 import com.raglaw.common.util.Ids;
 import com.raglaw.rag.contract.ContractAccessService;
+import com.raglaw.memory.casefile.CaseService;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -23,15 +24,18 @@ public class ConversationService {
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final ContractAccessService contractAccessService;
+    private final CaseService caseService;
 
     public ConversationService(
             ConversationRepository conversationRepository,
             MessageRepository messageRepository,
-            ContractAccessService contractAccessService
+            ContractAccessService contractAccessService,
+            CaseService caseService
     ) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.contractAccessService = contractAccessService;
+        this.caseService = caseService;
     }
 
     @Transactional(readOnly = true)
@@ -42,8 +46,12 @@ public class ConversationService {
     }
 
     @Transactional
-    public ConversationDto create(String userId, String agentCode, String contextDocumentId) {
+    public ConversationDto create(String userId, String agentCode, String contextDocumentId, String caseId) {
         contractAccessService.validateOwnedContractContext(blankToNull(contextDocumentId));
+        String resolvedCaseId = blankToNull(caseId);
+        if (resolvedCaseId != null && !caseService.existsOwnedBy("default", userId, resolvedCaseId)) {
+            throw new IllegalArgumentException("case does not belong to user");
+        }
         Instant now = Instant.now();
         String resolvedAgentCode = agentCode == null || agentCode.isBlank() ? DEFAULT_AGENT_CODE : agentCode;
         ConversationEntity entity = new ConversationEntity(
@@ -52,10 +60,16 @@ public class ConversationService {
                 DEFAULT_TITLE,
                 resolvedAgentCode,
                 blankToNull(contextDocumentId),
+                resolvedCaseId,
                 now,
                 now
         );
         return toDto(conversationRepository.save(entity));
+    }
+
+    @Transactional
+    public ConversationDto create(String userId, String agentCode, String contextDocumentId) {
+        return create(userId, agentCode, contextDocumentId, null);
     }
 
     @Transactional(readOnly = true)
@@ -222,6 +236,7 @@ public class ConversationService {
                 entity.getTitle(),
                 entity.getAgentCode(),
                 entity.getContextDocumentId(),
+                entity.getCaseId(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
