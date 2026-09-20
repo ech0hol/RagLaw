@@ -1,0 +1,17 @@
+{
+  "benchmarkVersion": "expert-resolution-benchmark-v1",
+  "benchmarkSha256": "68a129c18e89e46d034866e1dd084a179179f073e5fddaf87cb7641fc18ed767",
+  "gitCommit": "6140ea91d4962ca45caf870019ae1c032437c321",
+  "caseCount": 100,
+  "metrics": {
+    "top1Accuracy": 1.0,
+    "noCandidateAccuracy": 1.0,
+    "unsafeSelectionRate": 0.0,
+    "unauthorizedToolRate": 0.0,
+    "defaultFallbackRate": 0.0,
+    "modelDisagreement": null,
+    "p95ResolutionLatencyMs": null,
+    "status": "deterministic_fixture_gate"
+  },
+  "safetyFailures": []
+}
