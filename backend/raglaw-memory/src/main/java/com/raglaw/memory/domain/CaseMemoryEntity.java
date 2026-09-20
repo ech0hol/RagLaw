@@ -133,6 +133,23 @@ public class CaseMemoryEntity {
 
     public boolean isActive() { return lifecycle == MemoryLifecycle.ACTIVE; }
 
+    public void supersedeBy(String replacementId, Instant now) {
+        this.lifecycle = MemoryLifecycle.SUPERSEDED;
+        this.replacementMemoryId = replacementId;
+        this.updatedAt = now;
+        validateInvariants();
+    }
+
+    public void invalidate(Instant now) {
+        this.lifecycle = MemoryLifecycle.INVALIDATED;
+        this.updatedAt = now;
+    }
+
+    public void markDisputed(Instant now) {
+        this.verification = VerificationStatus.DISPUTED;
+        this.updatedAt = now;
+    }
+
     private static String require(String value, String name) {
         if (isBlank(value)) throw new IllegalArgumentException(name);
         return value;
