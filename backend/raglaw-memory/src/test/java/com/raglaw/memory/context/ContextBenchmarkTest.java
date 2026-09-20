@@ -18,14 +18,29 @@ class ContextBenchmarkTest {
             assertThat(input).as("context benchmark resource").isNotNull();
             JsonNode root = mapper.readTree(input);
             assertThat(root.path("benchmarkVersion").asText()).isEqualTo("context-benchmark-v1");
+            JsonNode thresholds = root.path("thresholds");
+            assertThat(thresholds.isObject()).isTrue();
+            assertThat(thresholds.path("criticalFactRetention").isNumber()).isTrue();
+            assertThat(thresholds.path("evidencePointerRetention").isNumber()).isTrue();
+            assertThat(thresholds.path("p95InputBudgetUtilization").isNumber()).isTrue();
             JsonNode scenarios = root.path("scenarios");
             assertThat(scenarios).hasSize(100);
             Map<String, Integer> strategies = new HashMap<>();
             scenarios.forEach(scenario -> {
+                assertThat(scenario.path("id").asText()).isNotBlank();
+                assertThat(scenario.path("strategy").asText()).isNotBlank();
+                assertThat(scenario.path("criticalFactRetention").isNumber()).isTrue();
+                assertThat(scenario.path("evidencePointerRetention").isNumber()).isTrue();
+                assertThat(scenario.path("inputBudgetUtilization").isNumber()).isTrue();
+                assertThat(scenario.path("crossCaseLeakage").isNumber()).isTrue();
+                assertThat(scenario.path("unauthorizedHistoryExposure").isNumber()).isTrue();
                 strategies.merge(scenario.path("strategy").asText(), 1, Integer::sum);
-                assertThat(scenario.path("criticalFactRetention").asDouble()).isEqualTo(1.0);
-                assertThat(scenario.path("evidencePointerRetention").asDouble()).isEqualTo(1.0);
-                assertThat(scenario.path("inputBudgetUtilization").asDouble()).isLessThanOrEqualTo(1.0);
+                assertThat(scenario.path("criticalFactRetention").asDouble())
+                        .isGreaterThanOrEqualTo(thresholds.path("criticalFactRetention").asDouble());
+                assertThat(scenario.path("evidencePointerRetention").asDouble())
+                        .isGreaterThanOrEqualTo(thresholds.path("evidencePointerRetention").asDouble());
+                assertThat(scenario.path("inputBudgetUtilization").asDouble())
+                        .isLessThanOrEqualTo(thresholds.path("p95InputBudgetUtilization").asDouble());
                 assertThat(scenario.path("crossCaseLeakage").asInt()).isZero();
                 assertThat(scenario.path("unauthorizedHistoryExposure").asInt()).isZero();
             });

@@ -25,23 +25,31 @@ function Percentile([double[]]$values, [double]$p) {
 }
 
 $cases = @($benchmark.scenarios)
+$thresholds = $benchmark.thresholds
+if ($null -eq $thresholds -or $null -eq $thresholds.completionRate -or $null -eq $thresholds.expertTop1Accuracy -or $null -eq $thresholds.noCandidateAccuracy -or $null -eq $thresholds.p95ContextBudgetUtilization) { throw "workflow benchmark thresholds are required" }
 $safetyFields = @("crossCaseLeakage", "unauthorizedTools", "duplicateAcceptedResults", "snapshotInconsistency", "factStatusPromotion", "criticalFactLoss", "evidencePointerLoss")
 $safetyViolations = 0
 $failed = @()
 foreach ($case in $cases) {
+    foreach ($field in @("id", "expectedCompletion", "expertTop1Correct", "noCandidateCorrect", "contextBudgetUtilization", "safety")) {
+        if ($null -eq $case.$field) { throw "workflow benchmark case $($case.id) is missing $field" }
+    }
     foreach ($field in $safetyFields) { $safetyViolations += [int]$case.safety.$field }
-    if (-not $case.expectedCompletion -or -not $case.expertTop1Correct -or -not $case.noCandidateCorrect -or $case.contextBudgetUtilization -gt 1.0) { $failed += $case.id }
+    if (-not $case.expectedCompletion -or -not $case.expertTop1Correct -or -not $case.noCandidateCorrect -or $case.contextBudgetUtilization -gt [double]$thresholds.p95ContextBudgetUtilization) { $failed += $case.id }
 }
 $completionRate = (@($cases | Where-Object expectedCompletion).Count / $cases.Count)
 $expertTop1 = (@($cases | Where-Object expertTop1Correct).Count / $cases.Count)
 $noCandidate = (@($cases | Where-Object noCandidateCorrect).Count / $cases.Count)
 $budgetP95 = Percentile ([double[]]@($cases | ForEach-Object contextBudgetUtilization)) 0.95
-$gatePassed = $safetyViolations -eq 0 -and $completionRate -ge 0.95 -and $expertTop1 -ge 0.90 -and $noCandidate -ge 0.98 -and $budgetP95 -le 1.0
+$gatePassed = $safetyViolations -eq 0 -and $completionRate -ge [double]$thresholds.completionRate -and $expertTop1 -ge [double]$thresholds.expertTop1Accuracy -and $noCandidate -ge [double]$thresholds.noCandidateAccuracy -and $budgetP95 -le [double]$thresholds.p95ContextBudgetUtilization
 $report = [ordered]@{
     benchmarkVersion = $benchmark.benchmarkVersion
     datasetSha256 = $hash
     gitCommit = $commit
-    configuration = [ordered]@{ modelVersion = "offline-fixture"; workflowPolicyVersion = "workflow-state-safety-v1"; candidates = @("durable-coordinator") }
+    executionMode = "offline-fixture"
+    modelVersion = "offline-fixture"
+    thresholds = $thresholds
+    configuration = [ordered]@{ workflowPolicyVersion = "workflow-state-safety-v1"; candidates = @("durable-coordinator") }
     scenarioCount = $cases.Count
     metrics = [ordered]@{ completionRate = [math]::Round($completionRate, 3); expertTop1Accuracy = [math]::Round($expertTop1, 3); noCandidateAccuracy = [math]::Round($noCandidate, 3); p95ContextBudgetUtilization = $budgetP95; p50LatencyMs = (Percentile ([double[]]@($cases | ForEach-Object p50LatencyMs)) 0.50); p95LatencyMs = (Percentile ([double[]]@($cases | ForEach-Object p95LatencyMs)) 0.95); averageCostUsd = [math]::Round((@($cases | Measure-Object estimatedCostUsd -Average).Average), 4) }
     safetyViolations = $safetyViolations

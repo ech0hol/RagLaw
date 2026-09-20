@@ -1,54 +1,63 @@
-{
-  "benchmarkVersion": "context-benchmark-v1",
-  "datasetSha256": "324a281b6e84b740027a983f4421dcb95d8eb43c0b00508ee530e3a023135fe3",
-  "gitCommit": "ae03055377b0771148c02b0d2c3a1b6ed58bbaf5",
-  "configuration": {
-    "strategies": [
-      "legacy-full-history",
-      "recent-window",
-      "summary-plus-tail",
-      "layered-context"
-    ],
-    "contextPolicyVersion": "context-retention-v1"
-  },
-  "scenarioCount": 100,
-  "strategies": {
-    "layered-context": {
-      "count": 25,
-      "p95InputBudgetUtilization": 0.68,
-      "p50LatencyMs": 456.0,
-      "p95LatencyMs": 1120.0,
-      "averageCostUsd": 0.0047
-    },
-    "legacy-full-history": {
-      "count": 25,
-      "p95InputBudgetUtilization": 0.9,
-      "p50LatencyMs": 756.0,
-      "p95LatencyMs": 1710.0,
-      "averageCostUsd": 0.0122
-    },
-    "recent-window": {
-      "count": 25,
-      "p95InputBudgetUtilization": 0.72,
-      "p50LatencyMs": 366.0,
-      "p95LatencyMs": 970.0,
-      "averageCostUsd": 0.0062
-    },
-    "summary-plus-tail": {
-      "count": 25,
-      "p95InputBudgetUtilization": 0.74,
-      "p50LatencyMs": 416.0,
-      "p95LatencyMs": 1050.0,
-      "averageCostUsd": 0.0057
-    }
-  },
-  "safetyGates": {
-    "criticalFactRetention": 1.0,
-    "evidencePointerRetention": 1.0,
-    "crossCaseLeakage": 0,
-    "unauthorizedHistoryExposure": 0,
-    "p95InputBudgetUtilization": 0.89
-  },
-  "failedCaseIds": [],
-  "gatePassed": true
+﻿{
+    "benchmarkVersion":  "context-benchmark-v1",
+    "datasetSha256":  "324a281b6e84b740027a983f4421dcb95d8eb43c0b00508ee530e3a023135fe3",
+    "gitCommit":  "366b026d95057b030d6d400cc6e9fb539a0c1b31",
+    "executionMode":  "offline-fixture",
+    "modelVersion":  "offline-fixture",
+    "thresholds":  {
+                       "criticalFactRetention":  1,
+                       "evidencePointerRetention":  1,
+                       "p95InputBudgetUtilization":  1
+                   },
+    "configuration":  {
+                          "strategies":  [
+                                             "legacy-full-history",
+                                             "recent-window",
+                                             "summary-plus-tail",
+                                             "layered-context"
+                                         ],
+                          "contextPolicyVersion":  "context-retention-v1"
+                      },
+    "scenarioCount":  100,
+    "strategies":  {
+                       "legacy-full-history":  {
+                                                   "count":  25,
+                                                   "p95InputBudgetUtilization":  0.9,
+                                                   "p50LatencyMs":  756,
+                                                   "p95LatencyMs":  1710,
+                                                   "averageCostUsd":  0.0122
+                                               },
+                       "recent-window":  {
+                                             "count":  25,
+                                             "p95InputBudgetUtilization":  0.72,
+                                             "p50LatencyMs":  366,
+                                             "p95LatencyMs":  970,
+                                             "averageCostUsd":  0.0062
+                                         },
+                       "summary-plus-tail":  {
+                                                 "count":  25,
+                                                 "p95InputBudgetUtilization":  0.74,
+                                                 "p50LatencyMs":  416,
+                                                 "p95LatencyMs":  1050,
+                                                 "averageCostUsd":  0.0057
+                                             },
+                       "layered-context":  {
+                                               "count":  25,
+                                               "p95InputBudgetUtilization":  0.68,
+                                               "p50LatencyMs":  456,
+                                               "p95LatencyMs":  1120,
+                                               "averageCostUsd":  0.0047
+                                           }
+                   },
+    "safetyGates":  {
+                        "criticalFactRetention":  1,
+                        "evidencePointerRetention":  1,
+                        "crossCaseLeakage":  0,
+                        "unauthorizedHistoryExposure":  0,
+                        "p95InputBudgetUtilization":  0.89
+                    },
+    "failedCaseIds":  [
+
+                      ],
+    "gatePassed":  true
 }
