@@ -1,17 +1,17 @@
 {
   "benchmarkVersion": "memory-benchmark-v1",
   "benchmarkSha256": "df4010dc2190920c78bb52b3effa245d178fa8627a271709d3c9f24ed8f61740",
-  "gitCommit": "d4498a4db9fc6870b33450770d9bc26196399a8f",
+  "gitCommit": "3ed0608a823a07ff21e1f7f386823e6f23121aa5",
   "scenarioCount": 100,
   "categoryCounts": {
-    "isolation": 10,
-    "conflict": 10,
-    "snapshot": 10,
-    "temporal": 10,
-    "correction": 15,
-    "admission": 20,
     "rejection": 15,
-    "budget": 10
+    "admission": 20,
+    "budget": 10,
+    "correction": 15,
+    "temporal": 10,
+    "isolation": 10,
+    "snapshot": 10,
+    "conflict": 10
   },
   "safetyGates": {
     "crossCaseLeakage": 0,
