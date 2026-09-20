@@ -17,6 +17,11 @@ public record WorkflowNodeDefinition(
         }
     }
 
+    /** Compatibility adapter for legacy workflow JSON that still stores a free-text role. */
+    public RoleRequirement roleRequirement() {
+        return new RoleRequirement(requiredRole, java.util.Set.of(), java.util.Set.of(), java.util.Set.of(), java.util.Set.of(), "LOW", 0.0, requiredRole);
+    }
+
     private static void requireText(String value, String name) {
         if (value == null || value.isBlank()) throw new IllegalArgumentException(name + " must not be blank");
     }
