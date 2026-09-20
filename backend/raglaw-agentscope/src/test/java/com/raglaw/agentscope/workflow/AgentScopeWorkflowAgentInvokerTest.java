@@ -96,6 +96,25 @@ class AgentScopeWorkflowAgentInvokerTest {
                 .hasMessageContaining("runtime does not expose");
     }
 
+    @Test
+    void frozenDeprecatedVersionRemainsExecutableForExistingWorkflow() throws Exception {
+        AgentVersionRegistry registry = mock(AgentVersionRegistry.class);
+        AgentscopeLlmProperties properties = new AgentscopeLlmProperties();
+        properties.setMock(true);
+        AgentVersionSnapshot deprecated = snapshot("labor-expert", 1, Set.of());
+        // Rebuild the immutable snapshot with the lifecycle status used by a frozen manifest.
+        deprecated = new AgentVersionSnapshot(deprecated.agentCode(), deprecated.version(), AgentPublishStatus.DEPRECATED,
+                deprecated.model(), deprecated.systemPrompt(), deprecated.manifest(), deprecated.toolPolicy(), deprecated.skills(),
+                deprecated.knowledgeScopes(), deprecated.mcpServers(), deprecated.evaluationScore(), deprecated.configChecksum());
+        when(registry.get("labor-expert", 1)).thenReturn(deprecated);
+        AgentScopeWorkflowAgentInvoker invoker = new AgentScopeWorkflowAgentInvoker(
+                mock(AgentRunFactory.class), registry, properties, mock(Environment.class), new ObjectMapper(), new AgentscopeMcpProperties());
+        ResolvedWorkflowNode node = new ResolvedWorkflowNode("node", "ROLE", "labor-expert", 1, Set.of(), "", List.of());
+
+        assertThat(invoker.invoke(node, null, "query", new WorkflowExecutionContext("run", "trace", "input", Map.of())).text())
+                .contains("labor-expert@v1");
+    }
+
     private AgentVersionSnapshot snapshot(String code, int version, Set<String> tools) {
         AgentCapabilityManifest manifest = new AgentCapabilityManifest(
                 Set.of("LABOR"), Set.of("STATUTE_RESEARCH"), Set.of("COMPLEX_LEGAL"),

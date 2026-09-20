@@ -10,4 +10,5 @@ public final class ErrorCodes {
     public static final String VALIDATION = "VALIDATION";
     public static final String RATE_LIMITED = "RATE_LIMITED";
     public static final String INTERNAL = "INTERNAL";
+    public static final String AGENT_VERSION_CONFLICT = "AGENT_VERSION_CONFLICT";
 }

@@ -30,6 +30,18 @@ type ToolCatalog = {
   globalMcpEnabled: boolean;
 };
 
+export type AgentVersion = {
+  agentCode: string;
+  version: number;
+  status: string;
+  evaluationScore: number;
+  configChecksum: string;
+};
+
+export function canDisablePublishedVersion(version: AgentVersion | undefined): boolean {
+  return version?.status === 'PUBLISHED';
+}
+
 type CategoryNode = {
   id: string;
   code: string;
@@ -116,6 +128,7 @@ function createDraftAgent(): Agent {
 
 export function AgentsAdminPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [publishedVersions, setPublishedVersions] = useState<AgentVersion[]>([]);
   const [catalog, setCatalog] = useState<ToolCatalog | null>(null);
   const [l2Categories, setL2Categories] = useState<L2CategoryOption[]>([]);
   const [idToCode, setIdToCode] = useState<Map<string, string>>(new Map());
@@ -136,23 +149,28 @@ export function AgentsAdminPage() {
   const l2CodeSet = new Set(l2Categories.map((c) => c.code));
 
   async function loadAgents() {
-    const res = await api<Agent[]>('/api/v1/admin/agents');
+    const [res, versionsRes] = await Promise.all([
+      api<Agent[]>('/api/v1/admin/agents'),
+      api<AgentVersion[]>('/api/v1/admin/agent-versions/published'),
+    ]);
     if (res.success) {
       setAgents(res.data);
       setError(null);
     } else {
       setError(res.error?.message ?? '加载 Agent 列表失败');
     }
+    if (versionsRes.success) setPublishedVersions(versionsRes.data);
   }
 
   useEffect(() => {
     void (async () => {
       setLoading(true);
       setError(null);
-      const [agentsRes, catRes, catalogRes] = await Promise.all([
+      const [agentsRes, catRes, catalogRes, versionsRes] = await Promise.all([
         api<Agent[]>('/api/v1/admin/agents'),
         api<CategoryNode[]>('/api/v1/categories/tree'),
         api<ToolCatalog>('/api/v1/admin/agents/catalog'),
+        api<AgentVersion[]>('/api/v1/admin/agent-versions/published'),
       ]);
       if (agentsRes.success) setAgents(agentsRes.data);
       else setError(agentsRes.error?.message ?? '加载 Agent 列表失败');
@@ -161,6 +179,7 @@ export function AgentsAdminPage() {
         setIdToCode(buildIdToCodeMap(catRes.data));
       }
       if (catalogRes.success) setCatalog(catalogRes.data);
+      if (versionsRes.success) setPublishedVersions(versionsRes.data);
       setLoading(false);
     })();
   }, []);
@@ -268,6 +287,18 @@ export function AgentsAdminPage() {
     }
   }
 
+  async function disablePublishedVersion(agent: Agent) {
+    const version = publishedVersions.find((item) => item.agentCode === agent.code);
+    if (!version || !canDisablePublishedVersion(version)) return;
+    const res = await api<AgentVersion>(`/api/v1/admin/agent-versions/${agent.code}/${version.version}/disable`, { method: 'POST' });
+    if (res.success) {
+      setMessage(`已禁用 ${agent.code} v${version.version}；已运行工作流仍使用其冻结版本`);
+      void loadAgents();
+    } else {
+      setMessage(res.error?.message ?? '禁用版本失败');
+    }
+  }
+
   return (
     <div>
       <MainHeader title="Agent 配置" />
@@ -305,6 +336,7 @@ export function AgentsAdminPage() {
                   <th>类型</th>
                   <th>模型</th>
                   <th>工具</th>
+                  <th>已发布版本</th>
                   <th>状态</th>
                   <th />
                 </tr>
@@ -323,6 +355,12 @@ export function AgentsAdminPage() {
                       {toolBadges(a).length === 0 && <span className="rl-muted">—</span>}
                     </td>
                     <td>
+                      {(() => {
+                        const version = publishedVersions.find((item) => item.agentCode === a.code);
+                        return version ? <Badge variant="muted">v{version.version} · {version.evaluationScore.toFixed(2)}</Badge> : <span className="rl-muted">未发布</span>;
+                      })()}
+                    </td>
+                    <td>
                       <Badge variant={a.enabled ? 'success' : 'muted'}>
                         {a.enabled ? '启用' : '禁用'}
                       </Badge>
@@ -332,6 +370,9 @@ export function AgentsAdminPage() {
                         <Button variant="ghost" onClick={() => openEdit(a)}>编辑</Button>
                         {!BUILTIN_AGENT_CODES.has(a.code) && (
                           <Button variant="ghost" onClick={() => void removeAgent(a)}>删除</Button>
+                        )}
+                        {publishedVersions.some((item) => item.agentCode === a.code && item.status === 'PUBLISHED') && (
+                          <Button variant="ghost" onClick={() => void disablePublishedVersion(a)}>禁用版本</Button>
                         )}
                       </div>
                     </td>

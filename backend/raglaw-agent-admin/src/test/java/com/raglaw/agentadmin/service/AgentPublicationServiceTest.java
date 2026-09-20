@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raglaw.agentadmin.domain.AgentPublishStatus;
 import com.raglaw.agentadmin.domain.AgentVersionEntity;
 import com.raglaw.agentadmin.domain.AgentVersionRepository;
+import com.raglaw.agentadmin.dto.CreateAgentVersionRequest;
 import com.raglaw.agentadmin.model.AgentCapabilityManifest;
 import com.raglaw.agentadmin.model.AgentToolPolicy;
 import com.raglaw.agentadmin.registry.AgentVersionRegistry;
@@ -32,7 +33,7 @@ class AgentPublicationServiceTest {
         when(repository.findByAgentCodeAndVersion("labor_expert", 2)).thenReturn(Optional.of(version));
         when(repository.findTopByAgentCodeAndStatusOrderByVersionDesc("labor_expert", AgentPublishStatus.PUBLISHED)).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(repository.findByStatusOrderByAgentCodeAscVersionDesc(AgentPublishStatus.PUBLISHED)).thenReturn(List.of());
+        when(repository.findAllByOrderByAgentCodeAscVersionDesc()).thenReturn(List.of());
         service = new AgentPublicationService(repository, new AgentManifestValidator(), new AgentVersionRegistry(), new ObjectMapper());
     }
 
@@ -51,11 +52,35 @@ class AgentPublicationServiceTest {
         assertThat(version.getPublishedBy()).isEqualTo("admin");
     }
 
+    @Test
+    void draftCannotBePublishedBeforeValidation() {
+        version = entity("labor_expert", 2, AgentPublishStatus.DRAFT, 0.95);
+        when(repository.findByAgentCodeAndVersion("labor_expert", 2)).thenReturn(Optional.of(version));
+        assertThatThrownBy(() -> service.publishReadyVersion("labor_expert", 2, "admin"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Only shadow");
+    }
+
+    @Test
+    void createVersionStartsAsDraftAndDoesNotEnterRegistry() {
+        when(repository.findTopByAgentCodeOrderByVersionDesc("labor_expert")).thenReturn(Optional.empty());
+        var created = service.createVersion("labor_expert", new CreateAgentVersionRequest(
+                null, "dashscope:qwen-plus", "prompt", manifest(), new AgentToolPolicy(List.of(), Set.of()),
+                List.of(), List.of(), List.of(), 0.0, "sha-new"), "admin");
+        assertThat(created.status()).isEqualTo(AgentPublishStatus.DRAFT);
+        assertThat(service.publishedCandidates()).isEmpty();
+    }
+
+    private static AgentCapabilityManifest manifest() {
+        return new AgentCapabilityManifest(Set.of("LABOR_LAW"), Set.of("LEGAL_ANALYSIS"),
+                Set.of("LEGAL_ANALYSIS"), Set.of("HIGH"), Set.of(), "Result");
+    }
+
     private static AgentVersionEntity entity(String code, int version, AgentPublishStatus status, double score) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             return new AgentVersionEntity("id-" + version, code, version, status, "dashscope:qwen-plus", "prompt",
-                    mapper.writeValueAsString(new AgentCapabilityManifest(Set.of("LABOR_LAW"), Set.of("LEGAL_ANALYSIS"), Set.of("LEGAL_ANALYSIS"), Set.of("HIGH"), Set.of(), "Result")),
+                    mapper.writeValueAsString(manifest()),
                     mapper.writeValueAsString(new AgentToolPolicy(List.of(), Set.of())), "[]", "[]", "[]", score, "sha-" + version, Instant.now());
         } catch (Exception exception) {
             throw new IllegalStateException(exception);

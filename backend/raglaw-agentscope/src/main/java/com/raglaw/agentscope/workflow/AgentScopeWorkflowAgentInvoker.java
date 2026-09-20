@@ -51,7 +51,7 @@ public class AgentScopeWorkflowAgentInvoker implements WorkflowAgentInvoker {
     public AgentInvocationResult invoke(ResolvedWorkflowNode node, WorkflowContextView context,
                                        String prompt, WorkflowExecutionContext executionContext) throws Exception {
         AgentVersionSnapshot snapshot = registry.get(node.agentCode(), node.agentVersion());
-        if (snapshot == null || snapshot.status() != AgentPublishStatus.PUBLISHED) {
+        if (snapshot == null || !isUsableFrozenVersion(snapshot.status())) {
             throw new IllegalStateException("frozen expert version unavailable: " + node.agentCode() + "@v" + node.agentVersion());
         }
         if (!snapshot.toolPolicy().toolNames().containsAll(node.effectiveTools())) {
@@ -96,6 +96,12 @@ public class AgentScopeWorkflowAgentInvoker implements WorkflowAgentInvoker {
         metadata.put("promptBytes", objectMapper.writeValueAsBytes(prompt).length);
         return new AgentInvocationResult(
                 answer.toString(), session.hits().stream().map(hit -> hit.chunkId()).filter(id -> id != null && !id.isBlank()).toList(), metadata);
+    }
+
+    private static boolean isUsableFrozenVersion(AgentPublishStatus status) {
+        return status == AgentPublishStatus.PUBLISHED
+                || status == AgentPublishStatus.DEPRECATED
+                || status == AgentPublishStatus.DISABLED;
     }
 
     private void validateConfiguredRuntimeTools(ResolvedWorkflowNode node) {

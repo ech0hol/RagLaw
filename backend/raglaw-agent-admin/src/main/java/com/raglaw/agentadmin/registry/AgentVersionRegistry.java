@@ -15,13 +15,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class AgentVersionRegistry {
     private volatile Map<String, List<AgentVersionSnapshot>> published = Map.of();
+    private volatile Map<String, List<AgentVersionSnapshot>> allVersions = Map.of();
 
     public void reload(Collection<AgentVersionSnapshot> snapshots) {
-        Map<String, List<AgentVersionSnapshot>> next = snapshots.stream()
-                .filter(snapshot -> snapshot.status() == AgentPublishStatus.PUBLISHED)
+        Map<String, List<AgentVersionSnapshot>> all = snapshots.stream()
                 .collect(Collectors.groupingBy(AgentVersionSnapshot::agentCode,
                         Collectors.collectingAndThen(Collectors.toList(), values -> values.stream()
                                 .sorted(Comparator.comparingInt(AgentVersionSnapshot::version).reversed()).toList())));
+        Map<String, List<AgentVersionSnapshot>> next = all.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        entry -> entry.getValue().stream().filter(snapshot -> snapshot.status() == AgentPublishStatus.PUBLISHED).toList()));
+        this.allVersions = Collections.unmodifiableMap(new ConcurrentHashMap<>(all));
         this.published = Collections.unmodifiableMap(new ConcurrentHashMap<>(next));
     }
 
@@ -35,7 +39,7 @@ public class AgentVersionRegistry {
     }
 
     public AgentVersionSnapshot get(String agentCode, int version) {
-        return published.getOrDefault(agentCode, List.of()).stream()
+        return allVersions.getOrDefault(agentCode, List.of()).stream()
                 .filter(snapshot -> snapshot.version() == version).findFirst().orElse(null);
     }
 }

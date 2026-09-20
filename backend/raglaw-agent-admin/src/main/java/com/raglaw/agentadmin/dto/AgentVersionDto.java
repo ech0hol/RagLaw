@@ -10,6 +10,7 @@ public record AgentVersionDto(
         double evaluationScore,
         String configChecksum,
         Instant createdAt,
+        String createdBy,
         Instant publishedAt,
         String publishedBy
 ) {}
