@@ -36,6 +36,12 @@ export type AgentVersion = {
   status: string;
   evaluationScore: number;
   configChecksum: string;
+  createdAt?: string | null;
+  createdBy?: string | null;
+  publishedAt?: string | null;
+  publishedBy?: string | null;
+  transitionedAt?: string | null;
+  transitionedBy?: string | null;
 };
 
 export function canDisablePublishedVersion(version: AgentVersion | undefined): boolean {
@@ -129,6 +135,9 @@ function createDraftAgent(): Agent {
 export function AgentsAdminPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [publishedVersions, setPublishedVersions] = useState<AgentVersion[]>([]);
+  const [historyAgentCode, setHistoryAgentCode] = useState<string | null>(null);
+  const [historyVersions, setHistoryVersions] = useState<AgentVersion[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [catalog, setCatalog] = useState<ToolCatalog | null>(null);
   const [l2Categories, setL2Categories] = useState<L2CategoryOption[]>([]);
   const [idToCode, setIdToCode] = useState<Map<string, string>>(new Map());
@@ -299,6 +308,32 @@ export function AgentsAdminPage() {
     }
   }
 
+  async function loadHistory(agentCode: string) {
+    setHistoryAgentCode(agentCode);
+    setHistoryLoading(true);
+    const res = await api<AgentVersion[]>(`/api/v1/admin/agent-versions/${agentCode}/history`);
+    if (res.success) setHistoryVersions(res.data);
+    else setMessage(res.error?.message ?? '加载版本历史失败');
+    setHistoryLoading(false);
+  }
+
+  async function transitionVersion(version: AgentVersion, action: 'validate' | 'shadow' | 'publish' | 'disable' | 'archive') {
+    const base = `/api/v1/admin/agent-versions/${version.agentCode}/${version.version}`;
+    const res = action === 'publish'
+      ? await api<AgentVersion>(`/api/v1/admin/agent-versions/${version.agentCode}/publish`, {
+        method: 'POST', body: JSON.stringify({ version: version.version, evaluationVersion: 'manual' }),
+      })
+      : await api<AgentVersion>(`${base}/${action}`, { method: 'POST' });
+    if (res.success) {
+      const labels = { validate: '提交校验', shadow: '进入影子', publish: '发布', disable: '禁用', archive: '归档' };
+      setMessage(`${version.agentCode} v${version.version} 已${labels[action]}`);
+      await loadHistory(version.agentCode);
+      await loadAgents();
+    } else {
+      setMessage(res.error?.message ?? '版本操作失败');
+    }
+  }
+
   return (
     <div>
       <MainHeader title="Agent 配置" />
@@ -368,6 +403,7 @@ export function AgentsAdminPage() {
                     <td>
                       <div className="rl-table-actions">
                         <Button variant="ghost" onClick={() => openEdit(a)}>编辑</Button>
+                        <Button variant="ghost" onClick={() => void loadHistory(a.code)}>版本历史</Button>
                         {!BUILTIN_AGENT_CODES.has(a.code) && (
                           <Button variant="ghost" onClick={() => void removeAgent(a)}>删除</Button>
                         )}
@@ -381,6 +417,42 @@ export function AgentsAdminPage() {
               </tbody>
             </table>
           </div>
+        </Card>
+      )}
+
+      {historyAgentCode && (
+        <Card style={{ marginTop: '1rem' }}>
+          <div className="rl-admin-toolbar" style={{ justifyContent: 'space-between' }}>
+            <h3 style={{ margin: 0 }}>版本历史 · {historyAgentCode}</h3>
+            <Button variant="ghost" onClick={() => setHistoryAgentCode(null)}>关闭</Button>
+          </div>
+          {historyLoading ? <Spinner /> : (
+            <div className="rl-data-table-wrap">
+              <table className="rl-data-table">
+                <thead><tr><th>版本</th><th>状态</th><th>评估分</th><th>创建人</th><th>状态变更</th><th /></tr></thead>
+                <tbody>
+                  {historyVersions.map((version) => (
+                    <tr key={`${version.agentCode}-${version.version}`}>
+                      <td>v{version.version}</td>
+                      <td><Badge variant={version.status === 'PUBLISHED' ? 'success' : 'muted'}>{version.status}</Badge></td>
+                      <td>{version.evaluationScore.toFixed(2)}</td>
+                      <td>{version.createdBy ?? '—'}</td>
+                      <td>{version.transitionedBy ? `${version.transitionedBy} · ${version.transitionedAt ?? ''}` : '—'}</td>
+                      <td>
+                        <div className="rl-table-actions">
+                          {version.status === 'DRAFT' && <Button variant="ghost" onClick={() => void transitionVersion(version, 'validate')}>校验</Button>}
+                          {version.status === 'VALIDATING' && <Button variant="ghost" onClick={() => void transitionVersion(version, 'shadow')}>进入影子</Button>}
+                          {version.status === 'SHADOW' && version.evaluationScore >= 0.8 && <Button variant="ghost" onClick={() => void transitionVersion(version, 'publish')}>发布</Button>}
+                          {version.status === 'PUBLISHED' && <Button variant="ghost" onClick={() => void transitionVersion(version, 'disable')}>禁用</Button>}
+                          {(version.status === 'DEPRECATED' || version.status === 'DISABLED') && <Button variant="ghost" onClick={() => void transitionVersion(version, 'archive')}>归档</Button>}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card>
       )}
 
