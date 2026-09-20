@@ -1,7 +1,7 @@
 ﻿# Workflow state evaluation (workflow-state-benchmark-v1)
 
 - Dataset SHA-256: c101867d03dbf39067d6df3e248860cb474c801aa33d52efcfe3216e153de9de
-- Git commit: 366b026d95057b030d6d400cc6e9fb539a0c1b31
+- Git commit: 7092e833c40cd960efb7bc50006e0fe001a01a59
 - Frozen scenarios: 60
 - Configuration: offline fixture / workflow-state-safety-v1
 

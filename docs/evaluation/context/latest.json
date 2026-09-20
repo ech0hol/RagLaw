@@ -1,7 +1,7 @@
 ﻿{
     "benchmarkVersion":  "context-benchmark-v1",
     "datasetSha256":  "324a281b6e84b740027a983f4421dcb95d8eb43c0b00508ee530e3a023135fe3",
-    "gitCommit":  "366b026d95057b030d6d400cc6e9fb539a0c1b31",
+    "gitCommit":  "7092e833c40cd960efb7bc50006e0fe001a01a59",
     "executionMode":  "offline-fixture",
     "modelVersion":  "offline-fixture",
     "thresholds":  {

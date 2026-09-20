@@ -1,7 +1,7 @@
 ﻿# Context evaluation (context-benchmark-v1)
 
 - Dataset SHA-256: 324a281b6e84b740027a983f4421dcb95d8eb43c0b00508ee530e3a023135fe3
-- Git commit: 366b026d95057b030d6d400cc6e9fb539a0c1b31
+- Git commit: 7092e833c40cd960efb7bc50006e0fe001a01a59
 - Execution mode: offline fixture (no live model or runtime replay)
 - Model version: offline-fixture
 - Frozen scenarios: 100

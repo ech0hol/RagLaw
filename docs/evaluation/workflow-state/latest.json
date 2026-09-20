@@ -1,7 +1,7 @@
 ﻿{
     "benchmarkVersion":  "workflow-state-benchmark-v1",
     "datasetSha256":  "c101867d03dbf39067d6df3e248860cb474c801aa33d52efcfe3216e153de9de",
-    "gitCommit":  "366b026d95057b030d6d400cc6e9fb539a0c1b31",
+    "gitCommit":  "7092e833c40cd960efb7bc50006e0fe001a01a59",
     "executionMode":  "offline-fixture",
     "modelVersion":  "offline-fixture",
     "thresholds":  {
