@@ -81,6 +81,23 @@ public class ConversationService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<String> findCaseId(String userId, String conversationId) {
+        return conversationRepository.findById(conversationId)
+                .filter(conversation -> conversation.getUserId().equals(userId))
+                .map(ConversationEntity::getCaseId)
+                .filter(id -> id != null && !id.isBlank());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<String> findLastUserMessageId(String userId, String conversationId) {
+        return conversationRepository.findById(conversationId)
+                .filter(conversation -> conversation.getUserId().equals(userId))
+                .flatMap(conversation -> messageRepository
+                        .findTopByConversationIdAndRoleOrderByCreatedAtDesc(conversationId, "user")
+                        .map(MessageEntity::getId));
+    }
+
+    @Transactional(readOnly = true)
     public Optional<ConversationDto> get(String userId, String conversationId) {
         return conversationRepository.findById(conversationId)
                 .filter(conversation -> conversation.getUserId().equals(userId))

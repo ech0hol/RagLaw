@@ -5,6 +5,9 @@ import com.raglaw.agentadmin.registry.AgentRegistry;
 import com.raglaw.agentscope.agui.dto.AguiRunRequest;
 import com.raglaw.agentscope.trace.TraceContext;
 import com.raglaw.agentscope.trace.TraceRecorder;
+import com.raglaw.agentscope.memory.MemoryCoordinator;
+import com.raglaw.memory.casefile.CaseScope;
+import com.raglaw.chat.dto.MessageDto;
 import com.raglaw.chat.service.ConversationService;
 import com.raglaw.common.auth.CurrentUserHolder;
 import java.io.IOException;
@@ -33,6 +36,8 @@ public class AguiRunService {
     private final Environment environment;
     private final AguiReactRunFacade reactRunFacade;
     private final ExecutorService executor = Executors.newCachedThreadPool();
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private MemoryCoordinator memoryCoordinator;
 
     public AguiRunService(
             AgentRegistry agentRegistry,
@@ -95,6 +100,7 @@ public class AguiRunService {
         boolean regenerate = Boolean.TRUE.equals(request.regenerate());
 
         String userMessage;
+        String userMessageId = null;
         if (regenerate) {
             String assistantMessageId = request.regenerateFromMessageId();
             if (assistantMessageId == null || assistantMessageId.isBlank()) {
@@ -115,8 +121,16 @@ public class AguiRunService {
             if (userMessage == null || userMessage.isBlank()) {
                 throw new IllegalArgumentException("消息不能为空");
             }
-            conversationService.appendMessage(userId, conversationId, "user", userMessage, null)
+            MessageDto persistedUserMessage = conversationService.appendMessage(userId, conversationId, "user", userMessage, null)
                     .orElseThrow(() -> new IllegalArgumentException("会话不存在或无权访问"));
+            userMessageId = persistedUserMessage.id();
+            if (memoryCoordinator != null) {
+                String correctionSourceId = userMessageId;
+                String correctionText = userMessage;
+                conversationService.findCaseId(userId, conversationId).ifPresent(caseId ->
+                        memoryCoordinator.processBeforeSnapshot(
+                                new CaseScope("default", userId, caseId), correctionSourceId, correctionText, userId));
+            }
         }
 
         TraceContext trace = traceRecorder.start(
@@ -151,6 +165,13 @@ public class AguiRunService {
                 trace,
                 contextDocumentId
         );
+        if (memoryCoordinator != null && userMessageId != null) {
+            String sourceId = userMessageId;
+            String ordinaryText = userMessage;
+            conversationService.findCaseId(userId, conversationId).ifPresent(caseId ->
+                    memoryCoordinator.queueOrdinary(
+                            new CaseScope("default", userId, caseId), sourceId, ordinaryText, userId));
+        }
     }
 
     private String resolveConversationId(AguiRunRequest request, String userId, String agentCode) {
