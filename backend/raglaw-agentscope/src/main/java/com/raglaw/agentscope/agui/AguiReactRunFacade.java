@@ -13,6 +13,8 @@ import com.raglaw.agentscope.routing.RoutingRequest;
 import com.raglaw.agentscope.routing.WorkflowCatalog;
 import com.raglaw.agentscope.config.RoutingMode;
 import com.raglaw.agentscope.config.RoutingProperties;
+import com.raglaw.agentscope.config.MemoryMode;
+import com.raglaw.agentscope.config.MemoryProperties;
 import com.raglaw.agentscope.workflow.WorkflowRunService;
 import com.raglaw.agentscope.runtime.AgentRunFactory;
 import com.raglaw.agentscope.runtime.AgentRunSession;
@@ -27,6 +29,11 @@ import com.raglaw.rag.tool.RagSearchResult;
 import com.raglaw.rag.tool.RagSearchTool;
 import com.raglaw.agentscope.tools.AgentscopeRagSearchTool;
 import com.raglaw.memory.casefile.CaseScope;
+import com.raglaw.memory.service.AssembledContext;
+import com.raglaw.memory.service.CaseMemorySnapshot;
+import com.raglaw.memory.service.ContextAssembler;
+import com.raglaw.memory.service.ContextRequest;
+import com.raglaw.memory.service.MemorySnapshotService;
 import io.agentscope.core.ReActAgent;
 import io.agentscope.core.agent.RuntimeContext;
 import io.agentscope.core.event.AgentEvent;
@@ -63,6 +70,9 @@ public class AguiReactRunFacade {
     @org.springframework.beans.factory.annotation.Autowired(required = false) private TaskRoutingService taskRoutingService;
     @org.springframework.beans.factory.annotation.Autowired(required = false) private WorkflowRunService workflowRunService;
     @org.springframework.beans.factory.annotation.Autowired(required = false) private RoutingProperties routingProperties;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private MemoryProperties memoryProperties;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private MemorySnapshotService memorySnapshotService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private ContextAssembler contextAssembler;
 
     public AguiReactRunFacade(
             ExpertRouter expertRouter,
@@ -159,9 +169,10 @@ public class AguiReactRunFacade {
         maybePresearchCatalog(emitter, session, expert, userMessage, trace);
         maybePresearchKnowledge(emitter, session, expert, userMessage, trace);
 
+        String contextAwareMessage = applyMemoryContext(userId, conversationId, userMessage, trace);
         ContractChatContext chatContext = contractChatContextBuilder.enrichUserMessage(
                 contextDocumentId,
-                userMessage
+                contextAwareMessage
         );
         String llmMessage = chatContext.message();
         if (chatContext.injected()) {
@@ -244,6 +255,28 @@ public class AguiReactRunFacade {
                 "latencyMs", latency
         ));
         emitter.complete();
+    }
+
+    private String applyMemoryContext(String userId, String conversationId, String userMessage, TraceContext trace) {
+        MemoryMode mode = memoryProperties == null ? MemoryMode.SHADOW : memoryProperties.getMode();
+        if (mode == MemoryMode.OFF || memorySnapshotService == null || contextAssembler == null) return userMessage;
+        java.util.Optional<String> caseId = conversationService.findCaseId(userId, conversationId);
+        if (caseId == null || caseId.isEmpty()) return userMessage;
+        CaseScope scope = new CaseScope("default", userId, caseId.get());
+        CaseMemorySnapshot snapshot = memorySnapshotService.freeze(scope);
+        int maxChars = memoryProperties == null ? 8_000 : memoryProperties.getMaxCharacters();
+        AssembledContext assembled = contextAssembler.assemble(new ContextRequest(
+                snapshot, "GENERAL_CONSULTATION", java.util.Set.of(), maxChars));
+        traceRecorder.recordStage(trace.traceId(), "memory_context", Map.of(
+                "mode", mode.name(),
+                "snapshotVersion", snapshot.version(),
+                "memoryCount", assembled.memoryIds().size(),
+                "sourceCount", assembled.sourceIds().size(),
+                "characters", assembled.characters(),
+                "truncated", assembled.truncated()
+        ), 0L);
+        if (mode == MemoryMode.SHADOW || assembled.memoryIds().isEmpty()) return userMessage;
+        return userMessage + "\n\n" + assembled.dataBlock();
     }
 
     private boolean enforceWorkflowBoundary(SseEmitter emitter, TraceContext trace, String query, String userId,
