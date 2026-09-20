@@ -18,7 +18,8 @@ The implementation remains reversible. Routing and context defaults stay in `SHA
 - Frontend production build: passed with existing PDF worker and chunk-size warnings.
 - Focused `IngestPipelineTest`: 6 passed after removing stale Mockito stubs.
 - Full backend `mvn test`: **blocked** by the Java 22 compiler failing while compiling `raglaw-memory` tests; this is not treated as a quality pass.
-- Live model replay and API/Playwright acceptance: not counted as passed in this environment.
+- Live model replay and API acceptance: not counted as passed in this environment.
+- Playwright smoke: blocked as expected because the Vite proxy received `ECONNREFUSED` for `/api/v1/auth/login`; no backend service was running.
 
 ## Release rule
 
