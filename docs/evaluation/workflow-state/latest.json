@@ -1,0 +1,25 @@
+{
+  "benchmarkVersion": "workflow-state-benchmark-v1",
+  "datasetSha256": "c101867d03dbf39067d6df3e248860cb474c801aa33d52efcfe3216e153de9de",
+  "gitCommit": "ae03055377b0771148c02b0d2c3a1b6ed58bbaf5",
+  "configuration": {
+    "modelVersion": "offline-fixture",
+    "workflowPolicyVersion": "workflow-state-safety-v1",
+    "candidates": [
+      "durable-coordinator"
+    ]
+  },
+  "scenarioCount": 60,
+  "metrics": {
+    "completionRate": 1.0,
+    "expertTop1Accuracy": 1.0,
+    "noCandidateAccuracy": 1.0,
+    "p95ContextBudgetUtilization": 0.82,
+    "p50LatencyMs": 525.0,
+    "p95LatencyMs": 1420.0,
+    "averageCostUsd": 0.0085
+  },
+  "safetyViolations": 0,
+  "failedCaseIds": [],
+  "gatePassed": true
+}

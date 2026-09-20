@@ -1,0 +1,1917 @@
+{
+  "benchmarkVersion": "context-benchmark-v1",
+  "description": "Frozen critical-fact and evidence-pointer retention scenarios.",
+  "thresholds": {
+    "criticalFactRetention": 1,
+    "evidencePointerRetention": 1,
+    "p95InputBudgetUtilization": 1
+  },
+  "strategies": [
+    "legacy-full-history",
+    "recent-window",
+    "summary-plus-tail",
+    "layered-context"
+  ],
+  "scenarios": [
+    {
+      "id": "context-001",
+      "strategy": "legacy-full-history",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-01"
+      ],
+      "evidencePointers": [
+        "evidence-01"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.86,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 720,
+      "p95LatencyMs": 1500,
+      "estimatedCostUsd": 0.012
+    },
+    {
+      "id": "context-002",
+      "strategy": "legacy-full-history",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-02"
+      ],
+      "evidencePointers": [
+        "evidence-02"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.87,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 738,
+      "p95LatencyMs": 1535,
+      "estimatedCostUsd": 0.0122
+    },
+    {
+      "id": "context-003",
+      "strategy": "legacy-full-history",
+      "category": "party",
+      "criticalFacts": [
+        "fact-03"
+      ],
+      "evidencePointers": [
+        "evidence-03"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.88,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 756,
+      "p95LatencyMs": 1570,
+      "estimatedCostUsd": 0.0124
+    },
+    {
+      "id": "context-004",
+      "strategy": "legacy-full-history",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-04"
+      ],
+      "evidencePointers": [
+        "evidence-04"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.89,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 774,
+      "p95LatencyMs": 1605,
+      "estimatedCostUsd": 0.012
+    },
+    {
+      "id": "context-005",
+      "strategy": "legacy-full-history",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-05"
+      ],
+      "evidencePointers": [
+        "evidence-05"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.9,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 792,
+      "p95LatencyMs": 1640,
+      "estimatedCostUsd": 0.0122
+    },
+    {
+      "id": "context-006",
+      "strategy": "legacy-full-history",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-06"
+      ],
+      "evidencePointers": [
+        "evidence-06"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.86,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 720,
+      "p95LatencyMs": 1675,
+      "estimatedCostUsd": 0.0124
+    },
+    {
+      "id": "context-007",
+      "strategy": "legacy-full-history",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-07"
+      ],
+      "evidencePointers": [
+        "evidence-07"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.87,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 738,
+      "p95LatencyMs": 1710,
+      "estimatedCostUsd": 0.012
+    },
+    {
+      "id": "context-008",
+      "strategy": "legacy-full-history",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-08"
+      ],
+      "evidencePointers": [
+        "evidence-08"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.88,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 756,
+      "p95LatencyMs": 1500,
+      "estimatedCostUsd": 0.0122
+    },
+    {
+      "id": "context-009",
+      "strategy": "legacy-full-history",
+      "category": "party",
+      "criticalFacts": [
+        "fact-09"
+      ],
+      "evidencePointers": [
+        "evidence-09"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.89,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 774,
+      "p95LatencyMs": 1535,
+      "estimatedCostUsd": 0.0124
+    },
+    {
+      "id": "context-010",
+      "strategy": "legacy-full-history",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-10"
+      ],
+      "evidencePointers": [
+        "evidence-10"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.9,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 792,
+      "p95LatencyMs": 1570,
+      "estimatedCostUsd": 0.012
+    },
+    {
+      "id": "context-011",
+      "strategy": "legacy-full-history",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-11"
+      ],
+      "evidencePointers": [
+        "evidence-11"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.86,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 720,
+      "p95LatencyMs": 1605,
+      "estimatedCostUsd": 0.0122
+    },
+    {
+      "id": "context-012",
+      "strategy": "legacy-full-history",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-12"
+      ],
+      "evidencePointers": [
+        "evidence-12"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.87,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 738,
+      "p95LatencyMs": 1640,
+      "estimatedCostUsd": 0.0124
+    },
+    {
+      "id": "context-013",
+      "strategy": "legacy-full-history",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-13"
+      ],
+      "evidencePointers": [
+        "evidence-13"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.88,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 756,
+      "p95LatencyMs": 1675,
+      "estimatedCostUsd": 0.012
+    },
+    {
+      "id": "context-014",
+      "strategy": "legacy-full-history",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-14"
+      ],
+      "evidencePointers": [
+        "evidence-14"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.89,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 774,
+      "p95LatencyMs": 1710,
+      "estimatedCostUsd": 0.0122
+    },
+    {
+      "id": "context-015",
+      "strategy": "legacy-full-history",
+      "category": "party",
+      "criticalFacts": [
+        "fact-15"
+      ],
+      "evidencePointers": [
+        "evidence-15"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.9,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 792,
+      "p95LatencyMs": 1500,
+      "estimatedCostUsd": 0.0124
+    },
+    {
+      "id": "context-016",
+      "strategy": "legacy-full-history",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-16"
+      ],
+      "evidencePointers": [
+        "evidence-16"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.86,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 720,
+      "p95LatencyMs": 1535,
+      "estimatedCostUsd": 0.012
+    },
+    {
+      "id": "context-017",
+      "strategy": "legacy-full-history",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-17"
+      ],
+      "evidencePointers": [
+        "evidence-17"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.87,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 738,
+      "p95LatencyMs": 1570,
+      "estimatedCostUsd": 0.0122
+    },
+    {
+      "id": "context-018",
+      "strategy": "legacy-full-history",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-18"
+      ],
+      "evidencePointers": [
+        "evidence-18"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.88,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 756,
+      "p95LatencyMs": 1605,
+      "estimatedCostUsd": 0.0124
+    },
+    {
+      "id": "context-019",
+      "strategy": "legacy-full-history",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-19"
+      ],
+      "evidencePointers": [
+        "evidence-19"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.89,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 774,
+      "p95LatencyMs": 1640,
+      "estimatedCostUsd": 0.012
+    },
+    {
+      "id": "context-020",
+      "strategy": "legacy-full-history",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-20"
+      ],
+      "evidencePointers": [
+        "evidence-20"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.9,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 792,
+      "p95LatencyMs": 1675,
+      "estimatedCostUsd": 0.0122
+    },
+    {
+      "id": "context-021",
+      "strategy": "legacy-full-history",
+      "category": "party",
+      "criticalFacts": [
+        "fact-01"
+      ],
+      "evidencePointers": [
+        "evidence-01"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.86,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 720,
+      "p95LatencyMs": 1710,
+      "estimatedCostUsd": 0.0124
+    },
+    {
+      "id": "context-022",
+      "strategy": "legacy-full-history",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-02"
+      ],
+      "evidencePointers": [
+        "evidence-02"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.87,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 738,
+      "p95LatencyMs": 1500,
+      "estimatedCostUsd": 0.012
+    },
+    {
+      "id": "context-023",
+      "strategy": "legacy-full-history",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-03"
+      ],
+      "evidencePointers": [
+        "evidence-03"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.88,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 756,
+      "p95LatencyMs": 1535,
+      "estimatedCostUsd": 0.0122
+    },
+    {
+      "id": "context-024",
+      "strategy": "legacy-full-history",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-04"
+      ],
+      "evidencePointers": [
+        "evidence-04"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.89,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 774,
+      "p95LatencyMs": 1570,
+      "estimatedCostUsd": 0.0124
+    },
+    {
+      "id": "context-025",
+      "strategy": "legacy-full-history",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-05"
+      ],
+      "evidencePointers": [
+        "evidence-05"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.9,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 792,
+      "p95LatencyMs": 1605,
+      "estimatedCostUsd": 0.012
+    },
+    {
+      "id": "context-026",
+      "strategy": "recent-window",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-06"
+      ],
+      "evidencePointers": [
+        "evidence-06"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.68,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 330,
+      "p95LatencyMs": 760,
+      "estimatedCostUsd": 0.006
+    },
+    {
+      "id": "context-027",
+      "strategy": "recent-window",
+      "category": "party",
+      "criticalFacts": [
+        "fact-07"
+      ],
+      "evidencePointers": [
+        "evidence-07"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.69,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 348,
+      "p95LatencyMs": 795,
+      "estimatedCostUsd": 0.0062
+    },
+    {
+      "id": "context-028",
+      "strategy": "recent-window",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-08"
+      ],
+      "evidencePointers": [
+        "evidence-08"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.7,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 366,
+      "p95LatencyMs": 830,
+      "estimatedCostUsd": 0.0064
+    },
+    {
+      "id": "context-029",
+      "strategy": "recent-window",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-09"
+      ],
+      "evidencePointers": [
+        "evidence-09"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.71,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 384,
+      "p95LatencyMs": 865,
+      "estimatedCostUsd": 0.006
+    },
+    {
+      "id": "context-030",
+      "strategy": "recent-window",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-10"
+      ],
+      "evidencePointers": [
+        "evidence-10"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.72,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 402,
+      "p95LatencyMs": 900,
+      "estimatedCostUsd": 0.0062
+    },
+    {
+      "id": "context-031",
+      "strategy": "recent-window",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-11"
+      ],
+      "evidencePointers": [
+        "evidence-11"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.68,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 330,
+      "p95LatencyMs": 935,
+      "estimatedCostUsd": 0.0064
+    },
+    {
+      "id": "context-032",
+      "strategy": "recent-window",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-12"
+      ],
+      "evidencePointers": [
+        "evidence-12"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.69,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 348,
+      "p95LatencyMs": 970,
+      "estimatedCostUsd": 0.006
+    },
+    {
+      "id": "context-033",
+      "strategy": "recent-window",
+      "category": "party",
+      "criticalFacts": [
+        "fact-13"
+      ],
+      "evidencePointers": [
+        "evidence-13"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.7,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 366,
+      "p95LatencyMs": 760,
+      "estimatedCostUsd": 0.0062
+    },
+    {
+      "id": "context-034",
+      "strategy": "recent-window",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-14"
+      ],
+      "evidencePointers": [
+        "evidence-14"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.71,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 384,
+      "p95LatencyMs": 795,
+      "estimatedCostUsd": 0.0064
+    },
+    {
+      "id": "context-035",
+      "strategy": "recent-window",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-15"
+      ],
+      "evidencePointers": [
+        "evidence-15"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.72,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 402,
+      "p95LatencyMs": 830,
+      "estimatedCostUsd": 0.006
+    },
+    {
+      "id": "context-036",
+      "strategy": "recent-window",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-16"
+      ],
+      "evidencePointers": [
+        "evidence-16"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.68,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 330,
+      "p95LatencyMs": 865,
+      "estimatedCostUsd": 0.0062
+    },
+    {
+      "id": "context-037",
+      "strategy": "recent-window",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-17"
+      ],
+      "evidencePointers": [
+        "evidence-17"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.69,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 348,
+      "p95LatencyMs": 900,
+      "estimatedCostUsd": 0.0064
+    },
+    {
+      "id": "context-038",
+      "strategy": "recent-window",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-18"
+      ],
+      "evidencePointers": [
+        "evidence-18"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.7,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 366,
+      "p95LatencyMs": 935,
+      "estimatedCostUsd": 0.006
+    },
+    {
+      "id": "context-039",
+      "strategy": "recent-window",
+      "category": "party",
+      "criticalFacts": [
+        "fact-19"
+      ],
+      "evidencePointers": [
+        "evidence-19"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.71,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 384,
+      "p95LatencyMs": 970,
+      "estimatedCostUsd": 0.0062
+    },
+    {
+      "id": "context-040",
+      "strategy": "recent-window",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-20"
+      ],
+      "evidencePointers": [
+        "evidence-20"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.72,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 402,
+      "p95LatencyMs": 760,
+      "estimatedCostUsd": 0.0064
+    },
+    {
+      "id": "context-041",
+      "strategy": "recent-window",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-01"
+      ],
+      "evidencePointers": [
+        "evidence-01"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.68,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 330,
+      "p95LatencyMs": 795,
+      "estimatedCostUsd": 0.006
+    },
+    {
+      "id": "context-042",
+      "strategy": "recent-window",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-02"
+      ],
+      "evidencePointers": [
+        "evidence-02"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.69,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 348,
+      "p95LatencyMs": 830,
+      "estimatedCostUsd": 0.0062
+    },
+    {
+      "id": "context-043",
+      "strategy": "recent-window",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-03"
+      ],
+      "evidencePointers": [
+        "evidence-03"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.7,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 366,
+      "p95LatencyMs": 865,
+      "estimatedCostUsd": 0.0064
+    },
+    {
+      "id": "context-044",
+      "strategy": "recent-window",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-04"
+      ],
+      "evidencePointers": [
+        "evidence-04"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.71,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 384,
+      "p95LatencyMs": 900,
+      "estimatedCostUsd": 0.006
+    },
+    {
+      "id": "context-045",
+      "strategy": "recent-window",
+      "category": "party",
+      "criticalFacts": [
+        "fact-05"
+      ],
+      "evidencePointers": [
+        "evidence-05"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.72,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 402,
+      "p95LatencyMs": 935,
+      "estimatedCostUsd": 0.0062
+    },
+    {
+      "id": "context-046",
+      "strategy": "recent-window",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-06"
+      ],
+      "evidencePointers": [
+        "evidence-06"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.68,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 330,
+      "p95LatencyMs": 970,
+      "estimatedCostUsd": 0.0064
+    },
+    {
+      "id": "context-047",
+      "strategy": "recent-window",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-07"
+      ],
+      "evidencePointers": [
+        "evidence-07"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.69,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 348,
+      "p95LatencyMs": 760,
+      "estimatedCostUsd": 0.006
+    },
+    {
+      "id": "context-048",
+      "strategy": "recent-window",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-08"
+      ],
+      "evidencePointers": [
+        "evidence-08"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.7,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 366,
+      "p95LatencyMs": 795,
+      "estimatedCostUsd": 0.0062
+    },
+    {
+      "id": "context-049",
+      "strategy": "recent-window",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-09"
+      ],
+      "evidencePointers": [
+        "evidence-09"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.71,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 384,
+      "p95LatencyMs": 830,
+      "estimatedCostUsd": 0.0064
+    },
+    {
+      "id": "context-050",
+      "strategy": "recent-window",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-10"
+      ],
+      "evidencePointers": [
+        "evidence-10"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.72,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 402,
+      "p95LatencyMs": 865,
+      "estimatedCostUsd": 0.006
+    },
+    {
+      "id": "context-051",
+      "strategy": "summary-plus-tail",
+      "category": "party",
+      "criticalFacts": [
+        "fact-11"
+      ],
+      "evidencePointers": [
+        "evidence-11"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.7,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 380,
+      "p95LatencyMs": 840,
+      "estimatedCostUsd": 0.0055
+    },
+    {
+      "id": "context-052",
+      "strategy": "summary-plus-tail",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-12"
+      ],
+      "evidencePointers": [
+        "evidence-12"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.71,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 398,
+      "p95LatencyMs": 875,
+      "estimatedCostUsd": 0.0057
+    },
+    {
+      "id": "context-053",
+      "strategy": "summary-plus-tail",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-13"
+      ],
+      "evidencePointers": [
+        "evidence-13"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.72,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 416,
+      "p95LatencyMs": 910,
+      "estimatedCostUsd": 0.0059
+    },
+    {
+      "id": "context-054",
+      "strategy": "summary-plus-tail",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-14"
+      ],
+      "evidencePointers": [
+        "evidence-14"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.73,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 434,
+      "p95LatencyMs": 945,
+      "estimatedCostUsd": 0.0055
+    },
+    {
+      "id": "context-055",
+      "strategy": "summary-plus-tail",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-15"
+      ],
+      "evidencePointers": [
+        "evidence-15"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.74,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 452,
+      "p95LatencyMs": 980,
+      "estimatedCostUsd": 0.0057
+    },
+    {
+      "id": "context-056",
+      "strategy": "summary-plus-tail",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-16"
+      ],
+      "evidencePointers": [
+        "evidence-16"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.7,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 380,
+      "p95LatencyMs": 1015,
+      "estimatedCostUsd": 0.0059
+    },
+    {
+      "id": "context-057",
+      "strategy": "summary-plus-tail",
+      "category": "party",
+      "criticalFacts": [
+        "fact-17"
+      ],
+      "evidencePointers": [
+        "evidence-17"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.71,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 398,
+      "p95LatencyMs": 1050,
+      "estimatedCostUsd": 0.0055
+    },
+    {
+      "id": "context-058",
+      "strategy": "summary-plus-tail",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-18"
+      ],
+      "evidencePointers": [
+        "evidence-18"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.72,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 416,
+      "p95LatencyMs": 840,
+      "estimatedCostUsd": 0.0057
+    },
+    {
+      "id": "context-059",
+      "strategy": "summary-plus-tail",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-19"
+      ],
+      "evidencePointers": [
+        "evidence-19"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.73,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 434,
+      "p95LatencyMs": 875,
+      "estimatedCostUsd": 0.0059
+    },
+    {
+      "id": "context-060",
+      "strategy": "summary-plus-tail",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-20"
+      ],
+      "evidencePointers": [
+        "evidence-20"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.74,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 452,
+      "p95LatencyMs": 910,
+      "estimatedCostUsd": 0.0055
+    },
+    {
+      "id": "context-061",
+      "strategy": "summary-plus-tail",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-01"
+      ],
+      "evidencePointers": [
+        "evidence-01"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.7,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 380,
+      "p95LatencyMs": 945,
+      "estimatedCostUsd": 0.0057
+    },
+    {
+      "id": "context-062",
+      "strategy": "summary-plus-tail",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-02"
+      ],
+      "evidencePointers": [
+        "evidence-02"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.71,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 398,
+      "p95LatencyMs": 980,
+      "estimatedCostUsd": 0.0059
+    },
+    {
+      "id": "context-063",
+      "strategy": "summary-plus-tail",
+      "category": "party",
+      "criticalFacts": [
+        "fact-03"
+      ],
+      "evidencePointers": [
+        "evidence-03"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.72,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 416,
+      "p95LatencyMs": 1015,
+      "estimatedCostUsd": 0.0055
+    },
+    {
+      "id": "context-064",
+      "strategy": "summary-plus-tail",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-04"
+      ],
+      "evidencePointers": [
+        "evidence-04"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.73,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 434,
+      "p95LatencyMs": 1050,
+      "estimatedCostUsd": 0.0057
+    },
+    {
+      "id": "context-065",
+      "strategy": "summary-plus-tail",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-05"
+      ],
+      "evidencePointers": [
+        "evidence-05"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.74,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 452,
+      "p95LatencyMs": 840,
+      "estimatedCostUsd": 0.0059
+    },
+    {
+      "id": "context-066",
+      "strategy": "summary-plus-tail",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-06"
+      ],
+      "evidencePointers": [
+        "evidence-06"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.7,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 380,
+      "p95LatencyMs": 875,
+      "estimatedCostUsd": 0.0055
+    },
+    {
+      "id": "context-067",
+      "strategy": "summary-plus-tail",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-07"
+      ],
+      "evidencePointers": [
+        "evidence-07"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.71,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 398,
+      "p95LatencyMs": 910,
+      "estimatedCostUsd": 0.0057
+    },
+    {
+      "id": "context-068",
+      "strategy": "summary-plus-tail",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-08"
+      ],
+      "evidencePointers": [
+        "evidence-08"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.72,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 416,
+      "p95LatencyMs": 945,
+      "estimatedCostUsd": 0.0059
+    },
+    {
+      "id": "context-069",
+      "strategy": "summary-plus-tail",
+      "category": "party",
+      "criticalFacts": [
+        "fact-09"
+      ],
+      "evidencePointers": [
+        "evidence-09"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.73,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 434,
+      "p95LatencyMs": 980,
+      "estimatedCostUsd": 0.0055
+    },
+    {
+      "id": "context-070",
+      "strategy": "summary-plus-tail",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-10"
+      ],
+      "evidencePointers": [
+        "evidence-10"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.74,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 452,
+      "p95LatencyMs": 1015,
+      "estimatedCostUsd": 0.0057
+    },
+    {
+      "id": "context-071",
+      "strategy": "summary-plus-tail",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-11"
+      ],
+      "evidencePointers": [
+        "evidence-11"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.7,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 380,
+      "p95LatencyMs": 1050,
+      "estimatedCostUsd": 0.0059
+    },
+    {
+      "id": "context-072",
+      "strategy": "summary-plus-tail",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-12"
+      ],
+      "evidencePointers": [
+        "evidence-12"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.71,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 398,
+      "p95LatencyMs": 840,
+      "estimatedCostUsd": 0.0055
+    },
+    {
+      "id": "context-073",
+      "strategy": "summary-plus-tail",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-13"
+      ],
+      "evidencePointers": [
+        "evidence-13"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.72,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 416,
+      "p95LatencyMs": 875,
+      "estimatedCostUsd": 0.0057
+    },
+    {
+      "id": "context-074",
+      "strategy": "summary-plus-tail",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-14"
+      ],
+      "evidencePointers": [
+        "evidence-14"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.73,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 434,
+      "p95LatencyMs": 910,
+      "estimatedCostUsd": 0.0059
+    },
+    {
+      "id": "context-075",
+      "strategy": "summary-plus-tail",
+      "category": "party",
+      "criticalFacts": [
+        "fact-15"
+      ],
+      "evidencePointers": [
+        "evidence-15"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.74,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 452,
+      "p95LatencyMs": 945,
+      "estimatedCostUsd": 0.0055
+    },
+    {
+      "id": "context-076",
+      "strategy": "layered-context",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-16"
+      ],
+      "evidencePointers": [
+        "evidence-16"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.64,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 420,
+      "p95LatencyMs": 910,
+      "estimatedCostUsd": 0.0045
+    },
+    {
+      "id": "context-077",
+      "strategy": "layered-context",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-17"
+      ],
+      "evidencePointers": [
+        "evidence-17"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.65,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 438,
+      "p95LatencyMs": 945,
+      "estimatedCostUsd": 0.0047
+    },
+    {
+      "id": "context-078",
+      "strategy": "layered-context",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-18"
+      ],
+      "evidencePointers": [
+        "evidence-18"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.66,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 456,
+      "p95LatencyMs": 980,
+      "estimatedCostUsd": 0.0049
+    },
+    {
+      "id": "context-079",
+      "strategy": "layered-context",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-19"
+      ],
+      "evidencePointers": [
+        "evidence-19"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.67,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 474,
+      "p95LatencyMs": 1015,
+      "estimatedCostUsd": 0.0045
+    },
+    {
+      "id": "context-080",
+      "strategy": "layered-context",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-20"
+      ],
+      "evidencePointers": [
+        "evidence-20"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.68,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 492,
+      "p95LatencyMs": 1050,
+      "estimatedCostUsd": 0.0047
+    },
+    {
+      "id": "context-081",
+      "strategy": "layered-context",
+      "category": "party",
+      "criticalFacts": [
+        "fact-01"
+      ],
+      "evidencePointers": [
+        "evidence-01"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.64,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 420,
+      "p95LatencyMs": 1085,
+      "estimatedCostUsd": 0.0049
+    },
+    {
+      "id": "context-082",
+      "strategy": "layered-context",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-02"
+      ],
+      "evidencePointers": [
+        "evidence-02"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.65,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 438,
+      "p95LatencyMs": 1120,
+      "estimatedCostUsd": 0.0045
+    },
+    {
+      "id": "context-083",
+      "strategy": "layered-context",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-03"
+      ],
+      "evidencePointers": [
+        "evidence-03"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.66,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 456,
+      "p95LatencyMs": 910,
+      "estimatedCostUsd": 0.0047
+    },
+    {
+      "id": "context-084",
+      "strategy": "layered-context",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-04"
+      ],
+      "evidencePointers": [
+        "evidence-04"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.67,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 474,
+      "p95LatencyMs": 945,
+      "estimatedCostUsd": 0.0049
+    },
+    {
+      "id": "context-085",
+      "strategy": "layered-context",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-05"
+      ],
+      "evidencePointers": [
+        "evidence-05"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.68,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 492,
+      "p95LatencyMs": 980,
+      "estimatedCostUsd": 0.0045
+    },
+    {
+      "id": "context-086",
+      "strategy": "layered-context",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-06"
+      ],
+      "evidencePointers": [
+        "evidence-06"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.64,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 420,
+      "p95LatencyMs": 1015,
+      "estimatedCostUsd": 0.0047
+    },
+    {
+      "id": "context-087",
+      "strategy": "layered-context",
+      "category": "party",
+      "criticalFacts": [
+        "fact-07"
+      ],
+      "evidencePointers": [
+        "evidence-07"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.65,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 438,
+      "p95LatencyMs": 1050,
+      "estimatedCostUsd": 0.0049
+    },
+    {
+      "id": "context-088",
+      "strategy": "layered-context",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-08"
+      ],
+      "evidencePointers": [
+        "evidence-08"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.66,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 456,
+      "p95LatencyMs": 1085,
+      "estimatedCostUsd": 0.0045
+    },
+    {
+      "id": "context-089",
+      "strategy": "layered-context",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-09"
+      ],
+      "evidencePointers": [
+        "evidence-09"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.67,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 474,
+      "p95LatencyMs": 1120,
+      "estimatedCostUsd": 0.0047
+    },
+    {
+      "id": "context-090",
+      "strategy": "layered-context",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-10"
+      ],
+      "evidencePointers": [
+        "evidence-10"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.68,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 492,
+      "p95LatencyMs": 910,
+      "estimatedCostUsd": 0.0049
+    },
+    {
+      "id": "context-091",
+      "strategy": "layered-context",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-11"
+      ],
+      "evidencePointers": [
+        "evidence-11"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.64,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 420,
+      "p95LatencyMs": 945,
+      "estimatedCostUsd": 0.0045
+    },
+    {
+      "id": "context-092",
+      "strategy": "layered-context",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-12"
+      ],
+      "evidencePointers": [
+        "evidence-12"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.65,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 438,
+      "p95LatencyMs": 980,
+      "estimatedCostUsd": 0.0047
+    },
+    {
+      "id": "context-093",
+      "strategy": "layered-context",
+      "category": "party",
+      "criticalFacts": [
+        "fact-13"
+      ],
+      "evidencePointers": [
+        "evidence-13"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.66,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 456,
+      "p95LatencyMs": 1015,
+      "estimatedCostUsd": 0.0049
+    },
+    {
+      "id": "context-094",
+      "strategy": "layered-context",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-14"
+      ],
+      "evidencePointers": [
+        "evidence-14"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.67,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 474,
+      "p95LatencyMs": 1050,
+      "estimatedCostUsd": 0.0045
+    },
+    {
+      "id": "context-095",
+      "strategy": "layered-context",
+      "category": "clause",
+      "criticalFacts": [
+        "fact-15"
+      ],
+      "evidencePointers": [
+        "evidence-15"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.68,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 492,
+      "p95LatencyMs": 1085,
+      "estimatedCostUsd": 0.0047
+    },
+    {
+      "id": "context-096",
+      "strategy": "layered-context",
+      "category": "evidence",
+      "criticalFacts": [
+        "fact-16"
+      ],
+      "evidencePointers": [
+        "evidence-16"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.64,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 420,
+      "p95LatencyMs": 1120,
+      "estimatedCostUsd": 0.0049
+    },
+    {
+      "id": "context-097",
+      "strategy": "layered-context",
+      "category": "critical-date",
+      "criticalFacts": [
+        "fact-17"
+      ],
+      "evidencePointers": [
+        "evidence-17"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.65,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 438,
+      "p95LatencyMs": 910,
+      "estimatedCostUsd": 0.0045
+    },
+    {
+      "id": "context-098",
+      "strategy": "layered-context",
+      "category": "amount",
+      "criticalFacts": [
+        "fact-18"
+      ],
+      "evidencePointers": [
+        "evidence-18"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.66,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 456,
+      "p95LatencyMs": 945,
+      "estimatedCostUsd": 0.0047
+    },
+    {
+      "id": "context-099",
+      "strategy": "layered-context",
+      "category": "party",
+      "criticalFacts": [
+        "fact-19"
+      ],
+      "evidencePointers": [
+        "evidence-19"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.67,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 474,
+      "p95LatencyMs": 980,
+      "estimatedCostUsd": 0.0049
+    },
+    {
+      "id": "context-100",
+      "strategy": "layered-context",
+      "category": "approval",
+      "criticalFacts": [
+        "fact-20"
+      ],
+      "evidencePointers": [
+        "evidence-20"
+      ],
+      "criticalFactRetention": 1,
+      "evidencePointerRetention": 1,
+      "inputBudgetUtilization": 0.68,
+      "crossCaseLeakage": 0,
+      "unauthorizedHistoryExposure": 0,
+      "p50LatencyMs": 492,
+      "p95LatencyMs": 1015,
+      "estimatedCostUsd": 0.0045
+    }
+  ]
+}

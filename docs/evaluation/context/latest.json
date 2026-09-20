@@ -1,0 +1,54 @@
+{
+  "benchmarkVersion": "context-benchmark-v1",
+  "datasetSha256": "324a281b6e84b740027a983f4421dcb95d8eb43c0b00508ee530e3a023135fe3",
+  "gitCommit": "ae03055377b0771148c02b0d2c3a1b6ed58bbaf5",
+  "configuration": {
+    "strategies": [
+      "legacy-full-history",
+      "recent-window",
+      "summary-plus-tail",
+      "layered-context"
+    ],
+    "contextPolicyVersion": "context-retention-v1"
+  },
+  "scenarioCount": 100,
+  "strategies": {
+    "layered-context": {
+      "count": 25,
+      "p95InputBudgetUtilization": 0.68,
+      "p50LatencyMs": 456.0,
+      "p95LatencyMs": 1120.0,
+      "averageCostUsd": 0.0047
+    },
+    "legacy-full-history": {
+      "count": 25,
+      "p95InputBudgetUtilization": 0.9,
+      "p50LatencyMs": 756.0,
+      "p95LatencyMs": 1710.0,
+      "averageCostUsd": 0.0122
+    },
+    "recent-window": {
+      "count": 25,
+      "p95InputBudgetUtilization": 0.72,
+      "p50LatencyMs": 366.0,
+      "p95LatencyMs": 970.0,
+      "averageCostUsd": 0.0062
+    },
+    "summary-plus-tail": {
+      "count": 25,
+      "p95InputBudgetUtilization": 0.74,
+      "p50LatencyMs": 416.0,
+      "p95LatencyMs": 1050.0,
+      "averageCostUsd": 0.0057
+    }
+  },
+  "safetyGates": {
+    "criticalFactRetention": 1.0,
+    "evidencePointerRetention": 1.0,
+    "crossCaseLeakage": 0,
+    "unauthorizedHistoryExposure": 0,
+    "p95InputBudgetUtilization": 0.89
+  },
+  "failedCaseIds": [],
+  "gatePassed": true
+}
