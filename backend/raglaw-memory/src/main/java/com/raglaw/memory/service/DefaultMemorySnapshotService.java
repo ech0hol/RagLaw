@@ -5,6 +5,7 @@ import com.raglaw.memory.domain.CaseMemoryVersionEntity;
 import com.raglaw.memory.domain.CaseMemoryVersionRepository;
 import java.time.Clock;
 import java.time.Instant;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,7 @@ public class DefaultMemorySnapshotService implements MemorySnapshotService {
     private final CaseMemoryVersionRepository versionRepository;
     private final Clock clock;
 
+    @Autowired
     public DefaultMemorySnapshotService(CaseMemoryVersionRepository versionRepository) {
         this(versionRepository, Clock.systemUTC());
     }

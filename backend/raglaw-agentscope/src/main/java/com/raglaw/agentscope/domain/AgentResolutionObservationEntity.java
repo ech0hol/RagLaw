@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -15,7 +16,7 @@ public class AgentResolutionObservationEntity {
     @Column(name = "deterministic_winner", nullable = false, length = 128) private String deterministicWinner;
     @Column(name = "model_winner", length = 128) private String modelWinner;
     @Column(nullable = false) private boolean agreement;
-    @Column private double confidence;
+    @Column(precision = 6, scale = 5) private BigDecimal confidence;
     @Column(name = "candidate_versions_json", nullable = false, columnDefinition = "JSON") private String candidateVersionsJson;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
 
@@ -24,7 +25,7 @@ public class AgentResolutionObservationEntity {
                                             String modelWinner, boolean agreement, double confidence,
                                             String candidateVersionsJson, Instant createdAt) {
         this.id = id; this.traceId = traceId; this.roleCode = roleCode; this.deterministicWinner = deterministicWinner;
-        this.modelWinner = modelWinner; this.agreement = agreement; this.confidence = confidence;
+        this.modelWinner = modelWinner; this.agreement = agreement; this.confidence = BigDecimal.valueOf(confidence);
         this.candidateVersionsJson = candidateVersionsJson; this.createdAt = createdAt;
     }
     public String getId() { return id; }
@@ -33,7 +34,7 @@ public class AgentResolutionObservationEntity {
     public String getDeterministicWinner() { return deterministicWinner; }
     public String getModelWinner() { return modelWinner; }
     public boolean isAgreement() { return agreement; }
-    public double getConfidence() { return confidence; }
+    public double getConfidence() { return confidence.doubleValue(); }
     public String getCandidateVersionsJson() { return candidateVersionsJson; }
     public Instant getCreatedAt() { return createdAt; }
 }

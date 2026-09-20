@@ -16,6 +16,7 @@ import com.raglaw.memory.domain.VerificationStatus;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ public class CaseMemoryCommandService {
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
+    @Autowired
     public CaseMemoryCommandService(CaseMemoryRepository memoryRepository,
                                     MemoryAuditRepository auditRepository,
                                     CaseMemoryVersionRepository versionRepository,

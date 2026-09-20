@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -29,7 +30,8 @@ public class AgentVersionEntity {
     @Column(name = "skills_json", nullable = false, columnDefinition = "JSON") private String skillsJson;
     @Column(name = "knowledge_scopes_json", nullable = false, columnDefinition = "JSON") private String knowledgeScopesJson;
     @Column(name = "mcp_servers_json", nullable = false, columnDefinition = "JSON") private String mcpServersJson;
-    @Column(name = "evaluation_score", nullable = false) private double evaluationScore;
+    @Column(name = "evaluation_score", nullable = false, precision = 6, scale = 5)
+    private BigDecimal evaluationScore;
     @Column(name = "config_checksum", nullable = false, length = 128) private String configChecksum;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "created_by", nullable = false, length = 128) private String createdBy;
@@ -55,7 +57,7 @@ public class AgentVersionEntity {
         this.id = id; this.agentCode = agentCode; this.version = version; this.status = status;
         this.model = model; this.systemPrompt = systemPrompt; this.manifestJson = manifestJson;
         this.toolPolicyJson = toolPolicyJson; this.skillsJson = skillsJson; this.knowledgeScopesJson = knowledgeScopesJson;
-        this.mcpServersJson = mcpServersJson; this.evaluationScore = evaluationScore; this.configChecksum = configChecksum;
+        this.mcpServersJson = mcpServersJson; this.evaluationScore = BigDecimal.valueOf(evaluationScore); this.configChecksum = configChecksum;
         this.createdAt = createdAt; this.createdBy = createdBy == null || createdBy.isBlank() ? "system" : createdBy;
     }
     public String getId() { return id; }
@@ -69,7 +71,7 @@ public class AgentVersionEntity {
     public String getSkillsJson() { return skillsJson; }
     public String getKnowledgeScopesJson() { return knowledgeScopesJson; }
     public String getMcpServersJson() { return mcpServersJson; }
-    public double getEvaluationScore() { return evaluationScore; }
+    public double getEvaluationScore() { return evaluationScore.doubleValue(); }
     public String getConfigChecksum() { return configChecksum; }
     public Instant getCreatedAt() { return createdAt; }
     public String getCreatedBy() { return createdBy; }

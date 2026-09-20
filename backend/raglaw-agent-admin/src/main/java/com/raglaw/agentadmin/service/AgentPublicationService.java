@@ -23,6 +23,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ public class AgentPublicationService {
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
+    @Autowired
     public AgentPublicationService(AgentVersionRepository repository, AgentManifestValidator validator,
                                    AgentVersionRegistry registry, ObjectMapper objectMapper) {
         this(repository, validator, registry, objectMapper, Clock.systemUTC());

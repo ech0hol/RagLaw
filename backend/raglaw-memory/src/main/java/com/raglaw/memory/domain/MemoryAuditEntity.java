@@ -3,6 +3,8 @@ package com.raglaw.memory.domain;
 import com.raglaw.memory.casefile.CaseScope;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -20,8 +22,10 @@ public class MemoryAuditEntity {
     private String caseId;
     @Column(name = "candidate_json", nullable = false, columnDefinition = "JSON")
     private String candidateJson;
+    @Enumerated(EnumType.STRING)
     @Column(name = "proposed_action", nullable = false, length = 32)
     private MemoryAction proposedAction;
+    @Enumerated(EnumType.STRING)
     @Column(name = "applied_action", nullable = false, length = 32)
     private MemoryAction appliedAction;
     @Column(nullable = false, length = 512)

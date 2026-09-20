@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 
-@Service
+@Service("governedContextAssembler")
 public class ContextAssembler {
     private final ContextBudgetPolicy budgetPolicy;
     public ContextAssembler(ContextBudgetPolicy budgetPolicy) { this.budgetPolicy = budgetPolicy; }

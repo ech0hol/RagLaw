@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.CountDownLatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,6 +31,7 @@ public class TaskRouteObserver {
     private volatile CountDownLatch workerGate;
     private volatile TraceRecorder traceRecorder;
 
+    @Autowired
     public TaskRouteObserver(TaskRouteDecisionRepository repository, ObjectMapper objectMapper) {
         this(repository, objectMapper, 2, 200);
     }

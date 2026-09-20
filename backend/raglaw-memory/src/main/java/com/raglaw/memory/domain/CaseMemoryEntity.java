@@ -3,6 +3,8 @@ package com.raglaw.memory.domain;
 import com.raglaw.memory.casefile.CaseScope;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -30,10 +32,13 @@ public class CaseMemoryEntity {
     private String predicate;
     @Column(name = "value_json", nullable = false, columnDefinition = "JSON")
     private String valueJson;
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private MemoryLifecycle lifecycle;
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private VerificationStatus verification;
+    @Enumerated(EnumType.STRING)
     @Column(name = "source_type", nullable = false, length = 32)
     private MemorySourceType sourceType;
     @Column(name = "source_id", nullable = false, length = 128)

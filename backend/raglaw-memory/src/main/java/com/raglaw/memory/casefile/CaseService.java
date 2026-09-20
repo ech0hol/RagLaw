@@ -5,6 +5,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,7 @@ public class CaseService {
     private final CaseRepository repository;
     private final Clock clock;
 
+    @Autowired
     public CaseService(CaseRepository repository) {
         this(repository, Clock.systemUTC());
     }
