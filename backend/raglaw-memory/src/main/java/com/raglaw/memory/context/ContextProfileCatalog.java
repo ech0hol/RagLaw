@@ -25,5 +25,9 @@ public class ContextProfileCatalog {
         profiles = Map.of("SINGLE_ADVISOR", new NodeContextProfile("SINGLE_ADVISOR", legal, List.of(ContextSectionType.GOVERNANCE, ContextSectionType.ROLE_CONTRACT, ContextSectionType.CURRENT_TASK, ContextSectionType.CASE_FACTS, ContextSectionType.EVIDENCE, ContextSectionType.RECENT_CONVERSATION)),
                 "LEGAL_ANALYSIS", new NodeContextProfile("LEGAL_ANALYSIS", legal, List.of(ContextSectionType.GOVERNANCE, ContextSectionType.ROLE_CONTRACT, ContextSectionType.CURRENT_TASK, ContextSectionType.CASE_FACTS, ContextSectionType.DISPUTED_FACTS, ContextSectionType.EVIDENCE, ContextSectionType.TASK_NOTE, ContextSectionType.DEPENDENCY_RESULT, ContextSectionType.LEGAL_AUTHORITY, ContextSectionType.RECENT_CONVERSATION)));
     }
-    public NodeContextProfile require(String code) { return profiles.getOrDefault(code, profiles.get("SINGLE_ADVISOR")); }
+    public NodeContextProfile require(String code) {
+        NodeContextProfile profile = profiles.get(code);
+        if (profile == null) throw new IllegalArgumentException("UNKNOWN_CONTEXT_PROFILE: " + code);
+        return profile;
+    }
 }

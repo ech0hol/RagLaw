@@ -9,6 +9,8 @@ import com.raglaw.agentscope.config.AgentscopeLlmProperties;
 import com.raglaw.agentscope.expert.ExpertContext;
 import com.raglaw.agentscope.expert.ExpertRouter;
 import com.raglaw.agentscope.context.AgentContextRenderer;
+import com.raglaw.agentscope.config.ContextMode;
+import com.raglaw.agentscope.config.ContextProperties;
 import com.raglaw.agentscope.shadow.ShadowRouteObserver;
 import com.raglaw.agentscope.routing.TaskRouteObserver;
 import com.raglaw.agentscope.routing.TaskRoutingService;
@@ -98,6 +100,7 @@ public class AguiReactRunFacade {
     @org.springframework.beans.factory.annotation.Autowired(required = false) private MemorySnapshotService memorySnapshotService;
     @org.springframework.beans.factory.annotation.Autowired(required = false) private ContextAssembler contextAssembler;
     @org.springframework.beans.factory.annotation.Autowired(required = false) private AgentContextRenderer agentContextRenderer;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private ContextProperties contextProperties;
 
     public AguiReactRunFacade(
             ExpertRouter expertRouter,
@@ -302,6 +305,9 @@ public class AguiReactRunFacade {
         ), 0L);
         if (assembled.memoryIds().isEmpty()) return userMessage;
         if (agentContextRenderer == null) {
+            if (contextProperties != null && contextProperties.getMode() == ContextMode.ENFORCE) {
+                throw new IllegalStateException("CONTEXT_RENDERER_UNAVAILABLE");
+            }
             if (mode == MemoryMode.SHADOW) return userMessage;
             return userMessage + "\n\n" + assembled.dataBlock();
         }

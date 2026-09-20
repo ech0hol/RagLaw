@@ -56,6 +56,14 @@ class AgentContextIntegrationTest {
                 .isInstanceOf(RuntimeException.class);
     }
 
+    @Test
+    void enforceRejectsUnknownProfileInsteadOfUsingSingleAdvisorDefaults() {
+        AgentContextRenderer renderer = renderer(properties(ContextMode.ENFORCE, 1_000));
+        assertThatThrownBy(() -> renderer.render(new AgentContextRenderer.RenderRequest("trace", "conversation", "UNKNOWN", 3,
+                "legacy", List.of(item("task", ContextSectionType.CURRENT_TASK, ContextPriority.P0_REQUIRED, 8)))))
+                .hasMessageContaining("UNKNOWN_CONTEXT_PROFILE");
+    }
+
     private static ContextProperties properties(ContextMode mode, int window) {
         ContextProperties properties = new ContextProperties();
         properties.setMode(mode);

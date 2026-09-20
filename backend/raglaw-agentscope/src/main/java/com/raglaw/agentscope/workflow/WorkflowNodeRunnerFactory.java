@@ -2,6 +2,7 @@ package com.raglaw.agentscope.workflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raglaw.agentscope.context.AgentContextRenderer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /** Creates an immutable runner bound to one workflow manifest and snapshot. */
@@ -17,6 +18,7 @@ public class WorkflowNodeRunnerFactory {
         this(projector, invoker, objectMapper, null);
     }
 
+    @Autowired
     public WorkflowNodeRunnerFactory(WorkflowContextProjector projector, WorkflowAgentInvoker invoker,
                                      ObjectMapper objectMapper, AgentContextRenderer contextRenderer) {
         this.projector = projector;
