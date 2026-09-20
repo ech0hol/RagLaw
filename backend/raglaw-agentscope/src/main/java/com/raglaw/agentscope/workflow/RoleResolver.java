@@ -12,8 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class RoleResolver {
     public ResolvedAgent resolve(RoleRequirement requirement, AgentResolutionContext context) {
-        List<ResolvedAgent> eligible = context.candidates().stream()
-                .filter(candidate -> eligible(candidate, requirement, context))
+        List<ResolvedAgent> eligible = eligibleCandidates(requirement, context).stream()
                 .map(candidate -> score(candidate, requirement, context))
                 .sorted(Comparator.comparingDouble(ResolvedAgent::score).reversed()
                         .thenComparing(ResolvedAgent::agentCode)
@@ -21,6 +20,10 @@ public class RoleResolver {
                 .toList();
         if (eligible.isEmpty()) throw new NoEligibleAgentException("No eligible agent for role " + requirement.roleCode());
         return eligible.get(0);
+    }
+
+    public List<AgentVersionSnapshot> eligibleCandidates(RoleRequirement requirement, AgentResolutionContext context) {
+        return context.candidates().stream().filter(candidate -> eligible(candidate, requirement, context)).toList();
     }
 
     private static boolean eligible(AgentVersionSnapshot candidate, RoleRequirement requirement, AgentResolutionContext context) {
