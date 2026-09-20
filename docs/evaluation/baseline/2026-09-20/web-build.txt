@@ -1,0 +1,4 @@
+Command: pnpm --dir raglaw-web build (equivalent direct Vite invocation used because pnpm launcher cannot access C:\Users\lllude in the sandbox)
+Result: PASSED
+Notes: Vite emitted the existing pdfjs worker resolution warning and a chunk-size warning; build completed successfully.
+

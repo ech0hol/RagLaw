@@ -1,0 +1,7 @@
+Command: mvn -q test
+Working directory: backend
+Result: FAILED (pre-existing baseline failure)
+Summary: 137 tests, 0 failures, 2 errors.
+Errors: raglaw-rag IngestPipelineTest.index_enqueuesUpsertWhenElasticsearchEnabled and index_marksFailedWhenElasticsearchWriteFails; both fail with Mockito UnnecessaryStubbingException (lines 128 and 161).
+Environment: Java 22.0.2, Maven 3.9.9.
+

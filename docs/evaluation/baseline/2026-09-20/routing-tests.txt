@@ -1,0 +1,3 @@
+Command: mvn -q -pl raglaw-agentscope -am -Dtest=RoutingBenchmarkTest,RoutingContractTest,TaskRoutingServiceTest,WorkflowCatalogTest,WorkflowExecutorTest -Dsurefire.failIfNoSpecifiedTests=false test
+Result: PASSED
+

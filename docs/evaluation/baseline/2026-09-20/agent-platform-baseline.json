@@ -1,0 +1,28 @@
+{
+  "capturedAt": "2026-09-20",
+  "commit": "1f611ab8e650188730f26cbf78690c65c3cc5287",
+  "branch": "main",
+  "java": "22.0.2",
+  "maven": "3.9.9",
+  "node": "20.14.0",
+  "springBoot": "3.3.6",
+  "agentScope": "2.0.2",
+  "routingMode": "SHADOW",
+  "databaseMigrationHead": "V40__workflow_runtime.sql",
+  "promptHashes": "not yet materialized as immutable artifacts; existing prompt versions are stored in migrations V18, V19, and V35",
+  "backendTest": "FAIL_PRE_EXISTING_2_ERRORS",
+  "webTest": "PASS_42_TESTS",
+  "webBuild": "PASS",
+  "routingBenchmarkAndAcceptance": "PASS_FOCUSED_SUITE",
+  "notes": [
+    "The full backend baseline has two existing Mockito strict-stubbing errors in raglaw-rag.",
+    "The pnpm launcher cannot access C:\\Users\\lllude in the sandbox; direct local Vitest and Vite binaries were used for equivalent verification.",
+    "The default production-facing routing behavior remains shadow-only until a later evaluation gate passes."
+  ],
+  "artifacts": [
+    "backend-tests.txt",
+    "web-tests.txt",
+    "web-build.txt",
+    "routing-tests.txt"
+  ]
+}
