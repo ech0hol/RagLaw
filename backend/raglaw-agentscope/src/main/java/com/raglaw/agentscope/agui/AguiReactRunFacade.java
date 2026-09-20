@@ -1,6 +1,8 @@
 package com.raglaw.agentscope.agui;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raglaw.agentadmin.model.AgentConfigSnapshot;
+import com.raglaw.agentadmin.registry.AgentVersionRegistry;
 import com.raglaw.agentscope.a2a.QuestionRecommender;
 import com.raglaw.agentscope.agui.dto.AguiRunRequest;
 import com.raglaw.agentscope.config.AgentscopeLlmProperties;
@@ -16,6 +18,17 @@ import com.raglaw.agentscope.config.RoutingProperties;
 import com.raglaw.agentscope.config.MemoryMode;
 import com.raglaw.agentscope.config.MemoryProperties;
 import com.raglaw.agentscope.workflow.WorkflowRunService;
+import com.raglaw.agentscope.workflow.AgentResolutionContext;
+import com.raglaw.agentscope.workflow.ResolvedAgent;
+import com.raglaw.agentscope.workflow.SharedWorkflowState;
+import com.raglaw.agentscope.workflow.WorkflowExecutionManifest;
+import com.raglaw.agentscope.workflow.WorkflowManifestFactory;
+import com.raglaw.agentscope.workflow.WorkflowNodeRunner;
+import com.raglaw.agentscope.workflow.WorkflowNodeRunnerFactory;
+import com.raglaw.agentscope.workflow.WorkflowNodeResult;
+import com.raglaw.agentscope.workflow.WorkflowExecutor;
+import com.raglaw.agentscope.workflow.WorkflowTaskNote;
+import com.raglaw.agentscope.workflow.RoleResolver;
 import com.raglaw.agentscope.runtime.AgentRunFactory;
 import com.raglaw.agentscope.runtime.AgentRunSession;
 import com.raglaw.agentscope.trace.TraceContext;
@@ -39,8 +52,10 @@ import io.agentscope.core.agent.RuntimeContext;
 import io.agentscope.core.event.AgentEvent;
 import io.agentscope.core.message.UserMessage;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -69,6 +84,11 @@ public class AguiReactRunFacade {
     private TaskRouteObserver taskRouteObserver;
     @org.springframework.beans.factory.annotation.Autowired(required = false) private TaskRoutingService taskRoutingService;
     @org.springframework.beans.factory.annotation.Autowired(required = false) private WorkflowRunService workflowRunService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private WorkflowNodeRunnerFactory workflowNodeRunnerFactory;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private WorkflowManifestFactory workflowManifestFactory;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private RoleResolver roleResolver;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private AgentVersionRegistry agentVersionRegistry;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private ObjectMapper objectMapper;
     @org.springframework.beans.factory.annotation.Autowired(required = false) private RoutingProperties routingProperties;
     @org.springframework.beans.factory.annotation.Autowired(required = false) private MemoryProperties memoryProperties;
     @org.springframework.beans.factory.annotation.Autowired(required = false) private MemorySnapshotService memorySnapshotService;
@@ -286,17 +306,77 @@ public class AguiReactRunFacade {
                 conversationId, query, contextDocumentId != null, false));
         var classification = new com.raglaw.agentscope.routing.TaskClassification(decision.taskType(), java.util.Set.of(), 1.0, java.util.List.of(), query, "facade", "facade");
         var workflow = WorkflowCatalog.standard().match(classification).orElse(null);
-        // The production role-bound runner is injected in the workflow execution layer.
-        // Keep this boundary fail-closed while that adapter is unavailable; never emit a
-        // fabricated successful answer from the request facade.
-        var outcome = workflowRunService.route(decision, trace.traceId(), trace.traceId(), query, workflow, null);
+        WorkflowNodeRunner runner = buildWorkflowRunner(decision, workflow, userId, conversationId, trace.traceId());
+        var outcome = workflowRunService.route(decision, trace.traceId(), trace.traceId(), query, workflow, runner);
         if (outcome.approvalRequired()) {
             AguiSseWriter.send(emitter, "approval_required", java.util.Map.of("traceId", trace.traceId(), "runId", outcome.runId())); emitter.complete(); return true;
         }
         if (outcome.execution() != null) {
-            AguiSseWriter.send(emitter, "done", java.util.Map.of("traceId", trace.traceId(), "status", outcome.status(), "runId", outcome.runId())); emitter.complete(); return true;
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("traceId", trace.traceId());
+            payload.put("status", outcome.status());
+            payload.put("runId", outcome.runId());
+            String content = extractWorkflowAnswer(outcome.execution());
+            if (!content.isBlank()) payload.put("content", content);
+            AguiSseWriter.send(emitter, "done", payload); emitter.complete(); return true;
         }
         return false;
+    }
+
+    private String extractWorkflowAnswer(WorkflowExecutor.ExecutionResult execution) {
+        if (execution == null || execution.nodes() == null || execution.nodes().isEmpty()) return "";
+        WorkflowNodeResult result = execution.nodes().get("SYNTHESIS");
+        if (result == null) result = execution.nodes().values().stream().reduce((first, last) -> last).orElse(null);
+        if (result == null || result.structuredOutputJson() == null || result.structuredOutputJson().isBlank()) return "";
+        try {
+            ObjectMapper mapper = objectMapper == null ? new ObjectMapper() : objectMapper;
+            var json = mapper.readTree(result.structuredOutputJson());
+            if (json.hasNonNull("answer")) return json.get("answer").asText();
+            if (json.hasNonNull("content")) return json.get("content").asText();
+        } catch (Exception ignored) {
+            // Keep the response envelope valid; malformed structured output is recorded by the node result.
+        }
+        return result.structuredOutputJson();
+    }
+
+    private WorkflowNodeRunner buildWorkflowRunner(
+            com.raglaw.agentscope.routing.RouteDecision decision,
+            com.raglaw.agentscope.workflow.WorkflowDefinition workflow,
+            String userId,
+            String conversationId,
+            String traceId
+    ) {
+        if (workflow == null || conversationId == null || conversationId.isBlank()
+                || memorySnapshotService == null || workflowNodeRunnerFactory == null
+                || workflowManifestFactory == null || roleResolver == null || agentVersionRegistry == null) {
+            return null;
+        }
+        try {
+            java.util.Optional<String> caseId = conversationService.findCaseId(userId, conversationId);
+            if (caseId.isEmpty()) return null;
+            CaseScope scope = new CaseScope("default", userId, caseId.get());
+            CaseMemorySnapshot snapshot = memorySnapshotService.freeze(scope);
+            AgentResolutionContext resolutionContext = new AgentResolutionContext(
+                    scope.tenantId(), decision.taskType().name(), decision.riskLevel().name(),
+                    Set.of(), Set.of("rag_search", "history_lookup", "tavily-search"),
+                    Set.of("rag_search", "history_lookup", "tavily-search"),
+                    agentVersionRegistry.publishedCandidates());
+            Map<String, ResolvedAgent> resolvedAgents = new LinkedHashMap<>();
+            for (var node : workflow.nodes()) {
+                resolvedAgents.put(node.requiredRole(), roleResolver.resolve(node.roleRequirement(), resolutionContext));
+            }
+            WorkflowExecutionManifest manifest = workflowManifestFactory.create(
+                    new WorkflowManifestFactory.ManifestRequest(
+                            traceId, scope.tenantId(), scope.userId(), scope.caseId(), conversationId,
+                            workflow, 1, traceId, snapshot, decision.policyVersion(), "workflow-tools-v1",
+                            resolvedAgents, workflow.requiredMaterials()));
+            SharedWorkflowState state = new SharedWorkflowState(
+                    manifest, snapshot, new WorkflowTaskNote(0, Map.of()), List.of(), List.of(), Map.of());
+            return workflowNodeRunnerFactory.create(manifest, state);
+        } catch (RuntimeException exception) {
+            log.warn("Workflow runner binding unavailable; keeping route fail-closed: {}", exception.getMessage());
+            return null;
+        }
     }
 
     /** Additive seam for shadow observation; it never changes the expert selected above. */

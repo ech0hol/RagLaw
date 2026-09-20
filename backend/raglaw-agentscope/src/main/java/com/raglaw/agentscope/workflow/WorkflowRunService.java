@@ -39,7 +39,7 @@ public class WorkflowRunService {
             return new RouteOutcome("approval_required", run.getId(), true, null);
         }
         WorkflowRunEntity run=create(traceId, routeDecisionId, decision, "RUNNING", "APPROVED"); runs.save(run);
-        WorkflowExecutor.ExecutionResult result=executor.execute(workflow, run.getId(), traceId, input, runner);
+        WorkflowExecutor.ExecutionResult result=executor.execute(workflow, run.getId(), traceId, input, runner.bindRunId(run.getId()));
         run.setStatus(result.status().name()); run.setCompletedAt(Instant.now()); run.setErrorCode(result.errorCode()); runs.save(run);
         result.nodes().values().forEach(n -> { WorkflowNodeRunEntity e=new WorkflowNodeRunEntity(); e.setId(UUID.randomUUID().toString()); e.setRunId(run.getId()); e.setNodeCode(n.nodeCode()); e.setAttempt(1); e.setStatus(n.status()); e.setStructuredOutputJson(n.structuredOutputJson()); e.setEvidenceIdsJson(String.join(",", n.evidenceIds())); e.setLatencyMs(n.latencyMs()); nodeRuns.save(e); });
         return new RouteOutcome(result.status().name(), run.getId(), false, result);
@@ -63,7 +63,7 @@ public class WorkflowRunService {
             return new RouteOutcome("approval_required", run.getId(), true, null);
         }
         WorkflowRunEntity run = create(traceId, routeDecisionId, decision, "RUNNING", "APPROVED"); runs.save(run);
-        WorkflowExecutor.ExecutionResult result = executor.execute(workflow, run.getId(), traceId, input, runner);
+        WorkflowExecutor.ExecutionResult result = executor.execute(workflow, run.getId(), traceId, input, runner.bindRunId(run.getId()));
         run.setStatus(result.status().name()); run.setCompletedAt(Instant.now()); run.setErrorCode(result.errorCode()); runs.save(run);
         result.nodes().values().forEach(n -> { WorkflowNodeRunEntity e=new WorkflowNodeRunEntity(); e.setId(UUID.randomUUID().toString()); e.setRunId(run.getId()); e.setNodeCode(n.nodeCode()); e.setAttempt(1); e.setStatus(n.status()); e.setStructuredOutputJson(n.structuredOutputJson()); e.setEvidenceIdsJson(String.join(",", n.evidenceIds())); e.setLatencyMs(n.latencyMs()); nodeRuns.save(e); });
         return new RouteOutcome(result.status().name(), run.getId(), false, result);

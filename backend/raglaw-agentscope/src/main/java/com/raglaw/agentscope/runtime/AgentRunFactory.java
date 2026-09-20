@@ -98,6 +98,13 @@ public class AgentRunFactory {
 
         filterToolkitTools(toolkit, tools);
 
+        Set<String> registered = new HashSet<>(toolkit.getToolNames());
+        if (!registered.containsAll(tools)) {
+            Set<String> missing = new HashSet<>(tools);
+            missing.removeAll(registered);
+            throw new IllegalStateException("requested tools were not registered: " + missing);
+        }
+
         if (toolkit.getToolNames().isEmpty()) {
             log.warn("Agent {} has no tools enabled in configuration", expert.searchAgentCode());
         }
